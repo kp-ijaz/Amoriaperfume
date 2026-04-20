@@ -112,7 +112,7 @@ export default function GiftSetsPage() {
                       <button
                         onClick={() => {
                           if (variant) {
-                            addItem({ product, variant, quantity: 1 });
+                            addItem(product, variant, 1);
                             toast.success(`${product.name} added to cart`);
                           }
                         }}
