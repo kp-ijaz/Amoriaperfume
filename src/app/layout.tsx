@@ -3,6 +3,8 @@ import { Cormorant_Garamond, Inter } from 'next/font/google';
 import './globals.css';
 import { StoreProvider } from '@/components/providers/StoreProvider';
 import { QueryProvider } from '@/components/providers/QueryProvider';
+import { LenisProvider } from '@/components/providers/LenisProvider';
+import { CustomCursor } from '@/components/ui/CustomCursor';
 import { Toaster } from 'sonner';
 
 const cormorant = Cormorant_Garamond({
@@ -44,7 +46,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       >
         <StoreProvider>
           <QueryProvider>
+            <LenisProvider>
+            <CustomCursor />
             {children}
+            </LenisProvider>
             <Toaster
               position="bottom-right"
               theme="dark"

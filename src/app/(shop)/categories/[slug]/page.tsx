@@ -9,7 +9,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
   const category = categories.find((c) => c.slug === slug);
   if (!category) notFound();
 
-  const categoryProducts = getProductsByCategory(category.name);
+  const categoryProducts = getProductsByCategory(slug);
 
   return (
     <div>

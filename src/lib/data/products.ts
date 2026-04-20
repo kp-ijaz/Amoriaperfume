@@ -803,6 +803,19 @@ export function getProductBySlug(slug: string): Product | undefined {
 }
 
 export function getProductsByCategory(category: string): Product[] {
+  const slug = category.toLowerCase().replace(/\s+/g, '-');
+
+  if (slug === 'best-sellers') return products.filter((p) => p.isBestseller);
+  if (slug === 'new-arrivals') return products.filter((p) => p.isNewArrival);
+  if (slug === 'perfume-oils') return products.filter((p) =>
+    p.concentration?.toLowerCase().includes('attar') ||
+    p.category.toLowerCase().includes('attar')
+  );
+  if (slug === 'perfumes') return products.filter((p) =>
+    ['edp', 'edt', 'parfum', 'premium signature', 'niche', 'inspired collections']
+      .some((k) => p.concentration?.toLowerCase().includes(k) || p.category.toLowerCase().includes(k))
+  );
+
   return products.filter(
     (p) => p.category.toLowerCase() === category.toLowerCase()
   );

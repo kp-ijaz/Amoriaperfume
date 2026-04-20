@@ -8,24 +8,69 @@ import { products } from '@/lib/data/products';
 import { formatCurrency } from '@/lib/utils/formatCurrency';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Heart, ShoppingBag, Trash2, ArrowRight } from 'lucide-react';
+import { Heart, Plus, Check, Trash2, ArrowRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
+import { useState } from 'react';
+
+// Per-card stateful add button — same circular style as ProductCard
+function WishlistAddButton({ product, inCart }: { product: typeof products[0]; inCart: boolean }) {
+  const dispatch = useDispatch();
+  const [justAdded, setJustAdded] = useState(false);
+
+  function handleAdd(e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (inCart || justAdded) return;
+    dispatch(addToCart({ product, variant: product.variants[0], quantity: 1 }));
+    setJustAdded(true);
+    toast.success(`Added to cart`, {
+      description: product.name,
+      style: { background: '#1A0A2E', color: '#FAF8F5', border: '1px solid rgba(201,168,76,0.25)', fontSize: '13px' },
+      duration: 2500,
+    });
+    setTimeout(() => setJustAdded(false), 800);
+  }
+
+  const checked = inCart || justAdded;
+
+  return (
+    <motion.button
+      onClick={handleAdd}
+      className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 transition-colors duration-200"
+      style={{ backgroundColor: checked ? '#16a34a' : '#1A0A2E', color: 'white', cursor: inCart ? 'default' : 'pointer' }}
+      whileTap={inCart ? {} : { scale: 0.88 }}
+      aria-label={inCart ? 'Already in cart' : 'Add to cart'}
+    >
+      <AnimatePresence mode="wait">
+        {checked ? (
+          <motion.span key="check" initial={{ scale: 0, rotate: -60 }} animate={{ scale: 1, rotate: 0 }} exit={{ scale: 0 }} transition={{ duration: 0.22, ease: 'backOut' }}>
+            <Check size={15} strokeWidth={2.5} />
+          </motion.span>
+        ) : (
+          <motion.span key="plus" initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }} transition={{ duration: 0.15 }}>
+            <Plus size={15} strokeWidth={2} />
+          </motion.span>
+        )}
+      </AnimatePresence>
+    </motion.button>
+  );
+}
 
 export default function WishlistPage() {
-  const dispatch     = useDispatch();
-  const wishlistIds  = useSelector((state: RootState) => state.wishlist.items);
+  const dispatch         = useDispatch();
+  const wishlistIds      = useSelector((state: RootState) => state.wishlist.items);
+  const cartItems        = useSelector((state: RootState) => state.cart.items);
   const wishlistProducts = products.filter((p) => wishlistIds.includes(p.id));
+
+  // Check if a specific variant is already in cart
+  function isVariantInCart(productId: string, variantId: string) {
+    return cartItems.some((i) => i.product.id === productId && i.variant.id === variantId);
+  }
 
   function handleRemove(productId: string, name: string) {
     dispatch(removeItem(productId));
     toast(`Removed from wishlist`, { description: name });
-  }
-
-  function handleAddToCart(product: typeof products[0]) {
-    const variant = product.variants[0];
-    dispatch(addToCart({ product, variant, quantity: 1 }));
-    toast.success(`Added to cart`, { description: product.name });
   }
 
   return (
@@ -208,15 +253,19 @@ export default function WishlistPage() {
                         )}
                       </div>
 
-                      {/* Add to cart */}
-                      <button
-                        onClick={() => handleAddToCart(product)}
-                        className="w-full flex items-center justify-center gap-2 py-2.5 text-[11px] font-bold tracking-[0.16em] uppercase transition-all duration-200 hover:brightness-110 active:scale-[0.98]"
-                        style={{ backgroundColor: '#1A0A2E', color: '#C9A84C' }}
-                      >
-                        <ShoppingBag size={13} />
-                        Add to Cart
-                      </button>
+                      {/* Add to Cart — same circular button as ProductCard */}
+                      {(() => {
+                        const defaultVariant = product.variants[0];
+                        const variantInCart  = isVariantInCart(product.id, defaultVariant?.id);
+                        return (
+                          <div className="flex items-center justify-between mt-1">
+                            <span className="text-[10px] uppercase tracking-wider" style={{ color: variantInCart ? '#16a34a' : 'transparent' }}>
+                              {variantInCart ? '✓ In cart' : ''}
+                            </span>
+                            <WishlistAddButton product={product} inCart={variantInCart} />
+                          </div>
+                        );
+                      })()}
                     </div>
                   </motion.div>
                 );

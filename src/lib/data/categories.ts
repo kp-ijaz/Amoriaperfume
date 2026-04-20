@@ -57,4 +57,32 @@ export const categories: Category[] = [
     image: '/images/categories/mini-perfumes.jpg',
     description: 'Travel-sized luxury fragrances perfect for on-the-go.',
   },
+  {
+    id: 'best-sellers',
+    slug: 'best-sellers',
+    name: 'Best Sellers',
+    image: '/images/categories/best-sellers.jpg',
+    description: 'Our most-loved fragrances — tried, tested, and adored.',
+  },
+  {
+    id: 'perfumes',
+    slug: 'perfumes',
+    name: 'Perfumes',
+    image: '/images/categories/perfumes.jpg',
+    description: 'A curated edit of our finest eau de parfums and parfums.',
+  },
+  {
+    id: 'perfume-oils',
+    slug: 'perfume-oils',
+    name: 'Perfume Oils',
+    image: '/images/categories/perfume-oils.jpg',
+    description: 'Pure, alcohol-free perfume oils — long-lasting and intimate.',
+  },
+  {
+    id: 'new-arrivals',
+    slug: 'new-arrivals',
+    name: 'New Arrivals',
+    image: '/images/categories/new-arrivals.jpg',
+    description: 'The latest additions to the Amoria collection.',
+  },
 ];

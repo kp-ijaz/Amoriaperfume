@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { MagneticButton } from '@/components/ui/MagneticButton';
 
 export function PromoStripBanner() {
   return (
@@ -31,13 +32,16 @@ export function PromoStripBanner() {
           <polygon points="4,0 8,4 4,8 0,4" fill="rgba(201,168,76,0.6)" />
         </svg>
 
-        <Link
-          href="/products"
-          className="text-[11px] font-semibold tracking-[0.16em] uppercase flex-shrink-0 transition-opacity hover:opacity-70"
-          style={{ color: '#C9A84C' }}
-        >
-          Shop Now →
-        </Link>
+        <MagneticButton as="div" strength={0.4}>
+          <Link
+            href="/products"
+            className="text-[11px] font-semibold tracking-[0.16em] uppercase flex-shrink-0 transition-opacity hover:opacity-70"
+            style={{ color: '#C9A84C' }}
+            data-cursor-label="SHOP"
+          >
+            Shop Now →
+          </Link>
+        </MagneticButton>
       </div>
     </div>
   );

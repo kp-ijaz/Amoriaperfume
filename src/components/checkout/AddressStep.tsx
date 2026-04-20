@@ -77,22 +77,25 @@ export function AddressStep({ onNext }: AddressStepProps) {
     resolver: zodResolver(schema),
   });
 
-  // For "today", slots whose window has already started are disabled (past)
-  // A slot is past if its start hour <= current hour (no buffer — exact cutoff)
+  // Returns the slot start time as a decimal hour (e.g. "2:00 PM" → 14.0)
   function slotStartHour(slot: string): number {
-    const part = slot.split('–')[0].trim(); // e.g. "10:00 AM "
-    const hour = parseInt(part.split(':')[0], 10);
-    const isPM = part.includes('PM') && hour !== 12;
+    const part = slot.split('–')[0].trim(); // e.g. "2:00 PM"
+    const [hStr] = part.split(':');
+    const hour   = parseInt(hStr, 10);
+    const isPM   = part.includes('PM') && hour !== 12;
     const isAM12 = part.includes('AM') && hour === 12;
-    if (isPM)    return hour + 12;
-    if (isAM12)  return 0;
+    if (isPM)   return hour + 12;
+    if (isAM12) return 0;
     return hour;
   }
 
+  // For "today": a slot is unavailable if it starts within 2 hours from now
+  // e.g. current time 3:30 PM → earliest available slot starts at 5:30 PM (17.5)
   const isPastSlot = useMemo(() => {
     if (selectedDate === 'tomorrow') return (_slot: string) => false;
-    const nowHour = new Date().getHours();
-    return (slot: string) => slotStartHour(slot) <= nowHour;
+    const now        = new Date();
+    const nowDecimal = now.getHours() + now.getMinutes() / 60; // e.g. 15.5 for 3:30 PM
+    return (slot: string) => slotStartHour(slot) < nowDecimal + 2;
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedDate]);
 
@@ -297,10 +300,11 @@ export function AddressStep({ onNext }: AddressStepProps) {
                     onClick={() => {
                       setSelectedDate(d);
                       setSlotError(false);
-                      // Clear slot if switching to today and current slot is already past
+                      // Clear slot if switching to today and it falls within the 2-hour buffer
                       if (d === 'today' && selectedSlot) {
-                        const nowHour = new Date().getHours();
-                        if (slotStartHour(selectedSlot) <= nowHour) setSelectedSlot('');
+                        const now        = new Date();
+                        const nowDecimal = now.getHours() + now.getMinutes() / 60;
+                        if (slotStartHour(selectedSlot) < nowDecimal + 2) setSelectedSlot('');
                       }
                     }}
                     className="p-3.5 border-2 text-left transition-all duration-200"
