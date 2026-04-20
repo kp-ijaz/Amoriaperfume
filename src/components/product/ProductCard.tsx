@@ -1,0 +1,320 @@
+'use client';
+
+import { useState } from 'react';
+import Image from 'next/image';
+import Link from 'next/link';
+import { Heart, Plus, Check } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { toast } from 'sonner';
+import { Product } from '@/types/product';
+import { useCart } from '@/lib/hooks/useCart';
+import { useWishlist } from '@/lib/hooks/useWishlist';
+import { formatCurrency } from '@/lib/utils/formatCurrency';
+import { useDispatch } from 'react-redux';
+import { addToRecentlyViewed } from '@/lib/store/uiSlice';
+
+interface ProductCardProps {
+  product: Product;
+  index?: number;
+}
+
+export function ProductCard({ product, index = 0 }: ProductCardProps) {
+  const { addItem } = useCart();
+  const { isInWishlist, toggleWishlist } = useWishlist();
+  const dispatch = useDispatch();
+
+  const [hovered, setHovered] = useState(false);
+  const [selectedVariantIndex, setSelectedVariantIndex] = useState(0);
+  const [added, setAdded] = useState(false);
+  const [imgLoaded, setImgLoaded] = useState(false);
+
+  const wishlisted = isInWishlist(product.id);
+  const primaryVariant = product.variants[selectedVariantIndex] ?? product.variants[0];
+  const price = primaryVariant?.salePrice ?? primaryVariant?.price ?? 0;
+  const originalPrice =
+    primaryVariant?.salePrice && primaryVariant.price > primaryVariant.salePrice
+      ? primaryVariant.price
+      : null;
+  const primaryImage =
+    product.images.find((i) => i.isPrimary)?.url ?? product.images[0]?.url ?? '';
+  const secondaryImage = product.images.find((i) => !i.isPrimary)?.url;
+  const discountPercent =
+    originalPrice && price < originalPrice
+      ? Math.round(((originalPrice - price) / originalPrice) * 100)
+      : null;
+
+  function handleAddToCart(e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (added) return;
+
+    addItem(product, primaryVariant);
+    setAdded(true);
+
+    toast.success(`${product.name} added to cart`, {
+      style: {
+        background: '#1A0A2E',
+        color: '#FAF8F5',
+        border: '1px solid rgba(201,168,76,0.25)',
+        fontSize: '13px',
+      },
+      duration: 2500,
+    });
+
+    setTimeout(() => {
+      setAdded(false);
+    }, 950);
+  }
+
+  function handleWishlist(e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    const nowWishlisted = !wishlisted;
+    toggleWishlist(product.id);
+    toast(nowWishlisted ? `Saved to wishlist` : 'Removed from wishlist', {
+      style: {
+        background: '#1A0A2E',
+        color: '#FAF8F5',
+        border: '1px solid rgba(201,168,76,0.2)',
+        fontSize: '13px',
+      },
+      duration: 2000,
+    });
+  }
+
+  function handleVariantSelect(e: React.MouseEvent, idx: number) {
+    e.preventDefault();
+    e.stopPropagation();
+    setSelectedVariantIndex(idx);
+  }
+
+  const hasMultipleVariants = product.variants.length > 1;
+
+  return (
+    <motion.article
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.5, delay: index * 0.055, ease: [0.22, 1, 0.36, 1] }}
+      className="group relative"
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      {/* ── IMAGE BLOCK ─────────────────────────────── */}
+      <Link
+        href={`/products/${product.slug}`}
+        onClick={() => dispatch(addToRecentlyViewed(product.id))}
+        className="block relative overflow-hidden"
+        style={{ aspectRatio: '3 / 4', backgroundColor: '#F5F2EE' }}
+      >
+        {/* Loading shimmer */}
+        {!imgLoaded && (
+          <div className="absolute inset-0 animate-pulse" style={{ backgroundColor: '#EDEBE7' }} />
+        )}
+
+        {/* Primary image */}
+        <Image
+          src={primaryImage}
+          alt={product.name}
+          fill
+          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+          className="object-cover"
+          style={{
+            opacity: imgLoaded ? (hovered && secondaryImage ? 0 : 1) : 0,
+            transform: hovered ? 'scale(1.05)' : 'scale(1)',
+            transition: 'opacity 0.5s ease, transform 0.7s cubic-bezier(0.22, 1, 0.36, 1)',
+          }}
+          onLoad={() => setImgLoaded(true)}
+        />
+
+        {/* Secondary hover image */}
+        {secondaryImage && (
+          <Image
+            src={secondaryImage}
+            alt={product.name}
+            fill
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+            className="object-cover"
+            style={{
+              opacity: hovered ? 1 : 0,
+              transform: hovered ? 'scale(1.05)' : 'scale(1)',
+              transition: 'opacity 0.5s ease, transform 0.7s cubic-bezier(0.22, 1, 0.36, 1)',
+            }}
+          />
+        )}
+
+        {/* Minimal badge — top left */}
+        {(discountPercent || product.isNewArrival || product.isBestseller) && (
+          <div className="absolute top-3 left-3 z-10 flex flex-col gap-1">
+            {discountPercent && (
+              <span
+                className="text-[9px] font-semibold tracking-[0.1em] uppercase px-2 py-0.5"
+                style={{ backgroundColor: '#1A0A2E', color: '#C9A84C' }}
+              >
+                −{discountPercent}%
+              </span>
+            )}
+            {product.isNewArrival && !discountPercent && (
+              <span
+                className="text-[9px] font-medium tracking-[0.12em] uppercase px-2 py-0.5"
+                style={{ backgroundColor: 'rgba(250,248,245,0.92)', color: '#1A0A2E' }}
+              >
+                New
+              </span>
+            )}
+            {product.isBestseller && !discountPercent && !product.isNewArrival && (
+              <span
+                className="text-[9px] font-medium tracking-[0.12em] uppercase px-2 py-0.5"
+                style={{ backgroundColor: 'rgba(201,168,76,0.15)', color: '#C9A84C' }}
+              >
+                Best Seller
+              </span>
+            )}
+          </div>
+        )}
+
+        {/* Wishlist — appears on hover or when wishlisted */}
+        <AnimatePresence>
+          {(hovered || wishlisted) && (
+            <motion.button
+              initial={{ opacity: 0, scale: 0.75 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.75 }}
+              transition={{ duration: 0.18, ease: 'easeOut' }}
+              onClick={handleWishlist}
+              className="absolute top-3 right-3 z-20 w-8 h-8 flex items-center justify-center bg-white rounded-full shadow-sm"
+              style={{ boxShadow: '0 1px 8px rgba(0,0,0,0.12)' }}
+              aria-label={wishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
+            >
+              <Heart
+                size={14}
+                fill={wishlisted ? '#ef4444' : 'none'}
+                style={{ color: wishlisted ? '#ef4444' : '#1C1C1C' }}
+              />
+            </motion.button>
+          )}
+        </AnimatePresence>
+
+        {/* ── HOVER ADD PANEL ────────────────────────── */}
+        <AnimatePresence>
+          {hovered && (
+            <motion.div
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+              className="absolute bottom-0 left-0 right-0 z-20"
+              onClick={(e) => e.preventDefault()}
+            >
+              <div
+                className="flex items-center justify-between gap-2 px-3 py-2.5"
+                style={{
+                  backgroundColor: 'rgba(250,248,245,0.96)',
+                  backdropFilter: 'blur(10px)',
+                  WebkitBackdropFilter: 'blur(10px)',
+                }}
+              >
+                {/* Variant size pills */}
+                <div className="flex items-center gap-1.5 flex-wrap min-w-0">
+                  {hasMultipleVariants ? (
+                    product.variants.map((v, idx) => (
+                      <button
+                        key={v.id}
+                        onClick={(e) => handleVariantSelect(e, idx)}
+                        className="text-[9px] font-semibold tracking-wider uppercase px-2 py-1 transition-all duration-150 shrink-0"
+                        style={{
+                          backgroundColor:
+                            selectedVariantIndex === idx ? '#1A0A2E' : 'transparent',
+                          color: selectedVariantIndex === idx ? 'white' : '#6B6B6B',
+                          border: `1px solid ${selectedVariantIndex === idx ? '#1A0A2E' : '#D1CBC1'}`,
+                        }}
+                      >
+                        {v.sizeMl > 0 ? `${v.sizeMl}ml` : v.concentration}
+                      </button>
+                    ))
+                  ) : (
+                    <span className="text-[10px] tracking-wide" style={{ color: '#6B6B6B' }}>
+                      {product.variants[0]?.sizeMl > 0
+                        ? `${product.variants[0].sizeMl}ml`
+                        : product.variants[0]?.concentration ?? ''}
+                    </span>
+                  )}
+                </div>
+
+                {/* Circular add button */}
+                <motion.button
+                  onClick={handleAddToCart}
+                  className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 transition-colors duration-200"
+                  style={{
+                    backgroundColor: added ? '#16a34a' : '#1A0A2E',
+                    color: 'white',
+                  }}
+                  whileTap={{ scale: 0.88 }}
+                  aria-label="Add to cart"
+                >
+                  <AnimatePresence mode="wait">
+                    {added ? (
+                      <motion.span
+                        key="check"
+                        initial={{ scale: 0, rotate: -60 }}
+                        animate={{ scale: 1, rotate: 0 }}
+                        exit={{ scale: 0 }}
+                        transition={{ duration: 0.22, ease: 'backOut' }}
+                      >
+                        <Check size={15} strokeWidth={2.5} />
+                      </motion.span>
+                    ) : (
+                      <motion.span
+                        key="plus"
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        exit={{ scale: 0 }}
+                        transition={{ duration: 0.15 }}
+                      >
+                        <Plus size={15} strokeWidth={2} />
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
+                </motion.button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </Link>
+
+      {/* ── TEXT DETAILS ────────────────────────────── */}
+      <div className="pt-3">
+        <p
+          className="text-[9px] uppercase tracking-[0.2em] mb-1"
+          style={{ color: '#A89880' }}
+        >
+          {product.brand}
+        </p>
+        <Link href={`/products/${product.slug}`} className="block group/name">
+          <h3
+            className="text-sm font-normal leading-tight line-clamp-1 transition-opacity duration-200 group-hover/name:opacity-50"
+            style={{ color: '#1C1C1C' }}
+          >
+            {product.name}
+          </h3>
+        </Link>
+        <div className="flex items-center gap-2 mt-1.5">
+          <span
+            className="text-sm font-medium tabular-nums"
+            style={{ color: originalPrice ? '#1A0A2E' : '#1C1C1C' }}
+          >
+            {formatCurrency(price)}
+          </span>
+          {originalPrice && (
+            <span
+              className="text-xs line-through tabular-nums"
+              style={{ color: '#B8B0A5' }}
+            >
+              {formatCurrency(originalPrice)}
+            </span>
+          )}
+        </div>
+      </div>
+    </motion.article>
+  );
+}

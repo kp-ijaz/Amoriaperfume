@@ -1,0 +1,384 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-geist-mono);
+  --font-heading: var(--font-heading);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+
+  /* Amoria Brand Colors */
+  --color-amoria-primary: #1A0A2E;
+  --color-amoria-primary-light: #2D1554;
+  --color-amoria-accent: #C9A84C;
+  --color-amoria-accent-light: #E8C97A;
+  --color-amoria-dark: #0D0A08;
+  --color-amoria-bg: #FAF8F5;
+  --color-amoria-surface: #FFFFFF;
+  --color-amoria-surface-2: #F5F2EE;
+  --color-amoria-text: #1C1C1C;
+  --color-amoria-text-muted: #6B6B6B;
+  --color-amoria-text-light: #A89880;
+  --color-amoria-border: #E8E3DC;
+
+  /* Animations */
+  --animate-fade-in: fade-in 0.5s ease-out forwards;
+  --animate-slide-up: slide-up 0.5s ease-out forwards;
+  --animate-marquee: marquee 30s linear infinite;
+  --animate-bounce-once: bounce-once 0.4s ease-out;
+}
+
+:root {
+  --background: #FAF8F5;
+  --foreground: #1C1C1C;
+  --card: #FFFFFF;
+  --card-foreground: #1C1C1C;
+  --popover: #FFFFFF;
+  --popover-foreground: #1C1C1C;
+  --primary: #1A0A2E;
+  --primary-foreground: #FFFFFF;
+  --secondary: #F5F2EE;
+  --secondary-foreground: #1C1C1C;
+  --muted: #F5F2EE;
+  --muted-foreground: #6B6B6B;
+  --accent: #C9A84C;
+  --accent-foreground: #1A0A2E;
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: #E8E3DC;
+  --input: #E8E3DC;
+  --ring: #C9A84C;
+  --chart-1: oklch(0.87 0 0);
+  --chart-2: oklch(0.556 0 0);
+  --chart-3: oklch(0.439 0 0);
+  --chart-4: oklch(0.371 0 0);
+  --chart-5: oklch(0.269 0 0);
+  --radius: 0.25rem;
+  --sidebar: #FAF8F5;
+  --sidebar-foreground: #1C1C1C;
+  --sidebar-primary: #1A0A2E;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #F5F2EE;
+  --sidebar-accent-foreground: #1C1C1C;
+  --sidebar-border: #E8E3DC;
+  --sidebar-ring: #C9A84C;
+  --font-heading: 'Cormorant Garamond', Georgia, serif;
+}
+
+.dark {
+  --background: #0D0A08;
+  --foreground: #FAF8F5;
+  --card: #1A0A2E;
+  --card-foreground: #FAF8F5;
+  --popover: #1A0A2E;
+  --popover-foreground: #FAF8F5;
+  --primary: #C9A84C;
+  --primary-foreground: #1A0A2E;
+  --secondary: #2D1554;
+  --secondary-foreground: #FAF8F5;
+  --muted: #2D1554;
+  --muted-foreground: #A89880;
+  --accent: #C9A84C;
+  --accent-foreground: #1A0A2E;
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: rgba(201, 168, 76, 0.2);
+  --input: rgba(255, 255, 255, 0.1);
+  --ring: #C9A84C;
+  --sidebar: #1A0A2E;
+  --sidebar-foreground: #FAF8F5;
+  --sidebar-primary: #C9A84C;
+  --sidebar-primary-foreground: #1A0A2E;
+  --sidebar-accent: #2D1554;
+  --sidebar-accent-foreground: #FAF8F5;
+  --sidebar-border: rgba(201, 168, 76, 0.2);
+  --sidebar-ring: #C9A84C;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-sans, Inter, sans-serif);
+  }
+  html {
+    @apply scroll-smooth;
+  }
+}
+
+/* Keyframe animations */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+@keyframes bounce-once {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+}
+
+@keyframes draw-check {
+  from { stroke-dashoffset: 100; }
+  to { stroke-dashoffset: 0; }
+}
+
+/* Grain texture for dark hero sections */
+.grain-texture::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Gold underline for headings */
+.gold-underline {
+  position: relative;
+  display: inline-block;
+}
+.gold-underline::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 40px;
+  height: 2px;
+  background-color: #C9A84C;
+}
+
+/* Marquee container */
+.marquee-container {
+  overflow: hidden;
+  white-space: nowrap;
+}
+.marquee-track {
+  display: inline-block;
+  animation: marquee 30s linear infinite;
+}
+
+/* Product card image crossfade */
+.product-image-secondary {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.product-card:hover .product-image-secondary {
+  opacity: 1;
+}
+
+/* Quick add slide up */
+.quick-add-bar {
+  transform: translateY(100%);
+  transition: transform 0.2s ease;
+}
+.product-card:hover .quick-add-bar {
+  transform: translateY(0);
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #F5F2EE;
+}
+::-webkit-scrollbar-thumb {
+  background: #C9A84C;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #1A0A2E;
+}
+
+/* Arabic geometric pattern */
+.arabic-pattern {
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23C9A84C' fill-opacity='0.15'%3E%3Cpath d='M30 0L60 30L30 60L0 30z'/%3E%3Cpath d='M30 10L50 30L30 50L10 30z' fill-opacity='0.08'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+
+/* Draw animation for order confirmation */
+.draw-check {
+  stroke-dasharray: 100;
+  animation: draw-check 0.8s ease-out forwards;
+}
+
+/* ─── PERFORMANCE HINTS ─────────────────────────────────────── */
+/* Promote animated elements to their own compositor layer */
+.grain-texture::before,
+.marquee-track,
+.product-image-secondary,
+.quick-add-bar {
+  will-change: transform;
+}
+
+/* Smooth text rendering everywhere */
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Hide scrollbar utility (for horizontal carousels) */
+.scrollbar-none {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+/* ─── BUTTON SHIMMER EFFECT ─────────────────────────────────── */
+@keyframes shimmer-slide {
+  0%   { transform: translateX(-100%) skewX(-15deg); }
+  100% { transform: translateX(250%)  skewX(-15deg); }
+}
+
+.btn-shimmer {
+  isolation: isolate;
+}
+.btn-shimmer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  width: 35%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.22),
+    transparent
+  );
+  animation: shimmer-slide 3.5s ease-in-out 1.8s infinite;
+  pointer-events: none;
+}
+
+/* ─── PAGE TRANSITION ────────────────────────────────────────── */
+/* Smooth entry for each page — Framer Motion drives this, but
+   the CSS version acts as a no-JS fallback and prevents FOUC */
+@keyframes page-enter {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0);   }
+}
+.page-enter {
+  animation: page-enter 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* ─── HERO SECTION HELPERS ──────────────────────────────────── */
+/* Smooth scale transition for product images on hover */
+.product-image-container img {
+  transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.product-image-container:hover img {
+  transform: scale(1.05);
+}
+
+/* Gold divider line */
+.gold-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #C9A84C, transparent);
+  opacity: 0.4;
+}
+
+/* ─── LINK HOVER ANIMATIONS ─────────────────────────────────── */
+/* Underline slide-in for text links */
+.link-underline {
+  position: relative;
+  display: inline-block;
+}
+.link-underline::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background-color: currentColor;
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 0.25s ease;
+}
+.link-underline:hover::after {
+  transform: scaleX(1);
+  transform-origin: left;
+}
+
+/* ─── SECTION REVEAL HELPER ─────────────────────────────────── */
+/* Use with Framer Motion whileInView; ensures no layout shift */
+.reveal-section {
+  overflow: hidden;
+}
+
+/* ─── FOCUS VISIBLE ──────────────────────────────────────────── */
+/* Better keyboard focus indicator (accessibility) */
+:focus-visible {
+  outline: 2px solid #C9A84C;
+  outline-offset: 3px;
+}
+
+/* ─── CSS VIEW TRANSITIONS (progressive enhancement) ─────────── */
+@supports (view-transition-name: none) {
+  ::view-transition-old(root) {
+    animation: 200ms ease-out both fade-out;
+  }
+  ::view-transition-new(root) {
+    animation: 250ms ease-in both fade-in;
+  }
+}
