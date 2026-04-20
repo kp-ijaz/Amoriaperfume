@@ -5,23 +5,17 @@ import { combineReducers } from '@reduxjs/toolkit';
 import cartReducer from './cartSlice';
 import wishlistReducer from './wishlistSlice';
 import uiReducer from './uiSlice';
+import authReducer from './authSlice';
 
-const cartPersistConfig = {
-  key: 'amoria_cart',
-  storage,
-  whitelist: ['items', 'coupon', 'savedItems'],
-};
-
-const wishlistPersistConfig = {
-  key: 'amoria_wishlist',
-  storage,
-  whitelist: ['items'],
-};
+const cartPersistConfig     = { key: 'amoria_cart',     storage, whitelist: ['items', 'coupon', 'savedItems'] };
+const wishlistPersistConfig = { key: 'amoria_wishlist', storage, whitelist: ['items'] };
+const authPersistConfig     = { key: 'amoria_auth',     storage, whitelist: ['user', 'isGuest', 'guestInfo'] };
 
 const rootReducer = combineReducers({
-  cart: persistReducer(cartPersistConfig, cartReducer),
+  cart:     persistReducer(cartPersistConfig,     cartReducer),
   wishlist: persistReducer(wishlistPersistConfig, wishlistReducer),
-  ui: uiReducer,
+  auth:     persistReducer(authPersistConfig,     authReducer),
+  ui:       uiReducer,
 });
 
 export const store = configureStore({
@@ -36,5 +30,5 @@ export const store = configureStore({
 
 export const persistor = persistStore(store);
 
-export type RootState = ReturnType<typeof store.getState>;
-export type AppDispatch = typeof store.dispatch;
+export type RootState    = ReturnType<typeof store.getState>;
+export type AppDispatch  = typeof store.dispatch;

@@ -6,13 +6,14 @@ import { usePathname } from 'next/navigation';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@/lib/store';
 import { openCartDrawer, openMobileNav } from '@/lib/store/uiSlice';
-import { Heart, ShoppingBag, User, Search, Menu, ChevronDown, X } from 'lucide-react';
+import { Heart, ShoppingBag, User, Search, Menu, ChevronDown, X, LogOut, Package, Settings } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { products } from '@/lib/data/products';
 import { formatCurrency } from '@/lib/utils/formatCurrency';
 import Image from 'next/image';
 import { CartDrawer } from '@/components/cart/CartDrawer';
 import { MobileNav } from './MobileNav';
+import { useAuth } from '@/lib/hooks/useAuth';
 
 const navLinks = [
   { label: 'Men', href: '/products?gender=men' },
@@ -38,6 +39,7 @@ export function Header() {
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   const cartCount = cartItems.reduce((acc, item) => acc + item.quantity, 0);
+  const { isLoggedIn, user, signOut } = useAuth();
 
   const isActive = useCallback(
     (href: string) => {
@@ -350,27 +352,65 @@ export function Header() {
 
               {/* Account */}
               <div className="relative group hidden md:block">
-                <button className="p-2.5 hover:opacity-70 transition-opacity flex items-center gap-0.5">
-                  <User size={20} style={{ color: 'var(--color-amoria-primary)' }} />
-                  <ChevronDown size={12} style={{ color: 'var(--color-amoria-primary)' }} />
+                <button className="p-2.5 hover:opacity-70 transition-opacity flex items-center gap-1">
+                  {isLoggedIn ? (
+                    <div
+                      className="w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold"
+                      style={{ backgroundColor: '#1A0A2E', color: '#C9A84C' }}
+                    >
+                      {user!.firstName[0]}{user!.lastName[0]}
+                    </div>
+                  ) : (
+                    <>
+                      <User size={20} style={{ color: 'var(--color-amoria-primary)' }} />
+                      <ChevronDown size={12} style={{ color: 'var(--color-amoria-primary)' }} />
+                    </>
+                  )}
                 </button>
                 <div
-                  className="absolute right-0 top-full hidden group-hover:block bg-white border shadow-lg min-w-[160px] z-50"
+                  className="absolute right-0 top-full hidden group-hover:block bg-white border shadow-xl min-w-[200px] z-50"
                   style={{ borderColor: 'var(--color-amoria-border)' }}
                 >
-                  <Link href="/login" className="block px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors" style={{ color: 'var(--color-amoria-text)' }}>
-                    Login
-                  </Link>
-                  <Link href="/register" className="block px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors" style={{ color: 'var(--color-amoria-text)' }}>
-                    Register
-                  </Link>
-                  <div className="border-t" style={{ borderColor: 'var(--color-amoria-border)' }} />
-                  <Link href="/account/orders" className="block px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors" style={{ color: 'var(--color-amoria-text)' }}>
-                    My Orders
-                  </Link>
-                  <Link href="/account/profile" className="block px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors" style={{ color: 'var(--color-amoria-text)' }}>
-                    Profile
-                  </Link>
+                  {isLoggedIn ? (
+                    <>
+                      {/* User info */}
+                      <div className="px-4 py-3 border-b" style={{ borderColor: 'var(--color-amoria-border)', backgroundColor: '#FAF8F5' }}>
+                        <p className="text-sm font-semibold" style={{ color: '#1A0A2E' }}>{user!.firstName} {user!.lastName}</p>
+                        <p className="text-[11px] truncate" style={{ color: '#A89880' }}>{user!.email}</p>
+                      </div>
+                      <Link href="/account/orders" className="flex items-center gap-2.5 px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors" style={{ color: 'var(--color-amoria-text)' }}>
+                        <Package size={14} style={{ color: '#A89880' }} /> My Orders
+                      </Link>
+                      <Link href="/account/wishlist" className="flex items-center gap-2.5 px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors" style={{ color: 'var(--color-amoria-text)' }}>
+                        <Heart size={14} style={{ color: '#A89880' }} /> My Wishlist
+                      </Link>
+                      <Link href="/account/profile" className="flex items-center gap-2.5 px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors" style={{ color: 'var(--color-amoria-text)' }}>
+                        <Settings size={14} style={{ color: '#A89880' }} /> Profile Settings
+                      </Link>
+                      <div className="border-t" style={{ borderColor: 'var(--color-amoria-border)' }} />
+                      <button
+                        onClick={signOut}
+                        className="flex items-center gap-2.5 w-full px-4 py-2.5 text-sm hover:bg-red-50 transition-colors text-left"
+                        style={{ color: '#dc2626' }}
+                      >
+                        <LogOut size={14} /> Sign Out
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <Link href="/login" className="block px-4 py-2.5 text-sm font-semibold hover:bg-gray-50 transition-colors" style={{ color: '#1A0A2E' }}>
+                        Sign In
+                      </Link>
+                      <Link href="/register" className="block px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors" style={{ color: 'var(--color-amoria-text)' }}>
+                        Create Account
+                      </Link>
+                      <div className="border-t px-4 py-2.5" style={{ borderColor: 'var(--color-amoria-border)' }}>
+                        <Link href="/checkout" className="block text-xs font-semibold" style={{ color: '#C9A84C' }}>
+                          → Guest Checkout
+                        </Link>
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
