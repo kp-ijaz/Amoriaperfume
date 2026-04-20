@@ -110,11 +110,6 @@ export default function OrdersPage() {
                     <button className="px-4 py-2 text-xs font-medium border" style={{ borderColor: 'var(--color-amoria-primary)', color: 'var(--color-amoria-primary)' }}>
                       Track Order
                     </button>
-                    {order.status === 'Delivered' && (
-                      <button className="px-4 py-2 text-xs font-medium border" style={{ borderColor: 'var(--color-amoria-border)', color: 'var(--color-amoria-text-muted)' }}>
-                        Return / Exchange
-                      </button>
-                    )}
                     <button className="px-4 py-2 text-xs font-medium" style={{ backgroundColor: 'var(--color-amoria-primary)', color: 'white' }}>
                       Re-order
                     </button>

@@ -2,23 +2,24 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Truck, Store } from 'lucide-react';
+import { Truck, Store, Calendar, Clock } from 'lucide-react';
 import { useCart } from '@/lib/hooks/useCart';
 import { Address } from '@/types/user';
 import { CartSummary } from '@/components/cart/CartSummary';
-import { FulfillmentMethod } from '@/components/checkout/AddressStep';
+import { FulfillmentMethod, PickupSlot } from '@/components/checkout/AddressStep';
 import Image from 'next/image';
 
 interface ReviewStepProps {
   address:           Address | null;
   paymentMethod:     'card' | 'applepay' | 'cod' | null;
   fulfillmentMethod: FulfillmentMethod;
+  pickupSlot?:       PickupSlot;
   onBack:            () => void;
 }
 
 const methodLabels = { card: 'Credit/Debit Card', applepay: 'Apple Pay', cod: 'Cash on Delivery' };
 
-export function ReviewStep({ address, paymentMethod, fulfillmentMethod, onBack }: ReviewStepProps) {
+export function ReviewStep({ address, paymentMethod, fulfillmentMethod, pickupSlot, onBack }: ReviewStepProps) {
   const router  = useRouter();
   const { items, clearCart } = useCart();
   const [loading, setLoading] = useState(false);
@@ -27,7 +28,16 @@ export function ReviewStep({ address, paymentMethod, fulfillmentMethod, onBack }
     setLoading(true);
     await new Promise((r) => setTimeout(r, 1500));
     clearCart();
-    router.push('/order-confirmation');
+
+    const params = new URLSearchParams();
+    if (fulfillmentMethod === 'pickup') {
+      params.set('type', 'pickup');
+      if (pickupSlot) {
+        params.set('date', pickupSlot.date);
+        params.set('time', pickupSlot.time);
+      }
+    }
+    router.push(`/order-confirmation?${params.toString()}`);
   }
 
   const sectionStyle = {
@@ -43,12 +53,34 @@ export function ReviewStep({ address, paymentMethod, fulfillmentMethod, onBack }
 
       {/* Fulfillment */}
       <div className="mb-4 p-4" style={sectionStyle}>
-        <h3 className="text-xs font-bold uppercase tracking-wider mb-2" style={{ color: '#A89880' }}>Fulfillment</h3>
-        <div className="flex items-center gap-2 text-sm font-semibold" style={{ color: '#1A0A2E' }}>
+        <h3 className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: '#A89880' }}>Fulfillment</h3>
+        <div className="flex items-center gap-2 text-sm font-semibold mb-2" style={{ color: '#1A0A2E' }}>
           {fulfillmentMethod === 'pickup'
-            ? <><Store size={15} style={{ color: '#C9A84C' }} /> Store Pickup — Dubai Mall (Ready in 2 hrs)</>
-            : <><Truck size={15} style={{ color: '#C9A84C' }} /> Home Delivery — 3–5 Business Days</>}
+            ? <><Store size={15} style={{ color: '#C9A84C' }} /> Store Pickup — Dubai Mall</>
+            : <><Truck size={15} style={{ color: '#C9A84C' }} /> Home Delivery</>}
         </div>
+
+        {/* Pickup slot details */}
+        {fulfillmentMethod === 'pickup' && pickupSlot && (
+          <div
+            className="mt-2 flex flex-wrap gap-3 px-3 py-2.5 text-xs"
+            style={{ backgroundColor: 'rgba(201,168,76,0.07)', border: '1px solid rgba(201,168,76,0.25)', borderRadius: '3px' }}
+          >
+            <span className="flex items-center gap-1.5 font-semibold" style={{ color: '#6B4A1E' }}>
+              <Calendar size={12} style={{ color: '#C9A84C' }} />
+              {pickupSlot.date}
+            </span>
+            <span className="flex items-center gap-1.5 font-semibold" style={{ color: '#6B4A1E' }}>
+              <Clock size={12} style={{ color: '#C9A84C' }} />
+              {pickupSlot.time}
+            </span>
+            <span style={{ color: '#A89880' }}>· Dubai Mall, Ground Floor</span>
+          </div>
+        )}
+
+        {fulfillmentMethod === 'pickup' && !pickupSlot && (
+          <p className="text-xs mt-1" style={{ color: '#A89880' }}>Ready in approximately 2 hours</p>
+        )}
       </div>
 
       {/* Address */}

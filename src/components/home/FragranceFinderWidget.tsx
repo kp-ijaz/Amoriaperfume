@@ -5,12 +5,15 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { X, ChevronLeft, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/lib/store';
 import { quizQuestions } from '@/lib/data/quiz';
 import { products } from '@/lib/data/products';
 import { formatCurrency } from '@/lib/utils/formatCurrency';
 
 export function FragranceFinderWidget() {
   const [open, setOpen]       = useState(false);
+  const cartDrawerOpen = useSelector((s: RootState) => s.ui.cartDrawerOpen);
   const [step, setStep]       = useState(0);
   const [answers, setAnswers] = useState<Record<number, string>>({});
   const [started, setStarted] = useState(false);
@@ -56,9 +59,9 @@ export function FragranceFinderWidget() {
 
   return (
     <>
-      {/* Floating trigger */}
+      {/* Floating trigger — hidden when cart drawer is open */}
       <AnimatePresence>
-        {!open && (
+        {!open && !cartDrawerOpen && (
           <motion.button
             initial={{ opacity: 0, x: 40 }}
             animate={{ opacity: 1, x: 0 }}

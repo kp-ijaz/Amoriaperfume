@@ -8,7 +8,7 @@ import { useAuth } from '@/lib/hooks/useAuth';
 import { useCart } from '@/lib/hooks/useCart';
 import { CheckoutStepper } from '@/components/checkout/CheckoutStepper';
 import { GuestInfoStep } from '@/components/checkout/GuestInfoStep';
-import { AddressStep, FulfillmentMethod } from '@/components/checkout/AddressStep';
+import { AddressStep, FulfillmentMethod, PickupSlot } from '@/components/checkout/AddressStep';
 import { PaymentStep } from '@/components/checkout/PaymentStep';
 import { ReviewStep } from '@/components/checkout/ReviewStep';
 import { Address } from '@/types/user';
@@ -24,6 +24,7 @@ export default function CheckoutPage() {
   const [flow,           setFlow]           = useState<CheckoutFlow>(isLoggedIn || isGuest ? 1 : 'gate');
   const [address,        setAddress]        = useState<Address | null>(null);
   const [fulfillment,    setFulfillment]    = useState<FulfillmentMethod>('delivery');
+  const [pickupSlot,     setPickupSlot]     = useState<PickupSlot | undefined>(undefined);
   const [paymentMethod,  setPaymentMethod]  = useState<'card' | 'applepay' | 'cod' | null>(null);
 
   // Cart empty guard
@@ -213,9 +214,10 @@ export default function CheckoutPage() {
 
             {flow === 1 && (
               <AddressStep
-                onNext={(addr, method) => {
+                onNext={(addr, method, slot) => {
                   setAddress(addr);
                   setFulfillment(method);
+                  setPickupSlot(slot);
                   setFlow(2);
                 }}
               />
@@ -231,6 +233,7 @@ export default function CheckoutPage() {
                 address={address}
                 paymentMethod={paymentMethod}
                 fulfillmentMethod={fulfillment}
+                pickupSlot={pickupSlot}
                 onBack={() => setFlow(2)}
               />
             )}
