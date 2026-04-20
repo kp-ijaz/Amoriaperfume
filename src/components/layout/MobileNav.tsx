@@ -8,13 +8,12 @@ import { X, Search, ChevronRight } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 
 const navLinks = [
-  { label: 'Men', href: '/products?gender=men' },
-  { label: 'Women', href: '/products?gender=women' },
-  { label: 'Attar & Oud', href: '/products?category=attar-oud' },
-  { label: 'Bakhoor', href: '/products?category=bakhoor' },
-  { label: 'Gift Sets', href: '/products?category=gift-sets' },
-  { label: 'Brands', href: '/brands' },
-  { label: 'Sale', href: '/products?sale=true' },
+  { label: 'Home',              href: '/' },
+  { label: 'Collections',       href: '/collections' },
+  { label: 'Brand Inspiration', href: '/brand-inspiration' },
+  { label: 'Gift Sets',         href: '/gift-sets' },
+  { label: 'Bakhoor',           href: '/bakhoor' },
+  { label: 'Sale',              href: '/products?sale=true', isRed: true },
 ];
 
 export function MobileNav() {
@@ -79,9 +78,16 @@ export function MobileNav() {
                   href={link.href}
                   onClick={() => dispatch(closeMobileNav())}
                   className="flex items-center justify-between px-4 py-3.5 text-sm font-medium border-b transition-colors hover:bg-white/5"
-                  style={{ color: 'rgba(255,255,255,0.85)', borderColor: 'rgba(255,255,255,0.06)' }}
+                  style={{ color: link.isRed ? '#f87171' : 'rgba(255,255,255,0.85)', borderColor: 'rgba(255,255,255,0.06)' }}
                 >
-                  {link.label}
+                  <span className="flex items-center gap-2">
+                    {link.label}
+                    {link.isRed && (
+                      <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded-sm" style={{ backgroundColor: '#fee2e2', color: '#dc2626' }}>
+                        HOT
+                      </span>
+                    )}
+                  </span>
                   <ChevronRight size={16} className="opacity-40" />
                 </Link>
               ))}

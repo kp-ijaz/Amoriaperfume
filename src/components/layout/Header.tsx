@@ -16,13 +16,12 @@ import { MobileNav } from './MobileNav';
 import { useAuth } from '@/lib/hooks/useAuth';
 
 const navLinks = [
-  { label: 'Men', href: '/products?gender=men' },
-  { label: 'Women', href: '/products?gender=women' },
-  { label: 'Attar & Oud', href: '/products?category=attar-oud' },
-  { label: 'Bakhoor', href: '/products?category=bakhoor' },
-  { label: 'Gift Sets', href: '/products?category=gift-sets' },
-  { label: 'Brands', href: '/brands' },
-  { label: 'Sale', href: '/products?sale=true', isRed: true },
+  { label: 'Home',              href: '/' },
+  { label: 'Collections',       href: '/collections' },
+  { label: 'Brand Inspiration', href: '/brand-inspiration' },
+  { label: 'Gift Sets',         href: '/gift-sets' },
+  { label: 'Bakhoor',           href: '/bakhoor' },
+  { label: 'Sale',              href: '/products?sale=true', isRed: true },
 ];
 
 export function Header() {

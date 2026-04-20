@@ -13,13 +13,15 @@ function IGIcon({ size = 20 }: { size?: number }) {
   );
 }
 
+// NOTE: Replace these with real post image URLs from the Instagram Basic Display API
+// using your @amoriaperfumeofficial access token for live feed.
 const instagramImages = [
-  { src: '/images/instagram/ig1.jpg', alt: 'Amoria perfume collection' },
-  { src: '/images/instagram/ig2.jpg', alt: 'Luxury fragrance bottles' },
-  { src: '/images/instagram/ig3.jpg', alt: 'Arabian oud collection' },
-  { src: '/images/instagram/ig4.jpg', alt: 'Perfume close-up' },
-  { src: '/images/instagram/ig5.jpg', alt: 'Gift set collection' },
-  { src: '/images/instagram/ig6.jpg', alt: 'Premium fragrance' },
+  { src: 'https://images.unsplash.com/photo-1557053378-d3e8-4d49-a89f-1c3e7a2d6e1f?w=600&q=80', alt: 'Amoria oud collection' },
+  { src: 'https://images.unsplash.com/photo-1563170351-be82bc888aa4?w=600&q=80',                alt: 'Luxury perfume bottles' },
+  { src: 'https://images.unsplash.com/photo-1585386959984-a4155224a1ad?w=600&q=80',             alt: 'Arabian fragrance' },
+  { src: 'https://images.unsplash.com/photo-1541643600914-78b084683702?w=600&q=80',             alt: 'Perfume close-up' },
+  { src: 'https://images.unsplash.com/photo-1588405748880-12d1d2a59f75?w=600&q=80',             alt: 'Gift set collection' },
+  { src: 'https://images.unsplash.com/photo-1616096142563-ce4f6a1a7c79?w=600&q=80',             alt: 'Premium fragrance' },
 ];
 
 export function InstagramFeed() {
@@ -40,7 +42,7 @@ export function InstagramFeed() {
           <div className="flex items-center justify-center gap-2 mb-2">
             <span style={{ color: '#C9A84C' }}><IGIcon size={16} /></span>
             <p className="text-[10px] tracking-[0.3em] uppercase font-semibold" style={{ color: '#C9A84C' }}>
-              @amoria.ae
+              @amoriaperfumeofficial
             </p>
           </div>
           <h2
@@ -62,7 +64,7 @@ export function InstagramFeed() {
           {instagramImages.map((img, i) => (
             <motion.a
               key={i}
-              href="https://instagram.com/amoria.ae"
+              href="https://www.instagram.com/amoriaperfumeofficial?igsh=MWk4dWhianVlaGhsbA=="
               target="_blank"
               rel="noopener noreferrer"
               className="relative aspect-square overflow-hidden group block"
@@ -103,7 +105,7 @@ export function InstagramFeed() {
           className="text-center mt-8"
         >
           <a
-            href="https://instagram.com/amoria.ae"
+            href="https://www.instagram.com/amoriaperfumeofficial?igsh=MWk4dWhianVlaGhsbA=="
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 text-sm font-semibold tracking-[0.15em] uppercase transition-all hover:gap-4 duration-300 border-b pb-0.5"
