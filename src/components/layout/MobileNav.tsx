@@ -70,8 +70,11 @@ export function MobileNav() {
               </div>
             </div>
 
-            {/* Nav links */}
-            <nav className="flex-1 overflow-y-auto py-2">
+            {/* Nav links — bottom padding so content clears the tab bar */}
+            <nav
+              className="flex-1 overflow-y-auto py-2"
+              style={{ paddingBottom: 'calc(64px + env(safe-area-inset-bottom))' }}
+            >
               {navLinks.map((link) => (
                 <Link
                   key={link.href}

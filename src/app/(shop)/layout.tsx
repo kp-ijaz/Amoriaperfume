@@ -8,8 +8,8 @@ export default function ShopLayout({ children }: { children: React.ReactNode }) 
   return (
     <>
       <Header />
-      {/* pb-[72px] on mobile reserves space above the fixed bottom tab bar */}
-      <main className="flex-1 pb-[72px] md:pb-0">
+      {/* Reserve space above the fixed bottom tab bar + device safe area */}
+      <main className="flex-1 shop-main-content">
         <PageTransition>{children}</PageTransition>
       </main>
       {/* Footer hidden on mobile — bottom tabs replace it */}

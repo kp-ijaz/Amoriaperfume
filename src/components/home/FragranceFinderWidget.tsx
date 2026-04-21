@@ -144,7 +144,7 @@ export function FragranceFinderWidget() {
               )}
 
               {/* Body */}
-              <div className="flex-1 overflow-y-auto">
+              <div className="flex-1 overflow-y-auto fragrance-widget-body">
                 <AnimatePresence mode="wait">
 
                   {/* ── Welcome ── */}

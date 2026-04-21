@@ -382,3 +382,52 @@ body {
     animation: 250ms ease-in both fade-in;
   }
 }
+
+/* ─── MOBILE: Fragrance widget body padding above tab bar ──────── */
+@media (max-width: 639px) {
+  .fragrance-widget-body {
+    padding-bottom: calc(64px + env(safe-area-inset-bottom));
+  }
+}
+
+/* ─── MOBILE: Bottom padding for shop pages (above tab bar) ──── */
+.shop-main-content {
+  padding-bottom: calc(72px + env(safe-area-inset-bottom));
+}
+@media (min-width: 768px) {
+  .shop-main-content {
+    padding-bottom: 0;
+  }
+}
+
+/* ─── MOBILE: Push toast above the bottom tab bar ─────────────── */
+@media (max-width: 767px) {
+  [data-sonner-toaster][data-x-position="right"][data-y-position="bottom"],
+  [data-sonner-toaster][data-x-position="left"][data-y-position="bottom"],
+  [data-sonner-toaster][data-x-position="center"][data-y-position="bottom"] {
+    bottom: calc(72px + env(safe-area-inset-bottom)) !important;
+  }
+}
+
+/* ─── MOBILE: Prevent horizontal overflow globally ─────────────── */
+html, body {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
+/* ─── MOBILE: Scroll to top button above bottom tab bar ─────── */
+.scroll-to-top-btn {
+  bottom: calc(80px + env(safe-area-inset-bottom));
+}
+@media (min-width: 768px) {
+  .scroll-to-top-btn {
+    bottom: 24px;
+  }
+}
+
+/* ─── MOBILE: Tap highlight suppression ───────────────────────── */
+@media (pointer: coarse) {
+  a, button {
+    -webkit-tap-highlight-color: transparent;
+  }
+}

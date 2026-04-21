@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, use } from 'react';
+import { useState, use, useEffect, useRef } from 'react';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { ShoppingBag, Heart, CheckCircle, Minus, Plus, RotateCcw, Shield, Truck, Gift } from 'lucide-react';
@@ -46,7 +46,26 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
   const originalPrice = selectedVariant?.salePrice ? selectedVariant.price : null;
   const discountPercent = originalPrice ? Math.round(((originalPrice - price) / originalPrice) * 100) : null;
 
-  dispatch(addToRecentlyViewed(product.id));
+  // Ref for the in-page Add to Cart button (for IntersectionObserver)
+  const addToCartRef = useRef<HTMLButtonElement>(null);
+  const [showStickyBar, setShowStickyBar] = useState(true);
+
+  // Track recently viewed only once on mount
+  useEffect(() => {
+    dispatch(addToRecentlyViewed(product.id));
+  }, [product.id, dispatch]);
+
+  // Hide sticky bar when the in-page Add to Cart is visible
+  useEffect(() => {
+    const el = addToCartRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setShowStickyBar(!entry.isIntersecting),
+      { threshold: 0.5 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   async function handleAddToCart() {
     setAddedState('loading');
@@ -58,7 +77,7 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
+    <div className="max-w-7xl mx-auto px-4 pt-8 pb-[140px] md:pt-8 md:pb-8">
       {/* Breadcrumb */}
       <nav className="flex items-center gap-2 text-xs mb-6" style={{ color: 'var(--color-amoria-text-muted)' }}>
         <Link href="/" className="hover:opacity-80">Home</Link>
@@ -165,6 +184,7 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
               </button>
             </div>
             <button
+              ref={addToCartRef}
               onClick={handleAddToCart}
               disabled={addedState !== 'idle' || selectedVariant.stock === 0}
               className="flex-1 h-12 flex items-center justify-center gap-2 text-sm font-semibold tracking-wide transition-all disabled:opacity-70"
@@ -270,6 +290,41 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
       <PeopleAlsoBought products={alsoBoought} />
       <RelatedProducts products={relatedProducts} />
       <RecentlyViewed />
+
+      {/* Mobile sticky bottom bar — hides when in-page Add to Cart is visible */}
+      {showStickyBar && (
+        <div
+          className="md:hidden fixed bottom-0 left-0 right-0 z-50 flex items-center gap-3 px-4 py-3"
+          style={{
+            backgroundColor: 'rgba(250,248,245,0.97)',
+            backdropFilter: 'blur(12px)',
+            borderTop: '1px solid var(--color-amoria-border)',
+            paddingBottom: 'calc(12px + env(safe-area-inset-bottom))',
+          }}
+        >
+          <div className="flex-1">
+            <p className="text-lg font-semibold" style={{ fontFamily: 'var(--font-heading)', color: 'var(--color-amoria-accent)' }}>
+              {price >= 200 ? (
+                <>{formatCurrency(price)} <span className="text-xs font-normal text-green-600 ml-1">Free Delivery</span></>
+              ) : formatCurrency(price)}
+            </p>
+          </div>
+          <button
+            onClick={handleAddToCart}
+            disabled={addedState !== 'idle' || selectedVariant.stock === 0}
+            className="flex-1 h-12 flex items-center justify-center gap-2 text-sm font-semibold tracking-wide transition-all disabled:opacity-70"
+            style={{ backgroundColor: 'var(--color-amoria-primary)', color: 'white' }}
+          >
+            {addedState === 'loading' ? (
+              <span className="animate-spin">⟳</span>
+            ) : addedState === 'success' ? (
+              <><CheckCircle size={16} /> Added!</>
+            ) : (
+              <><ShoppingBag size={16} /> Add to Cart</>
+            )}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

@@ -27,7 +27,6 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
   const [selectedVariantIndex, setSelectedVariantIndex] = useState(0);
   const [justAdded, setJustAdded]               = useState(false);
   const [imgLoaded, setImgLoaded]               = useState(false);
-  const [showSecondary, setShowSecondary]       = useState(false); // mobile image tap
   const [isMobile, setIsMobile]                 = useState(false);
 
   useEffect(() => {
@@ -91,12 +90,6 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
     setSelectedVariantIndex(idx);
   }
 
-  function handleImageTap(e: React.MouseEvent) {
-    if (!isMobile || !secondaryImage) return;
-    e.preventDefault();
-    setShowSecondary((v) => !v);
-  }
-
   // The add panel is always visible on mobile, hover-triggered on desktop
   const showPanel = isMobile || hovered;
 
@@ -117,9 +110,8 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
       >
         <Link
           href={`/products/${product.slug}`}
-          onClick={(e) => {
+          onClick={() => {
             dispatch(addToRecentlyViewed(product.id));
-            if (isMobile && secondaryImage) handleImageTap(e);
           }}
           className="block w-full h-full"
         >
@@ -136,15 +128,15 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
             className="object-cover"
             style={{
-              opacity: imgLoaded ? (desktopShowSecondary || (isMobile && showSecondary) ? 0 : 1) : 0,
+              opacity: imgLoaded ? (desktopShowSecondary ? 0 : 1) : 0,
               transform: hovered && !isMobile ? 'scale(1.05)' : 'scale(1)',
               transition: 'opacity 0.45s ease, transform 0.7s cubic-bezier(0.22, 1, 0.36, 1)',
             }}
             onLoad={() => setImgLoaded(true)}
           />
 
-          {/* Secondary image */}
-          {secondaryImage && (
+          {/* Secondary image — desktop hover only */}
+          {secondaryImage && !isMobile && (
             <Image
               src={secondaryImage}
               alt={product.name}
@@ -152,27 +144,13 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
               sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
               className="object-cover"
               style={{
-                opacity: desktopShowSecondary || (isMobile && showSecondary) ? 1 : 0,
-                transform: hovered && !isMobile ? 'scale(1.05)' : 'scale(1)',
+                opacity: desktopShowSecondary ? 1 : 0,
+                transform: hovered ? 'scale(1.05)' : 'scale(1)',
                 transition: 'opacity 0.45s ease, transform 0.7s cubic-bezier(0.22, 1, 0.36, 1)',
               }}
             />
           )}
         </Link>
-
-        {/* Mobile image dots indicator */}
-        {isMobile && secondaryImage && (
-          <div className="absolute bottom-12 left-0 right-0 flex justify-center gap-1.5 z-10 pointer-events-none">
-            <div
-              className="rounded-full transition-all duration-300"
-              style={{ width: showSecondary ? 6 : 8, height: showSecondary ? 6 : 8, backgroundColor: showSecondary ? 'rgba(255,255,255,0.5)' : '#fff' }}
-            />
-            <div
-              className="rounded-full transition-all duration-300"
-              style={{ width: showSecondary ? 8 : 6, height: showSecondary ? 8 : 6, backgroundColor: showSecondary ? '#fff' : 'rgba(255,255,255,0.5)' }}
-            />
-          </div>
-        )}
 
         {/* Badges */}
         {(discountPercent || product.isNewArrival || product.isBestseller) && (

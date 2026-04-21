@@ -34,6 +34,7 @@ export function VideoHero() {
   const [videoReady, setVideoReady] = useState(false);
   const [videoError, setVideoError] = useState(false);
   const [showParticles, setShowParticles] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const sectionRef = useRef<HTMLElement>(null);
 
@@ -48,12 +49,18 @@ export function VideoHero() {
   const orbY = useTransform(springY, [-0.5, 0.5], [12, -12]);
 
   useEffect(() => {
+    // Detect desktop for heavy animations
+    const desktop = window.matchMedia('(min-width: 768px) and (pointer: fine)').matches;
+    setIsDesktop(desktop);
+
     const v = videoRef.current;
     if (!v) return;
     v.play().catch(() => setVideoError(true));
-    // Delay particles so they don't block initial paint
-    const t = setTimeout(() => setShowParticles(true), 600);
-    return () => clearTimeout(t);
+    // Delay particles so they don't block initial paint — desktop only
+    if (desktop) {
+      const t = setTimeout(() => setShowParticles(true), 600);
+      return () => clearTimeout(t);
+    }
   }, []);
 
   const handleMouseMove = useCallback(
@@ -140,10 +147,10 @@ export function VideoHero() {
       {/* GRAIN TEXTURE */}
       <div className="grain-texture absolute inset-0 pointer-events-none" />
 
-      {/* AMBIENT PARALLAX GLOW ORBS */}
+      {/* AMBIENT PARALLAX GLOW ORBS — desktop only */}
       <motion.div
         className="absolute inset-0 pointer-events-none overflow-hidden"
-        style={{ x: orbX, y: orbY }}
+        style={isDesktop ? { x: orbX, y: orbY } : {}}
       >
         {/* Large gold orb — top area */}
         <motion.div
