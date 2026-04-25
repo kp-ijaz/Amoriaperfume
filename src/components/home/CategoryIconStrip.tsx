@@ -3,42 +3,28 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
+import { useCategories } from '@/lib/hooks/useApiCategories';
 
-const categories = [
-  {
-    id: 'gift-set',
-    slug: 'gift-sets',
-    name: 'Gift Set',
-    type: 'photo',
-    image: 'https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=300&q=85',
-  },
-  {
-    id: 'best-sellers',
-    slug: 'best-sellers',
-    name: 'Best Sellers',
-    type: 'green',
-  },
-  {
-    id: 'perfumes',
-    slug: 'perfumes',
-    name: 'Perfumes',
-    type: 'green',
-  },
-  {
-    id: 'perfume-oils',
-    slug: 'perfume-oils',
-    name: 'Perfume Oils',
-    type: 'green',
-  },
-  {
-    id: 'new-arrivals',
-    slug: 'new-arrivals',
-    name: 'New Arrivals',
-    type: 'ring',
-  },
-];
+// Tile types cycle: photo → green → green → ring → repeat
+function getTileType(index: number): 'photo' | 'green' | 'ring' {
+  const cycle = ['photo', 'green', 'green', 'ring'] as const;
+  return cycle[index % cycle.length];
+}
 
 export function CategoryIconStrip() {
+  const { data: apiCategories = [], isLoading } = useCategories();
+
+  // Limit to 4 for the strip layout
+  const categories = apiCategories.slice(0, 4).map((cat, i) => ({
+    id: cat.id,
+    slug: cat.slug,
+    name: cat.name,
+    type: getTileType(i),
+    image: cat.image,
+  }));
+
+  if (isLoading || categories.length === 0) return null;
+
   return (
     <section
       className="relative overflow-hidden"
@@ -97,7 +83,7 @@ export function CategoryIconStrip() {
                 className="group"
               >
                 {/* Photo tile */}
-                {cat.type === 'photo' && (
+                {cat.type === 'photo' && cat.image && (
                   <div
                     style={{
                       width: '110px',
@@ -112,13 +98,23 @@ export function CategoryIconStrip() {
                     className="group-hover:-translate-y-1 group-hover:scale-[1.03]"
                   >
                     <Image
-                      src={cat.image!}
+                      src={cat.image}
                       alt={cat.name}
                       fill
                       className="object-cover"
                       sizes="110px"
+                      unoptimized
                     />
                   </div>
+                )}
+                {cat.type === 'photo' && !cat.image && (
+                  <div
+                    style={{
+                      width: '110px', height: '110px', borderRadius: '22px',
+                      backgroundColor: '#F5E8D0', border: '1px solid #E8E3DC',
+                    }}
+                    className="group-hover:-translate-y-1 group-hover:scale-[1.03]"
+                  />
                 )}
 
                 {/* Cream box */}

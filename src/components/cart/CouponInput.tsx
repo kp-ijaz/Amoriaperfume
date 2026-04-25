@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useCart } from '@/lib/hooks/useCart';
-import { coupons } from '@/lib/data/coupons';
+import { useValidatePromotion } from '@/lib/hooks/useApiPromotions';
 import { formatCurrency } from '@/lib/utils/formatCurrency';
 import { Tag, X } from 'lucide-react';
 import { toast } from 'sonner';
@@ -11,23 +11,50 @@ export function CouponInput() {
   const [code, setCode] = useState('');
   const [error, setError] = useState('');
   const { coupon, applyCoupon, removeCoupon, subtotal } = useCart();
+  const validateCode = useValidatePromotion();
 
   function handleApply() {
-    const upper = code.trim().toUpperCase();
-    const data = coupons[upper];
-    if (!data) {
-      setError('Invalid coupon code. Please try again.');
+    setError('');
+    const result = validateCode(code.trim(), subtotal);
+
+    if (!result.valid) {
+      setError(result.message);
       return;
     }
-    applyCoupon({ code: upper, discount: data.discount, type: data.type });
-    const savings = data.type === 'percentage' ? subtotal * data.discount : 0;
+
+    const { promo } = result;
+
+    // Map API promo kind → internal CouponCode type
+    let discount = 0;
+    let type: 'percentage' | 'freeshipping' = 'percentage';
+
+    if (promo.kind === 'free_shipping') {
+      type = 'freeshipping';
+      discount = 0;
+    } else if (promo.kind === 'percent_off') {
+      type = 'percentage';
+      discount = promo.value / 100; // e.g. 10% → 0.10
+    } else if (promo.kind === 'fixed_off') {
+      // Treat fixed as percentage based on current subtotal
+      type = 'percentage';
+      discount = subtotal > 0 ? (promo.value / subtotal) : 0;
+    }
+
+    applyCoupon({ code: promo.code, discount, type });
+
+    const savings =
+      type === 'freeshipping'
+        ? 0
+        : promo.kind === 'fixed_off'
+        ? promo.value
+        : subtotal * discount;
+
     toast.success(
-      data.type === 'freeshipping'
+      type === 'freeshipping'
         ? 'Free shipping applied!'
         : `Coupon applied! You saved ${formatCurrency(savings)}`
     );
     setCode('');
-    setError('');
   }
 
   if (coupon) {
@@ -42,7 +69,9 @@ export function CouponInput() {
             {coupon.code}
           </span>
           <span className="text-xs" style={{ color: 'var(--color-amoria-text-muted)' }}>
-            {coupon.type === 'freeshipping' ? 'Free Shipping' : `${(coupon.discount * 100).toFixed(0)}% off`}
+            {coupon.type === 'freeshipping'
+              ? 'Free Shipping'
+              : `${(coupon.discount * 100).toFixed(0)}% off`}
           </span>
         </div>
         <button

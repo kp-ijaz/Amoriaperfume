@@ -5,8 +5,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { ShoppingBag, Heart, CheckCircle, Minus, Plus, RotateCcw, Shield, Truck, Gift } from 'lucide-react';
 import { toast } from 'sonner';
-import { getProductBySlug, getRelatedProducts, products as allProducts } from '@/lib/data/products';
-import { getReviewsForProduct } from '@/lib/data/reviews';
+import { useApiProduct, useProductReviews, useProductsByLimit } from '@/lib/hooks/useApiProducts';
 import { ProductImageGallery } from '@/components/product/ProductImageGallery';
 import { ProductVariantSelector } from '@/components/product/ProductVariantSelector';
 import { FragranceNotes } from '@/components/product/FragranceNotes';
@@ -25,37 +24,34 @@ import { ProductVariant } from '@/types/product';
 
 export default function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params);
-  const productData = getProductBySlug(slug);
+
+  // slug is the MongoDB _id for API products
+  const { data: product, isLoading, error } = useApiProduct(slug);
 
   const { addItem } = useCart();
   const { isInWishlist, toggleWishlist } = useWishlist();
   const dispatch = useDispatch();
-  const [selectedVariant, setSelectedVariant] = useState<ProductVariant>(productData?.variants[0] ?? {} as ProductVariant);
+
+  const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [addedState, setAddedState] = useState<'idle' | 'loading' | 'success'>('idle');
-
-  if (!productData) return notFound();
-  const product = productData;
-
-  const wishlisted = isInWishlist(product.id);
-  const reviews = getReviewsForProduct(product.id);
-  const relatedProducts = getRelatedProducts(product, 4);
-  const alsoBoought = allProducts.filter((p) => p.id !== product.id && p.brand !== product.brand).slice(0, 6);
-
-  const price = selectedVariant?.salePrice ?? selectedVariant?.price ?? 0;
-  const originalPrice = selectedVariant?.salePrice ? selectedVariant.price : null;
-  const discountPercent = originalPrice ? Math.round(((originalPrice - price) / originalPrice) * 100) : null;
-
-  // Ref for the in-page Add to Cart button (for IntersectionObserver)
   const addToCartRef = useRef<HTMLButtonElement>(null);
   const [showStickyBar, setShowStickyBar] = useState(true);
 
-  // Track recently viewed only once on mount
+  // Set default variant once product loads
   useEffect(() => {
-    dispatch(addToRecentlyViewed(product.id));
-  }, [product.id, dispatch]);
+    if (product && !selectedVariant) {
+      setSelectedVariant(product.variants[0] ?? null);
+    }
+  }, [product, selectedVariant]);
 
-  // Hide sticky bar when the in-page Add to Cart is visible
+  // Track recently viewed
+  useEffect(() => {
+    if (product?.id) dispatch(addToRecentlyViewed(product.id));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [product?.id]);
+
+  // Hide sticky bar when in-page Add to Cart button is visible
   useEffect(() => {
     const el = addToCartRef.current;
     if (!el) return;
@@ -65,12 +61,40 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
     );
     observer.observe(el);
     return () => observer.disconnect();
-  }, []);
+  }, [product]);
+
+  // Product reviews from API
+  const { data: apiReviews = [] } = useProductReviews(slug);
+
+  // Related / People also bought
+  const { data: moreProducts = [] } = useProductsByLimit(6);
+  const relatedProducts = moreProducts.filter((p) => p.id !== slug).slice(0, 4);
+  const alsoBoought = moreProducts.filter((p) => p.id !== slug).slice(0, 6);
+
+  if (isLoading) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 pt-20 pb-16 flex items-center justify-center min-h-[50vh]">
+        <div className="text-center">
+          <div className="w-8 h-8 border-2 border-[#C9A84C] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-sm" style={{ color: 'var(--color-amoria-text-muted)' }}>Loading product…</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !product) return notFound();
+
+  const variant = selectedVariant ?? product.variants[0];
+  const price = variant?.salePrice ?? variant?.price ?? 0;
+  const originalPrice = variant?.salePrice ? variant.price : null;
+  const discountPercent = originalPrice ? Math.round(((originalPrice - price) / originalPrice) * 100) : null;
+  const wishlisted = isInWishlist(product.id);
 
   async function handleAddToCart() {
+    if (!product || !variant) return;
     setAddedState('loading');
     await new Promise((r) => setTimeout(r, 400));
-    addItem(product, selectedVariant, quantity);
+    addItem(product, variant, quantity);
     setAddedState('success');
     toast.success(`${product.name} added to cart`);
     setTimeout(() => setAddedState('idle'), 1500);
@@ -84,8 +108,6 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
         <span>/</span>
         <Link href="/products" className="hover:opacity-80">Products</Link>
         <span>/</span>
-        <Link href={`/products?category=${product.category}`} className="hover:opacity-80">{product.category}</Link>
-        <span>/</span>
         <span style={{ color: 'var(--color-amoria-text)' }}>{product.name}</span>
       </nav>
 
@@ -97,13 +119,9 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
         {/* Right: Details */}
         <div>
           {/* Brand */}
-          <Link
-            href={`/brands/${product.brand.toLowerCase().replace(' ', '-')}`}
-            className="text-xs uppercase tracking-wider font-medium hover:opacity-80"
-            style={{ color: 'var(--color-amoria-text-muted)' }}
-          >
+          <span className="text-xs uppercase tracking-wider font-medium" style={{ color: 'var(--color-amoria-text-muted)' }}>
             {product.brand}
-          </Link>
+          </span>
 
           {/* Name */}
           <h1
@@ -145,39 +163,38 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
           <div className="h-px mb-5" style={{ backgroundColor: 'rgba(201,168,76,0.3)' }} />
 
           {/* Variant selector */}
-          {product.variants.length > 1 && (
+          {product.variants.length > 1 && variant && (
             <div className="mb-5">
               <ProductVariantSelector
                 variants={product.variants}
-                selectedVariant={selectedVariant}
+                selectedVariant={variant}
                 onSelect={setSelectedVariant}
               />
             </div>
           )}
 
           {/* Stock */}
-          <div className="flex items-center gap-2 mb-4">
-            <div
-              className="w-2 h-2 rounded-full"
-              style={{ backgroundColor: selectedVariant.stock > 5 ? '#22c55e' : selectedVariant.stock > 0 ? '#f59e0b' : '#ef4444' }}
-            />
-            <span className="text-sm" style={{ color: 'var(--color-amoria-text-muted)' }}>
-              {selectedVariant.stock > 5 ? 'In Stock' : selectedVariant.stock > 0 ? `Only ${selectedVariant.stock} left!` : 'Out of Stock'}
-            </span>
-          </div>
+          {variant && (
+            <div className="flex items-center gap-2 mb-4">
+              <div
+                className="w-2 h-2 rounded-full"
+                style={{ backgroundColor: variant.stock > 5 ? '#22c55e' : variant.stock > 0 ? '#f59e0b' : '#ef4444' }}
+              />
+              <span className="text-sm" style={{ color: 'var(--color-amoria-text-muted)' }}>
+                {variant.stock > 5 ? 'In Stock' : variant.stock > 0 ? `Only ${variant.stock} left!` : 'Out of Stock'}
+              </span>
+            </div>
+          )}
 
           {/* Qty + add to cart */}
           <div className="flex gap-3 mb-4">
             <div className="flex items-center border" style={{ borderColor: 'var(--color-amoria-border)' }}>
-              <button
-                onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                className="w-10 h-12 flex items-center justify-center hover:bg-gray-50"
-              >
+              <button onClick={() => setQuantity((q) => Math.max(1, q - 1))} className="w-10 h-12 flex items-center justify-center hover:bg-gray-50">
                 <Minus size={14} />
               </button>
               <span className="w-10 text-center text-sm font-medium">{quantity}</span>
               <button
-                onClick={() => setQuantity((q) => Math.min(selectedVariant.stock, q + 1))}
+                onClick={() => setQuantity((q) => Math.min(variant?.stock ?? 1, q + 1))}
                 className="w-10 h-12 flex items-center justify-center hover:bg-gray-50"
               >
                 <Plus size={14} />
@@ -186,7 +203,7 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
             <button
               ref={addToCartRef}
               onClick={handleAddToCart}
-              disabled={addedState !== 'idle' || selectedVariant.stock === 0}
+              disabled={addedState !== 'idle' || !variant || variant.stock === 0}
               className="flex-1 h-12 flex items-center justify-center gap-2 text-sm font-semibold tracking-wide transition-all disabled:opacity-70"
               style={{ backgroundColor: 'var(--color-amoria-primary)', color: 'white' }}
             >
@@ -235,17 +252,23 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
             ))}
           </div>
 
-          {/* Quick info pills */}
+          {/* Info pills */}
           <div className="flex flex-wrap gap-2 text-xs">
-            <span className="px-3 py-1 border rounded-full" style={{ borderColor: 'var(--color-amoria-border)', color: 'var(--color-amoria-text-muted)' }}>
-              {product.concentration}
-            </span>
-            <span className="px-3 py-1 border rounded-full" style={{ borderColor: 'var(--color-amoria-border)', color: 'var(--color-amoria-text-muted)' }}>
-              {product.fragranceFamily}
-            </span>
-            <span className="px-3 py-1 border rounded-full" style={{ borderColor: 'var(--color-amoria-border)', color: 'var(--color-amoria-text-muted)' }}>
-              {product.gender}
-            </span>
+            {product.concentration && (
+              <span className="px-3 py-1 border rounded-full" style={{ borderColor: 'var(--color-amoria-border)', color: 'var(--color-amoria-text-muted)' }}>
+                {product.concentration}
+              </span>
+            )}
+            {product.fragranceFamily && (
+              <span className="px-3 py-1 border rounded-full" style={{ borderColor: 'var(--color-amoria-border)', color: 'var(--color-amoria-text-muted)' }}>
+                {product.fragranceFamily}
+              </span>
+            )}
+            {product.gender && (
+              <span className="px-3 py-1 border rounded-full" style={{ borderColor: 'var(--color-amoria-border)', color: 'var(--color-amoria-text-muted)' }}>
+                {product.gender}
+              </span>
+            )}
           </div>
         </div>
       </div>
@@ -279,7 +302,7 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
           <TabsContent value="reviews" className="pt-6">
             <ReviewsSection
               productId={product.id}
-              reviews={reviews}
+              reviews={apiReviews}
               rating={product.rating}
               reviewCount={product.reviewCount}
             />
@@ -291,8 +314,8 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
       <RelatedProducts products={relatedProducts} />
       <RecentlyViewed />
 
-      {/* Mobile sticky bottom bar — hides when in-page Add to Cart is visible */}
-      {showStickyBar && (
+      {/* Mobile sticky bottom bar */}
+      {showStickyBar && variant && (
         <div
           className="md:hidden fixed bottom-0 left-0 right-0 z-50 flex items-center gap-3 px-4 py-3"
           style={{
@@ -311,7 +334,7 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
           </div>
           <button
             onClick={handleAddToCart}
-            disabled={addedState !== 'idle' || selectedVariant.stock === 0}
+            disabled={addedState !== 'idle' || variant.stock === 0}
             className="flex-1 h-12 flex items-center justify-center gap-2 text-sm font-semibold tracking-wide transition-all disabled:opacity-70"
             style={{ backgroundColor: 'var(--color-amoria-primary)', color: 'white' }}
           >

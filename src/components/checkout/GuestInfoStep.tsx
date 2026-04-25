@@ -15,11 +15,14 @@ type FormData = z.infer<typeof schema>;
 
 interface GuestInfoStepProps {
   onNext: (info: GuestInfo) => void;
+  defaultValues?: GuestInfo;
+  isEditing?: boolean;
 }
 
-export function GuestInfoStep({ onNext }: GuestInfoStepProps) {
+export function GuestInfoStep({ onNext, defaultValues, isEditing = false }: GuestInfoStepProps) {
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<FormData>({
     resolver: zodResolver(schema),
+    defaultValues: defaultValues ?? {},
   });
 
   function onSubmit(data: FormData) {
@@ -36,10 +39,12 @@ export function GuestInfoStep({ onNext }: GuestInfoStepProps) {
           <User size={24} style={{ color: '#C9A84C' }} />
         </div>
         <h2 className="text-xl font-semibold mb-1" style={{ fontFamily: 'var(--font-heading)', color: '#1A0A2E' }}>
-          Guest Checkout
+          {isEditing ? 'Edit Your Details' : 'Guest Checkout'}
         </h2>
         <p className="text-sm" style={{ color: '#6B6B6B' }}>
-          No account needed — just a few details for your order
+          {isEditing
+            ? 'Update your name, email or phone number below'
+            : 'No account needed — just a few details for your order'}
         </p>
       </div>
 
@@ -105,7 +110,7 @@ export function GuestInfoStep({ onNext }: GuestInfoStepProps) {
           className="w-full py-3.5 text-sm font-bold tracking-[0.12em] uppercase disabled:opacity-60 transition-opacity mt-2"
           style={{ backgroundColor: '#1A0A2E', color: '#C9A84C' }}
         >
-          Continue to Delivery →
+          {isEditing ? 'Save & Continue →' : 'Continue to Delivery →'}
         </button>
       </form>
     </div>

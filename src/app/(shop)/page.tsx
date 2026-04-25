@@ -1,7 +1,7 @@
 import { VideoHero } from '@/components/home/VideoHero';
 import { CategoryIconStrip } from '@/components/home/CategoryIconStrip';
 import { ScentPillars } from '@/components/home/ScentPillars';
-import { ProductSection } from '@/components/home/ProductSection';
+import { ProductSectionClient } from '@/components/home/ProductSectionClient';
 import { FeaturedCollections } from '@/components/home/FeaturedCollections';
 import { BrandShowcase } from '@/components/home/BrandShowcase';
 import { FragranceFinderCTA } from '@/components/home/FragranceFinderCTA';
@@ -11,60 +11,58 @@ import { InstagramFeed } from '@/components/home/InstagramFeed';
 import { NewsletterSection } from '@/components/home/NewsletterSection';
 import { LimitedOfferPopup } from '@/components/home/LimitedOfferPopup';
 import { FragranceFinderWidget } from '@/components/home/FragranceFinderWidget';
-import { getNewArrivals, getBestsellers } from '@/lib/data/products';
 
 export default function HomePage() {
-  const newArrivals = getNewArrivals().slice(0, 4);
-  const bestsellers = getBestsellers().slice(0, 4);
-
   return (
     <>
       {/* 1 — Full-screen video hero */}
       <VideoHero />
 
-      {/* 2 — Category icon strip */}
+      {/* 2 — Category icon strip (fetches from API) */}
       <CategoryIconStrip />
 
-      {/* 4 — New Arrivals */}
-      <ProductSection
+      {/* 3 — New Arrivals */}
+      <ProductSectionClient
         title="New Arrivals"
-        products={newArrivals}
-        viewAllHref="/products?filter=new"
+        viewAllHref="/products"
         theme="light"
         sectionNumber="01"
+        limit={4}
       />
 
-      {/* 5 — Editorial curated collections */}
+      {/* 4 — Editorial curated collections */}
       <FeaturedCollections />
 
-      {/* 6 — Three Pillars of Perfumery (Oud · Rose · Amber) */}
+      {/* 5 — Three Pillars of Perfumery */}
       <ScentPillars />
 
-      {/* 7 — Best Sellers */}
-      <ProductSection
+      {/* 6 — Best Sellers (featured products) */}
+      <ProductSectionClient
         title="Best Sellers"
-        products={bestsellers}
-        viewAllHref="/products?filter=bestsellers"
+        subtitle="Most Loved"
+        viewAllHref="/products"
         theme="light"
         sectionNumber="02"
+        limit={8}
+        featured={true}
       />
 
-      {/* 8 — Brand marquee */}
+      {/* 7 — Brand marquee (fetches from API) */}
       <BrandShowcase />
 
-      {/* 9 — Fragrance Finder quiz CTA */}
+      {/* 8 — Fragrance Finder quiz CTA */}
       <FragranceFinderCTA />
 
-      {/* 10 — Flash deals + countdown */}
+      {/* 9 — Flash deals + countdown */}
       <LimitedDealsSection />
 
-      {/* 11 — Testimonials + stats bar */}
+      {/* 10 — Testimonials + stats bar */}
       <TestimonialsSection />
 
-      {/* 12 — Instagram feed */}
+      {/* 11 — Instagram feed */}
       <InstagramFeed />
 
-      {/* 13 — Newsletter */}
+      {/* 12 — Newsletter */}
       <NewsletterSection />
 
       {/* Global overlays */}

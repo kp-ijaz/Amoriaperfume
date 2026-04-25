@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import Link from 'next/link';
-import { User, UserCheck, LogIn, ShoppingBag, Shield, Store, Truck, ChevronRight } from 'lucide-react';
+import { useSearchParams } from 'next/navigation';
+import { User, UserCheck, LogIn, ShoppingBag, Shield, Store, Truck, ChevronRight, Pencil, UserX } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { useCart } from '@/lib/hooks/useCart';
@@ -14,14 +15,24 @@ import { ReviewStep } from '@/components/checkout/ReviewStep';
 import { Address } from '@/types/user';
 import { GuestInfo } from '@/lib/store/authSlice';
 
-type CheckoutFlow = 'gate' | 'guest-info' | 1 | 2 | 3;
+type CheckoutFlow = 'gate' | 'guest-info' | 'guest-edit' | 1 | 2 | 3;
 
-export default function CheckoutPage() {
-  const { isLoggedIn, isGuest, user, guestInfo, continueAsGuest } = useAuth();
+function CheckoutPageInner() {
+  const { isLoggedIn, isGuest, user, guestInfo, continueAsGuest, clearGuest } = useAuth();
   const { items } = useCart();
+  const searchParams = useSearchParams();
+  const editGuest = searchParams.get('editGuest') === '1';
+
+  // If editing guest details from header dropdown, go straight to guest-edit
+  // If already authenticated, skip gate; otherwise show gate
+  function getInitialFlow(): CheckoutFlow {
+    if (editGuest && isGuest) return 'guest-edit';
+    if (isLoggedIn || isGuest) return 1;
+    return 'gate';
+  }
 
   // If already authenticated, skip gate
-  const [flow,           setFlow]           = useState<CheckoutFlow>(isLoggedIn || isGuest ? 1 : 'gate');
+  const [flow,           setFlow]           = useState<CheckoutFlow>(getInitialFlow);
   const [address,        setAddress]        = useState<Address | null>(null);
   const [fulfillment,    setFulfillment]    = useState<FulfillmentMethod>('delivery');
   const [pickupSlot,     setPickupSlot]     = useState<PickupSlot | undefined>(undefined);
@@ -48,6 +59,16 @@ export default function CheckoutPage() {
   function handleGuestInfo(info: GuestInfo) {
     continueAsGuest(info);
     setFlow(1);
+  }
+
+  function handleGuestEdit(info: GuestInfo) {
+    continueAsGuest(info);
+    setFlow(1);
+  }
+
+  function handleUseDifferent() {
+    clearGuest();
+    setFlow('guest-info');
   }
 
   return (
@@ -189,6 +210,26 @@ export default function CheckoutPage() {
           </motion.div>
         )}
 
+        {/* ── GUEST EDIT ── */}
+        {flow === 'guest-edit' && (
+          <motion.div
+            key="guest-edit"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.3 }}
+          >
+            <button onClick={() => setFlow(1)} className="flex items-center gap-1 text-xs mb-6 hover:opacity-70 transition-opacity" style={{ color: '#A89880' }}>
+              ← Back
+            </button>
+            <GuestInfoStep
+              onNext={handleGuestEdit}
+              defaultValues={guestInfo ?? undefined}
+              isEditing
+            />
+          </motion.div>
+        )}
+
         {/* ── STEPS 1–3 ── */}
         {(flow === 1 || flow === 2 || flow === 3) && (
           <motion.div
@@ -198,6 +239,45 @@ export default function CheckoutPage() {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
           >
+            {/* Guest info card — always visible during steps so they can change details */}
+            {isGuest && guestInfo && (
+              <div
+                className="flex items-center justify-between gap-3 px-4 py-3 mb-5"
+                style={{ backgroundColor: '#FAF8F5', border: '1px solid #E8E3DC' }}
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div
+                    className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold"
+                    style={{ backgroundColor: 'rgba(201,168,76,0.15)', color: '#C9A84C' }}
+                  >
+                    {guestInfo.name.charAt(0).toUpperCase()}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold truncate" style={{ color: '#1A0A2E' }}>{guestInfo.name}</p>
+                    <p className="text-xs truncate" style={{ color: '#A89880' }}>{guestInfo.email} · {guestInfo.phone}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1 flex-shrink-0">
+                  <button
+                    onClick={() => setFlow('guest-edit')}
+                    className="flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-semibold transition-colors hover:bg-gray-100"
+                    style={{ color: '#1A0A2E', border: '1px solid #E8E3DC' }}
+                    title="Edit your details"
+                  >
+                    <Pencil size={11} /> Edit
+                  </button>
+                  <button
+                    onClick={handleUseDifferent}
+                    className="flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-semibold transition-colors hover:bg-red-50"
+                    style={{ color: '#ef4444', border: '1px solid #fecaca' }}
+                    title="Order for someone else"
+                  >
+                    <UserX size={11} /> Change
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* Fulfillment badge */}
             {flow !== 1 && (
               <div
@@ -235,11 +315,20 @@ export default function CheckoutPage() {
                 fulfillmentMethod={fulfillment}
                 pickupSlot={pickupSlot}
                 onBack={() => setFlow(2)}
+                guestInfo={guestInfo}
               />
             )}
           </motion.div>
         )}
       </AnimatePresence>
     </div>
+  );
+}
+
+export default function CheckoutPage() {
+  return (
+    <Suspense>
+      <CheckoutPageInner />
+    </Suspense>
   );
 }

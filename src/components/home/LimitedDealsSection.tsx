@@ -3,7 +3,7 @@
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { useCountdown } from '@/lib/hooks/useCountdown';
-import { getSaleProducts } from '@/lib/data/products';
+import { useProductsByLimit } from '@/lib/hooks/useApiProducts';
 import { ProductCard } from '@/components/product/ProductCard';
 
 function TimeUnit({ value, label }: { value: number; label: string }) {
@@ -30,7 +30,7 @@ function TimeUnit({ value, label }: { value: number; label: string }) {
 
 export function LimitedDealsSection() {
   const { hours, minutes, seconds } = useCountdown();
-  const dealProducts = getSaleProducts().slice(0, 4);
+  const { data: dealProducts = [] } = useProductsByLimit(4, { featured: true });
 
   return (
     <section

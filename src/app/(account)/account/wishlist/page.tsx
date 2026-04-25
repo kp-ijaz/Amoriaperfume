@@ -4,7 +4,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@/lib/store';
 import { removeItem } from '@/lib/store/wishlistSlice';
 import { addItem as addToCart } from '@/lib/store/cartSlice';
-import { products } from '@/lib/data/products';
+import { useProductsByIds } from '@/lib/hooks/useApiProducts';
 import { formatCurrency } from '@/lib/utils/formatCurrency';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -13,8 +13,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { useState } from 'react';
 
+import { Product } from '@/types/product';
+
 // Per-card stateful add button — same circular style as ProductCard
-function WishlistAddButton({ product, inCart }: { product: typeof products[0]; inCart: boolean }) {
+function WishlistAddButton({ product, inCart }: { product: Product; inCart: boolean }) {
   const dispatch = useDispatch();
   const [justAdded, setJustAdded] = useState(false);
 
@@ -58,10 +60,10 @@ function WishlistAddButton({ product, inCart }: { product: typeof products[0]; i
 }
 
 export default function WishlistPage() {
-  const dispatch         = useDispatch();
-  const wishlistIds      = useSelector((state: RootState) => state.wishlist.items);
-  const cartItems        = useSelector((state: RootState) => state.cart.items);
-  const wishlistProducts = products.filter((p) => wishlistIds.includes(p.id));
+  const dispatch    = useDispatch();
+  const wishlistIds = useSelector((state: RootState) => state.wishlist.items);
+  const cartItems   = useSelector((state: RootState) => state.cart.items);
+  const { products: wishlistProducts, isLoading } = useProductsByIds(wishlistIds);
 
   // Check if a specific variant is already in cart
   function isVariantInCart(productId: string, variantId: string) {
@@ -103,7 +105,7 @@ export default function WishlistPage() {
                 </h1>
               </div>
               <p className="text-sm" style={{ color: 'rgba(255,255,255,0.4)' }}>
-                {wishlistProducts.length} {wishlistProducts.length === 1 ? 'item' : 'items'} saved
+                {wishlistIds.length} {wishlistIds.length === 1 ? 'item' : 'items'} saved
               </p>
             </div>
 
@@ -122,8 +124,17 @@ export default function WishlistPage() {
       </div>
 
       <div className="max-w-6xl mx-auto px-5 py-10">
+        {/* Loading skeletons */}
+        {isLoading && wishlistIds.length > 0 && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+            {wishlistIds.map((id) => (
+              <div key={id} className="aspect-[3/4] bg-gray-100 animate-pulse" />
+            ))}
+          </div>
+        )}
+
         {/* Empty state */}
-        {wishlistProducts.length === 0 && (
+        {!isLoading && wishlistIds.length === 0 && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -156,7 +167,7 @@ export default function WishlistPage() {
         )}
 
         {/* Product grid */}
-        {wishlistProducts.length > 0 && (
+        {!isLoading && wishlistProducts.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
             <AnimatePresence mode="popLayout">
               {wishlistProducts.map((product, i) => {

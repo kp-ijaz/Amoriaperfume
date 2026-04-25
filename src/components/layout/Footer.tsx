@@ -86,7 +86,7 @@ export function Footer() {
             <ul className="space-y-2.5">
               {[
                 { label: 'FAQs', href: '/faqs' },
-                { label: 'Track Order', href: '/account/orders' },
+                { label: 'Track Order', href: '/track-order' },
                 { label: 'Returns & Exchange', href: '/faqs#returns' },
                 { label: 'Contact Us', href: '/contact' },
                 { label: 'Privacy Policy', href: '/privacy' },

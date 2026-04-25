@@ -2,9 +2,13 @@
 
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { brands } from '@/lib/data/brands';
+import { useBrands } from '@/lib/hooks/useApiBrands';
 
 export function BrandShowcase() {
+  const { data: apiBrands = [] } = useBrands();
+  // Fallback to ensure marquee has enough items
+  const brands = apiBrands.length > 0 ? apiBrands : [];
+  if (brands.length === 0) return null;
   const doubled = [...brands, ...brands];
 
   return (
@@ -75,7 +79,7 @@ export function BrandShowcase() {
 
         <motion.div
           className="flex items-center gap-0"
-          animate={{ x: [0, -50 * brands.length * 8] }}
+          animate={{ x: [0, -(180 * brands.length)] }}
           transition={{ x: { duration: 22, repeat: Infinity, ease: 'linear' } }}
         >
           {doubled.map((brand, i) => (

@@ -3,6 +3,7 @@
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@/lib/store';
 import { closeCartDrawer } from '@/lib/store/uiSlice';
+import { useBodyLock } from '@/lib/hooks/useBodyLock';
 import { AnimatePresence, motion } from 'framer-motion';
 import Link from 'next/link';
 import { X, ArrowRight } from 'lucide-react';
@@ -14,6 +15,7 @@ import { calculateVAT } from '@/lib/utils/calculateVAT';
 export function CartDrawer() {
   const dispatch = useDispatch();
   const isOpen = useSelector((state: RootState) => state.ui.cartDrawerOpen);
+  useBodyLock(isOpen);
   const { items } = useCart();
 
   const subtotal = items.reduce((acc, item) => {

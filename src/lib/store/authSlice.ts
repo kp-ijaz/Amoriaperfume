@@ -16,12 +16,14 @@ export interface GuestInfo {
 
 interface AuthState {
   user: AuthUser | null;
+  token: string | null;
   isGuest: boolean;
   guestInfo: GuestInfo | null;
 }
 
 const initialState: AuthState = {
   user: null,
+  token: null,
   isGuest: false,
   guestInfo: null,
 };
@@ -30,13 +32,15 @@ const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
-    login(state, action: PayloadAction<AuthUser>) {
-      state.user = action.payload;
+    login(state, action: PayloadAction<{ user: AuthUser; token: string }>) {
+      state.user = action.payload.user;
+      state.token = action.payload.token;
       state.isGuest = false;
       state.guestInfo = null;
     },
     logout(state) {
       state.user = null;
+      state.token = null;
       state.isGuest = false;
       state.guestInfo = null;
     },
@@ -44,6 +48,7 @@ const authSlice = createSlice({
       state.isGuest = true;
       state.guestInfo = action.payload;
       state.user = null;
+      state.token = null;
     },
     clearGuest(state) {
       state.isGuest = false;

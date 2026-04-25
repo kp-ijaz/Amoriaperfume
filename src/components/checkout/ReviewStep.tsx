@@ -4,10 +4,14 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Truck, Store, Calendar, Clock } from 'lucide-react';
 import { useCart } from '@/lib/hooks/useCart';
+import { useCreateOrder } from '@/lib/hooks/useApiOrders';
+import { useAuth } from '@/lib/hooks/useAuth';
 import { Address } from '@/types/user';
 import { CartSummary } from '@/components/cart/CartSummary';
 import { FulfillmentMethod, PickupSlot } from '@/components/checkout/AddressStep';
+import { GuestInfo } from '@/lib/store/authSlice';
 import Image from 'next/image';
+import { toast } from 'sonner';
 
 interface ReviewStepProps {
   address:           Address | null;
@@ -15,35 +19,91 @@ interface ReviewStepProps {
   fulfillmentMethod: FulfillmentMethod;
   pickupSlot?:       PickupSlot;
   onBack:            () => void;
+  guestInfo?:        GuestInfo | null;
 }
 
 const methodLabels = { card: 'Credit/Debit Card', applepay: 'Apple Pay', cod: 'Cash on Delivery' };
 
-export function ReviewStep({ address, paymentMethod, fulfillmentMethod, pickupSlot, onBack }: ReviewStepProps) {
-  const router  = useRouter();
-  const { items, clearCart } = useCart();
+export function ReviewStep({ address, paymentMethod, fulfillmentMethod, pickupSlot, onBack, guestInfo }: ReviewStepProps) {
+  const router = useRouter();
+  const { items, subtotal, total, clearCart } = useCart();
+  const { user } = useAuth();
+  const createOrder = useCreateOrder();
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function handlePlaceOrder() {
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 1500));
-    clearCart();
+    setError(null);
 
-    const params = new URLSearchParams();
-    if (fulfillmentMethod === 'pickup') {
-      params.set('type', 'pickup');
-      if (pickupSlot) {
-        params.set('date', pickupSlot.date);
-        params.set('time', pickupSlot.time);
+    // Build customer details
+    const customerName = user
+      ? `${user.firstName} ${user.lastName}`.trim()
+      : guestInfo?.name ?? 'Guest';
+    const customerEmail = user?.email ?? guestInfo?.email ?? '';
+    const customerPhone = user?.phone ?? guestInfo?.phone ?? address?.phone ?? '';
+
+    // Build shipping address
+    const shippingAddr = {
+      fullAddress: address ? `${address.street}, ${address.area}` : 'Pickup',
+      city: address?.emirate ?? 'Dubai',
+      state: address?.emirate ?? 'Dubai',
+      pincode: address?.postcode ?? '00000',
+      country: 'UAE',
+    };
+
+    // Build line items (prices in fils = AED * 100)
+    const orderItems = items.map((item) => ({
+      productId: item.product.id,
+      variantId: item.variant.id,
+      sizeId: item.variant.id,
+      quantity: item.quantity,
+      price: Math.round((item.variant.salePrice ?? item.variant.price) * 100),
+    }));
+
+    const subtotalFils = Math.round(subtotal * 100);
+    const totalFils = Math.round(total * 100);
+
+    try {
+      const res = await createOrder.mutateAsync({
+        customerDetails: {
+          name: customerName,
+          email: customerEmail,
+          phone: customerPhone,
+        },
+        shippingAddress: shippingAddr,
+        items: orderItems,
+        paymentMethod: paymentMethod === 'cod' ? 'COD' : 'ONLINE',
+        subtotal: subtotalFils,
+        totalAmount: totalFils,
+      });
+
+      if (!res.success) {
+        throw new Error(res.message ?? 'Failed to place order');
       }
+
+      const orderId = res.data?.orderId ?? '';
+      clearCart();
+
+      const params = new URLSearchParams();
+      params.set('orderId', orderId);
+      if (fulfillmentMethod === 'pickup') {
+        params.set('type', 'pickup');
+        if (pickupSlot) {
+          params.set('date', pickupSlot.date);
+          params.set('time', pickupSlot.time);
+        }
+      }
+      router.push(`/order-confirmation?${params.toString()}`);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Something went wrong placing your order.';
+      setError(msg);
+      toast.error(msg);
+      setLoading(false);
     }
-    router.push(`/order-confirmation?${params.toString()}`);
   }
 
-  const sectionStyle = {
-    border: '1px solid #E8E3DC',
-    backgroundColor: 'white',
-  };
+  const sectionStyle = { border: '1px solid #E8E3DC', backgroundColor: 'white' };
 
   return (
     <div>
@@ -59,27 +119,19 @@ export function ReviewStep({ address, paymentMethod, fulfillmentMethod, pickupSl
             ? <><Store size={15} style={{ color: '#C9A84C' }} /> Store Pickup — Dubai Mall</>
             : <><Truck size={15} style={{ color: '#C9A84C' }} /> Home Delivery</>}
         </div>
-
-        {/* Pickup slot details */}
         {fulfillmentMethod === 'pickup' && pickupSlot && (
           <div
             className="mt-2 flex flex-wrap gap-3 px-3 py-2.5 text-xs"
             style={{ backgroundColor: 'rgba(201,168,76,0.07)', border: '1px solid rgba(201,168,76,0.25)', borderRadius: '3px' }}
           >
             <span className="flex items-center gap-1.5 font-semibold" style={{ color: '#6B4A1E' }}>
-              <Calendar size={12} style={{ color: '#C9A84C' }} />
-              {pickupSlot.date}
+              <Calendar size={12} style={{ color: '#C9A84C' }} />{pickupSlot.date}
             </span>
             <span className="flex items-center gap-1.5 font-semibold" style={{ color: '#6B4A1E' }}>
-              <Clock size={12} style={{ color: '#C9A84C' }} />
-              {pickupSlot.time}
+              <Clock size={12} style={{ color: '#C9A84C' }} />{pickupSlot.time}
             </span>
             <span style={{ color: '#A89880' }}>· Dubai Mall, Ground Floor</span>
           </div>
-        )}
-
-        {fulfillmentMethod === 'pickup' && !pickupSlot && (
-          <p className="text-xs mt-1" style={{ color: '#A89880' }}>Ready in approximately 2 hours</p>
         )}
       </div>
 
@@ -119,7 +171,9 @@ export function ReviewStep({ address, paymentMethod, fulfillmentMethod, pickupSl
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium truncate" style={{ color: '#1C1C1C' }}>{item.product.name}</p>
-                  <p className="text-xs" style={{ color: '#A89880' }}>Qty: {item.quantity} · {item.variant.concentration} · {item.variant.sizeMl}ml</p>
+                  <p className="text-xs" style={{ color: '#A89880' }}>
+                    Qty: {item.quantity} · {item.variant.concentration} · {item.variant.sizeMl}ml
+                  </p>
                 </div>
                 <p className="text-sm font-semibold flex-shrink-0" style={{ color: '#C9A84C' }}>
                   AED {((item.variant.salePrice ?? item.variant.price) * item.quantity).toFixed(2)}
@@ -131,6 +185,12 @@ export function ReviewStep({ address, paymentMethod, fulfillmentMethod, pickupSl
       </div>
 
       <CartSummary showCheckoutButton={false} paymentMethod={paymentMethod ?? undefined} />
+
+      {error && (
+        <div className="mt-4 p-3 text-sm text-red-700 bg-red-50 border border-red-200 rounded-sm">
+          {error}
+        </div>
+      )}
 
       <div className="flex gap-3 mt-6">
         <button

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import { useBodyLock } from '@/lib/hooks/useBodyLock';
 import Image from 'next/image';
 import Link from 'next/link';
 import { X, ChevronLeft, Sparkles } from 'lucide-react';
@@ -8,12 +9,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/lib/store';
 import { quizQuestions } from '@/lib/data/quiz';
-import { products } from '@/lib/data/products';
+import { useProductsByLimit } from '@/lib/hooks/useApiProducts';
 import { formatCurrency } from '@/lib/utils/formatCurrency';
 
 export function FragranceFinderWidget() {
   const [open, setOpen]       = useState(false);
   const cartDrawerOpen = useSelector((s: RootState) => s.ui.cartDrawerOpen);
+  useBodyLock(open);
   const [step, setStep]       = useState(0);
   const [answers, setAnswers] = useState<Record<number, string>>({});
   const [started, setStarted] = useState(false);
@@ -22,6 +24,9 @@ export function FragranceFinderWidget() {
   const totalSteps = quizQuestions.length;
   const progress   = started ? Math.round((step / totalSteps) * 100) : 0;
   const isDone     = started && step >= totalSteps;
+
+  // Fetch all products for matching (prefetched so results are instant)
+  const { data: allProducts = [] } = useProductsByLimit(100);
 
   function pickAnswer(optionId: string) {
     const next = { ...answers, [current.id]: optionId };
@@ -39,23 +44,23 @@ export function FragranceFinderWidget() {
     setStarted(false);
   }
 
-  // Score products against selected tags and return top 3
+  // Score API products against selected tags and return top 3
   const matches = useMemo(() => {
     if (!isDone) return [];
     const selectedTags = quizQuestions.flatMap((q) => {
       const opt = q.options.find((o) => o.id === answers[q.id]);
       return opt?.tags ?? [];
     });
-    return products
+    return allProducts
       .map((p) => ({
         product: p,
-        score: p.tags.filter((t) => selectedTags.includes(t)).length,
+        score: (p.tags ?? []).filter((t) => selectedTags.includes(t)).length,
       }))
       .filter((x) => x.score > 0)
       .sort((a, b) => b.score - a.score)
       .slice(0, 3)
       .map((x) => x.product);
-  }, [isDone, answers]);
+  }, [isDone, answers, allProducts]);
 
   return (
     <>
@@ -208,7 +213,7 @@ export function FragranceFinderWidget() {
                       {matches.length > 0 ? (
                         <div>
                           {matches.map((product, i) => {
-                            const primary  = product.images.find((img) => img.isPrimary) ?? product.images[0];
+                            const imageUrl = product.images.find((img) => img.isPrimary)?.url ?? product.images[0]?.url ?? '';
                             const variant  = product.variants[0];
                             const price    = variant?.salePrice ?? variant?.price ?? 0;
                             const original = variant?.price ?? 0;
@@ -227,7 +232,7 @@ export function FragranceFinderWidget() {
                               >
                                 {/* Image */}
                                 <div className="relative flex-shrink-0 w-[60px] h-[60px] overflow-hidden" style={{ borderRadius: '3px' }}>
-                                  <Image src={primary.url} alt={primary.alt} fill className="object-cover" unoptimized />
+                                  {imageUrl && <Image src={imageUrl} alt={product.name} fill className="object-cover" unoptimized />}
                                   {/* Match badge */}
                                   <div className="absolute top-0 left-0 px-1 py-0.5 text-[8px] font-black" style={{ backgroundColor: '#C9A84C', color: '#1A0A2E' }}>
                                     ✓

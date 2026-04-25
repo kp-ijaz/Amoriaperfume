@@ -3,8 +3,9 @@
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@/lib/store';
 import { closeMobileNav } from '@/lib/store/uiSlice';
+import { useBodyLock } from '@/lib/hooks/useBodyLock';
 import Link from 'next/link';
-import { X, Search, ChevronRight } from 'lucide-react';
+import { X, Search, ChevronRight, Package, Truck } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 
 const navLinks = [
@@ -19,6 +20,7 @@ const navLinks = [
 export function MobileNav() {
   const dispatch = useDispatch();
   const isOpen = useSelector((state: RootState) => state.ui.mobileNavOpen);
+  useBodyLock(isOpen);
 
   return (
     <AnimatePresence>
@@ -95,6 +97,24 @@ export function MobileNav() {
                 </Link>
               ))}
 
+              {/* Orders & Tracking — always visible for both guests and logged-in */}
+              <div className="mt-4 pt-4 border-t" style={{ borderColor: 'rgba(255,255,255,0.1)' }}>
+                <p className="px-4 text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'var(--color-amoria-accent)' }}>
+                  Orders
+                </p>
+                <Link href="/account/orders" onClick={() => dispatch(closeMobileNav())} className="flex items-center gap-3 px-4 py-3 text-sm transition-colors hover:bg-white/5 border-b" style={{ color: 'rgba(255,255,255,0.85)', borderColor: 'rgba(255,255,255,0.06)' }}>
+                  <Package size={15} style={{ color: 'rgba(201,168,76,0.7)' }} />
+                  My Orders
+                  <ChevronRight size={14} className="ml-auto opacity-40" />
+                </Link>
+                <Link href="/track-order" onClick={() => dispatch(closeMobileNav())} className="flex items-center gap-3 px-4 py-3 text-sm transition-colors hover:bg-white/5 border-b" style={{ color: 'rgba(255,255,255,0.85)', borderColor: 'rgba(255,255,255,0.06)' }}>
+                  <Truck size={15} style={{ color: 'rgba(201,168,76,0.7)' }} />
+                  Track Order
+                  <ChevronRight size={14} className="ml-auto opacity-40" />
+                </Link>
+              </div>
+
+              {/* Account */}
               <div className="mt-4 pt-4 border-t" style={{ borderColor: 'rgba(255,255,255,0.1)' }}>
                 <p className="px-4 text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'var(--color-amoria-accent)' }}>
                   Account
@@ -104,9 +124,6 @@ export function MobileNav() {
                 </Link>
                 <Link href="/register" onClick={() => dispatch(closeMobileNav())} className="flex items-center justify-between px-4 py-3 text-sm transition-colors hover:bg-white/5" style={{ color: 'rgba(255,255,255,0.7)' }}>
                   Register
-                </Link>
-                <Link href="/account/orders" onClick={() => dispatch(closeMobileNav())} className="flex items-center justify-between px-4 py-3 text-sm transition-colors hover:bg-white/5" style={{ color: 'rgba(255,255,255,0.7)' }}>
-                  My Orders
                 </Link>
               </div>
             </nav>

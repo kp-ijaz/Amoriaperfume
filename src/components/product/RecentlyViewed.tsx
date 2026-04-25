@@ -2,14 +2,12 @@
 
 import { useSelector } from 'react-redux';
 import { RootState } from '@/lib/store';
-import { products } from '@/lib/data/products';
+import { useProductsByIds } from '@/lib/hooks/useApiProducts';
 import { ProductCard } from './ProductCard';
 
 export function RecentlyViewed() {
   const recentIds = useSelector((state: RootState) => state.ui.recentlyViewed);
-  const recentProducts = recentIds
-    .map((id) => products.find((p) => p.id === id))
-    .filter(Boolean) as typeof products;
+  const { products: recentProducts } = useProductsByIds(recentIds);
 
   if (!recentProducts.length) return null;
 

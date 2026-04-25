@@ -5,55 +5,37 @@ import { useRouter } from 'next/navigation';
 import { RootState } from '@/lib/store';
 import { login, logout, setGuest, clearGuest, AuthUser, GuestInfo } from '@/lib/store/authSlice';
 import { clearCart } from '@/lib/store/cartSlice';
-
-// Demo accounts that always work
-const DEMO_ACCOUNTS = [
-  { id: 'u1', firstName: 'Ahmed', lastName: 'Al Rashid', email: 'ahmed@demo.com', phone: '+971501234567', passwordHash: btoa('password123') },
-  { id: 'u2', firstName: 'Sara',  lastName: 'Al Mansouri', email: 'sara@demo.com', phone: '+971507654321', passwordHash: btoa('password123') },
-];
-
-const USERS_KEY = 'amoria_users';
-
-function getStoredUsers(): typeof DEMO_ACCOUNTS {
-  if (typeof window === 'undefined') return DEMO_ACCOUNTS;
-  try {
-    const raw = localStorage.getItem(USERS_KEY);
-    return raw ? [...DEMO_ACCOUNTS, ...JSON.parse(raw)] : DEMO_ACCOUNTS;
-  } catch {
-    return DEMO_ACCOUNTS;
-  }
-}
-
-function saveNewUser(user: typeof DEMO_ACCOUNTS[0]) {
-  if (typeof window === 'undefined') return;
-  try {
-    const raw = localStorage.getItem(USERS_KEY);
-    const existing = raw ? JSON.parse(raw) : [];
-    localStorage.setItem(USERS_KEY, JSON.stringify([...existing, user]));
-  } catch { /* ignore */ }
-}
+import { apiLogin, setStoredToken, clearStoredToken } from '@/lib/api/client';
 
 export function useAuth() {
   const dispatch = useDispatch();
   const router   = useRouter();
-  const { user, isGuest, guestInfo } = useSelector((s: RootState) => s.auth);
+  const { user, token, isGuest, guestInfo } = useSelector((s: RootState) => s.auth);
 
   const isLoggedIn = !!user;
 
   /** Sign in with email + password. Returns error string or null on success. */
   async function signIn(email: string, password: string): Promise<string | null> {
-    await new Promise((r) => setTimeout(r, 800)); // simulate network
-    const all = getStoredUsers();
-    const found = all.find(
-      (u) => u.email.toLowerCase() === email.toLowerCase() && u.passwordHash === btoa(password)
-    );
-    if (!found) return 'Invalid email or password. Try ahmed@demo.com / password123';
-    const { passwordHash: _, ...authUser } = found;
-    dispatch(login(authUser));
+    const res = await apiLogin(email, password);
+    if (!res.success || !res.data) {
+      return res.message ?? 'Invalid email or password.';
+    }
+    const { user: apiUser, accessToken } = res.data;
+    const authUser: AuthUser = {
+      id: apiUser._id,
+      firstName: apiUser.name.split(' ')[0] ?? apiUser.name,
+      lastName: apiUser.name.split(' ').slice(1).join(' ') ?? '',
+      email: apiUser.email,
+      phone: '',
+    };
+    setStoredToken(accessToken);
+    dispatch(login({ user: authUser, token: accessToken }));
     return null;
   }
 
-  /** Register a new account. Returns error string or null on success. */
+  /** Register — currently the API has admin-only login; register saves locally
+   *  and falls back to the admin API login for demo purposes.
+   *  TODO: Replace when a customer register endpoint is available. */
   async function register(data: {
     firstName: string;
     lastName: string;
@@ -61,22 +43,30 @@ export function useAuth() {
     phone: string;
     password: string;
   }): Promise<string | null> {
-    await new Promise((r) => setTimeout(r, 900));
-    const all = getStoredUsers();
-    if (all.some((u) => u.email.toLowerCase() === data.email.toLowerCase())) {
-      return 'An account with this email already exists.';
+    // Attempt API login in case admin credentials are supplied
+    const res = await apiLogin(data.email, data.password);
+    if (res.success && res.data) {
+      const { user: apiUser, accessToken } = res.data;
+      const authUser: AuthUser = {
+        id: apiUser._id,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        email: apiUser.email,
+        phone: data.phone,
+      };
+      setStoredToken(accessToken);
+      dispatch(login({ user: authUser, token: accessToken }));
+      return null;
     }
-    const newUser = {
-      id: `u_${Date.now()}`,
+    // Fallback: store locally so the form appears to work for demo
+    const authUser: AuthUser = {
+      id: `local_${Date.now()}`,
       firstName: data.firstName,
       lastName: data.lastName,
       email: data.email,
       phone: data.phone,
-      passwordHash: btoa(data.password),
     };
-    saveNewUser(newUser);
-    const { passwordHash: _, ...authUser } = newUser;
-    dispatch(login(authUser));
+    dispatch(login({ user: authUser, token: '' }));
     return null;
   }
 
@@ -87,6 +77,7 @@ export function useAuth() {
 
   /** Sign out and go home. */
   function signOut() {
+    clearStoredToken();
     dispatch(logout());
     dispatch(clearCart());
     router.push('/');
@@ -94,6 +85,7 @@ export function useAuth() {
 
   return {
     user,
+    token,
     isLoggedIn,
     isGuest,
     guestInfo,

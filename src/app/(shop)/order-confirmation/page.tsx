@@ -1,14 +1,10 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Store, Calendar, Clock, MessageCircle, Bell, X, Truck } from 'lucide-react';
-
-function generateOrderNumber() {
-  return `AMR-${Math.floor(100000 + Math.random() * 900000)}`;
-}
 
 export default function OrderConfirmationPage() {
   const searchParams  = useSearchParams();
@@ -16,8 +12,9 @@ export default function OrderConfirmationPage() {
   const pickupDate    = searchParams.get('date') ?? '';
   const pickupTime    = searchParams.get('time') ?? '';
 
-  // Stable order number across renders
-  const orderNumber = useRef(generateOrderNumber()).current;
+  // Read real orderId from ReviewStep redirect; fall back to a placeholder
+  const rawOrderId  = searchParams.get('orderId') ?? '';
+  const orderNumber = rawOrderId || `AMR-${Math.floor(100000 + Math.random() * 900000)}`;
 
   // Pickup-ready notification state (simulated after 6 seconds for demo)
   const [showPickupReady, setShowPickupReady] = useState(false);
@@ -133,7 +130,7 @@ export default function OrderConfirmationPage() {
 
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <Link
-            href="/account/orders"
+            href={isPickup ? '/account/orders' : `/track-order?orderId=${encodeURIComponent(orderNumber)}`}
             className="px-6 py-3 text-sm font-semibold border"
             style={{ borderColor: '#1A0A2E', color: '#1A0A2E' }}
           >

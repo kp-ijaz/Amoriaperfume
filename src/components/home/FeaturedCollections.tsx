@@ -3,39 +3,26 @@
 import { motion } from 'framer-motion';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useCollections } from '@/lib/hooks/useApiCollections';
 
-const featuredItems = [
-  {
-    id: 1,
-    label: "Editor's Pick",
-    title: 'Arabian Oud Masterpieces',
-    description:
-      'The rarest ouds from the finest agarwood forests — curated for the discerning connoisseur.',
-    image: '/images/collections/arabian-oud.jpg',
-    href: '/products?category=attar-oud',
-    large: true,
-  },
-  {
-    id: 2,
-    label: 'Gift Ready',
-    title: 'Luxury Gift Sets',
-    description: 'Luxuriously presented sets for every celebration.',
-    image: '/images/collections/gift-sets.jpg',
-    href: '/products?category=gift-sets',
-    large: false,
-  },
-  {
-    id: 3,
-    label: 'Exclusive',
-    title: 'Niche Signatures',
-    description: 'Artisan fragrances that transcend the ordinary.',
-    image: '/images/collections/niche.jpg',
-    href: '/products?category=niche-perfumes',
-    large: false,
-  },
-];
+const FALLBACK_LABELS = ["Editor's Pick", 'Gift Ready', 'Exclusive'];
 
 export function FeaturedCollections() {
+  const { data: collections = [] } = useCollections();
+
+  // Map API collections to display items
+  const featuredItems = collections.slice(0, 3).map((col, i) => ({
+    id: col._id,
+    label: FALLBACK_LABELS[i] ?? 'Collection',
+    title: col.name,
+    description: col.description,
+    image: col.heroImage,
+    href: `/collections/${col.slug}`,
+  }));
+
+  // If no collections yet, render nothing (avoid layout shift)
+  if (featuredItems.length === 0) return null;
+
   const [mainItem, ...sideItems] = featuredItems;
 
   return (

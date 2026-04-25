@@ -6,10 +6,10 @@ import { usePathname } from 'next/navigation';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@/lib/store';
 import { openCartDrawer, openMobileNav } from '@/lib/store/uiSlice';
-import { Heart, ShoppingBag, User, Search, Menu, ChevronDown, X, LogOut, Package, Settings } from 'lucide-react';
+import { Heart, ShoppingBag, User, Search, Menu, ChevronDown, X, LogOut, Package, Settings, Truck, Pencil } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { products } from '@/lib/data/products';
 import { formatCurrency } from '@/lib/utils/formatCurrency';
+import { useSearchProducts } from '@/lib/hooks/useApiProducts';
 import Image from 'next/image';
 import { CartDrawer } from '@/components/cart/CartDrawer';
 import { MobileNav } from './MobileNav';
@@ -31,14 +31,22 @@ export function Header() {
   const wishlistItems = useSelector((state: RootState) => state.wishlist.items);
   const [scrolled, setScrolled] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<typeof products>([]);
-  const [showSearch, setShowSearch] = useState(false);
+  const [debouncedQuery, setDebouncedQuery] = useState('');
   const [searchOpen, setSearchOpen] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
+  // Debounce the search query by 300 ms
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedQuery(searchQuery), 300);
+    return () => clearTimeout(t);
+  }, [searchQuery]);
+
+  const { data: searchResults = [] } = useSearchProducts(debouncedQuery);
+  const showSearch = debouncedQuery.length >= 2;
+
   const cartCount = cartItems.reduce((acc, item) => acc + item.quantity, 0);
-  const { isLoggedIn, user, signOut } = useAuth();
+  const { isLoggedIn, isGuest, guestInfo, user, signOut, clearGuest } = useAuth();
 
   const isActive = useCallback(
     (href: string) => {
@@ -64,29 +72,10 @@ export function Header() {
     };
   }, []);
 
-  useEffect(() => {
-    if (searchQuery.length >= 2) {
-      const q = searchQuery.toLowerCase();
-      const results = products
-        .filter(
-          (p) =>
-            p.name.toLowerCase().includes(q) ||
-            p.brand.toLowerCase().includes(q) ||
-            p.category.toLowerCase().includes(q)
-        )
-        .slice(0, 5);
-      setSearchResults(results);
-      setShowSearch(true);
-    } else {
-      setSearchResults([]);
-      setShowSearch(false);
-    }
-  }, [searchQuery]);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
-        setShowSearch(false);
         setSearchOpen(false);
         setSearchQuery('');
       }
@@ -214,7 +203,6 @@ export function Header() {
                         onChange={(e) => setSearchQuery(e.target.value)}
                         onKeyDown={(e) => {
                           if (e.key === 'Escape') {
-                            setShowSearch(false);
                             setSearchOpen(false);
                             setSearchQuery('');
                           }
@@ -223,7 +211,7 @@ export function Header() {
                         style={{ color: 'var(--color-amoria-text)' }}
                       />
                       <button
-                        onClick={() => { setSearchOpen(false); setSearchQuery(''); setShowSearch(false); }}
+                        onClick={() => { setSearchOpen(false); setSearchQuery(''); }}
                         className="p-1.5 hover:opacity-60 transition-opacity"
                       >
                         <X size={12} style={{ color: 'var(--color-amoria-text-muted)' }} />
@@ -270,7 +258,7 @@ export function Header() {
                             >
                               <Link
                                 href={`/products/${product.slug}`}
-                                onClick={() => { setShowSearch(false); setSearchQuery(''); setSearchOpen(false); }}
+                                onClick={() => { setSearchQuery(''); setSearchOpen(false); }}
                                 className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 transition-colors"
                               >
                                 <div className="w-10 h-10 relative flex-shrink-0 bg-gray-100 overflow-hidden">
@@ -298,7 +286,7 @@ export function Header() {
                           ))}
                           <Link
                             href={`/products?q=${searchQuery}`}
-                            onClick={() => { setShowSearch(false); setSearchQuery(''); setSearchOpen(false); }}
+                            onClick={() => { setSearchQuery(''); setSearchOpen(false); }}
                             className="block px-4 py-2.5 text-xs text-center border-t transition-colors hover:bg-gray-50"
                             style={{ color: 'var(--color-amoria-accent)', borderColor: 'var(--color-amoria-border)' }}
                           >
@@ -380,6 +368,9 @@ export function Header() {
                       <Link href="/account/orders" className="flex items-center gap-2.5 px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors" style={{ color: 'var(--color-amoria-text)' }}>
                         <Package size={14} style={{ color: '#A89880' }} /> My Orders
                       </Link>
+                      <Link href="/track-order" className="flex items-center gap-2.5 px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors" style={{ color: 'var(--color-amoria-text)' }}>
+                        <Truck size={14} style={{ color: '#A89880' }} /> Track Order
+                      </Link>
                       <Link href="/account/wishlist" className="flex items-center gap-2.5 px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors" style={{ color: 'var(--color-amoria-text)' }}>
                         <Heart size={14} style={{ color: '#A89880' }} /> My Wishlist
                       </Link>
@@ -397,17 +388,53 @@ export function Header() {
                     </>
                   ) : (
                     <>
-                      <Link href="/login" className="block px-4 py-2.5 text-sm font-semibold hover:bg-gray-50 transition-colors" style={{ color: '#1A0A2E' }}>
-                        Sign In
+                      {/* Guest profile card — shown when they've checked out as guest before */}
+                      {isGuest && guestInfo ? (
+                        <div className="px-4 py-3 border-b" style={{ borderColor: 'var(--color-amoria-border)', backgroundColor: '#FAF8F5' }}>
+                          <div className="flex items-center gap-2 mb-1">
+                            <div className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0"
+                              style={{ backgroundColor: 'rgba(201,168,76,0.2)', color: '#C9A84C' }}>
+                              {guestInfo.name.charAt(0).toUpperCase()}
+                            </div>
+                            <p className="text-sm font-semibold truncate" style={{ color: '#1A0A2E' }}>{guestInfo.name}</p>
+                          </div>
+                          <p className="text-[11px] truncate mb-2" style={{ color: '#A89880' }}>{guestInfo.email}</p>
+                          <div className="flex gap-2">
+                            <Link href="/checkout?editGuest=1" className="flex items-center gap-1 text-[11px] font-semibold px-2 py-1 transition-colors hover:bg-gray-100"
+                              style={{ color: '#1A0A2E', border: '1px solid #E8E3DC' }}>
+                              <Pencil size={10} /> Edit Details
+                            </Link>
+                            <button onClick={clearGuest}
+                              className="text-[11px] font-semibold px-2 py-1 transition-colors hover:bg-red-50"
+                              style={{ color: '#ef4444', border: '1px solid #fecaca' }}>
+                              Clear
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          <Link href="/login" className="block px-4 py-2.5 text-sm font-semibold hover:bg-gray-50 transition-colors border-b" style={{ color: '#1A0A2E', borderColor: 'var(--color-amoria-border)' }}>
+                            Sign In
+                          </Link>
+                          <Link href="/register" className="block px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors border-b" style={{ color: 'var(--color-amoria-text)', borderColor: 'var(--color-amoria-border)' }}>
+                            Create Account
+                          </Link>
+                        </>
+                      )}
+                      <Link href="/account/orders" className="flex items-center gap-2.5 px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors" style={{ color: 'var(--color-amoria-text)' }}>
+                        <Package size={14} style={{ color: '#A89880' }} /> My Orders
                       </Link>
-                      <Link href="/register" className="block px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors" style={{ color: 'var(--color-amoria-text)' }}>
-                        Create Account
+                      <Link href="/track-order" className="flex items-center gap-2.5 px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors border-b" style={{ color: 'var(--color-amoria-text)', borderColor: 'var(--color-amoria-border)' }}>
+                        <Truck size={14} style={{ color: '#C9A84C' }} />
+                        <span>Track Order</span>
                       </Link>
-                      <div className="border-t px-4 py-2.5" style={{ borderColor: 'var(--color-amoria-border)' }}>
-                        <Link href="/checkout" className="block text-xs font-semibold" style={{ color: '#C9A84C' }}>
-                          → Guest Checkout
-                        </Link>
-                      </div>
+                      {!isGuest && (
+                        <div className="px-4 py-2.5">
+                          <Link href="/checkout" className="block text-xs font-semibold" style={{ color: '#C9A84C' }}>
+                            → Guest Checkout
+                          </Link>
+                        </div>
+                      )}
                     </>
                   )}
                 </div>
