@@ -3,10 +3,11 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Truck, Store, MapPin, Clock, CheckCircle2, CalendarDays, Info } from 'lucide-react';
 import { Address } from '@/types/user';
 import { useAuth } from '@/lib/hooks/useAuth';
+import { useCreateUserAddress, useUserAddresses } from '@/lib/hooks/useApiAddresses';
 
 const schema = z.object({
   fullName:  z.string().min(2, 'Name is required'),
@@ -18,11 +19,6 @@ const schema = z.object({
   isDefault: z.boolean().optional(),
 });
 type FormData = z.infer<typeof schema>;
-
-const savedAddresses: Address[] = [
-  { id: 'a1', fullName: 'Ahmed Al Rashid', phone: '+971501234567', street: 'Villa 12, Al Barsha 1',       area: 'Al Barsha',    emirate: 'Dubai', isDefault: true },
-  { id: 'a2', fullName: 'Ahmed Al Rashid', phone: '+971501234567', street: 'Apartment 504, Marina Tower', area: 'Dubai Marina', emirate: 'Dubai', isDefault: false },
-];
 
 const emirates = ['Dubai','Abu Dhabi','Sharjah','Ajman','Ras Al Khaimah','Fujairah','Umm Al Quwain'];
 
@@ -64,8 +60,10 @@ interface AddressStepProps {
 
 export function AddressStep({ onNext }: AddressStepProps) {
   const { isLoggedIn }                        = useAuth();
+  const { data: savedAddresses = [] }         = useUserAddresses();
+  const createAddress                          = useCreateUserAddress();
   const [method, setMethod]                   = useState<FulfillmentMethod>('delivery');
-  const [selectedAddress, setSelectedAddress] = useState<string>(savedAddresses[0].id);
+  const [selectedAddress, setSelectedAddress] = useState<string>('');
   const [showNewForm, setShowNewForm]         = useState(false);
 
   // Pickup slot state
@@ -76,6 +74,13 @@ export function AddressStep({ onNext }: AddressStepProps) {
   const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
   });
+
+  useEffect(() => {
+    if (savedAddresses.length > 0 && !selectedAddress) {
+      const defaultAddress = savedAddresses.find((addr) => addr.isDefault) ?? savedAddresses[0];
+      setSelectedAddress(defaultAddress.id);
+    }
+  }, [savedAddresses, selectedAddress]);
 
   // Returns the slot start time as a decimal hour (e.g. "2:00 PM" → 14.0)
   function slotStartHour(slot: string): number {
@@ -119,8 +124,23 @@ export function AddressStep({ onNext }: AddressStepProps) {
     if (addr) onNext(addr, 'delivery');
   }
 
-  function onSubmit(data: FormData) {
+  async function onSubmit(data: FormData) {
     const newAddr: Address = { id: 'new', ...data, isDefault: data.isDefault ?? false };
+    if (isLoggedIn) {
+      try {
+        await createAddress.mutateAsync({
+          fullName: data.fullName,
+          phone: data.phone,
+          street: data.street,
+          area: data.area,
+          emirate: data.emirate,
+          postcode: data.postcode,
+          isDefault: data.isDefault ?? false,
+        });
+      } catch {
+        return;
+      }
+    }
     onNext(newAddr, 'delivery');
   }
 
@@ -165,7 +185,7 @@ export function AddressStep({ onNext }: AddressStepProps) {
       {/* ── DELIVERY ── */}
       {method === 'delivery' && (
         <>
-          {isLoggedIn && !showNewForm && (
+          {isLoggedIn && savedAddresses.length > 0 && !showNewForm && (
             <div className="space-y-3 mb-5">
               <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: '#A89880' }}>Saved Addresses</p>
               {savedAddresses.map((addr) => (
@@ -189,7 +209,7 @@ export function AddressStep({ onNext }: AddressStepProps) {
             </div>
           )}
 
-          {(showNewForm || !isLoggedIn) && (
+          {(showNewForm || !isLoggedIn || savedAddresses.length === 0) && (
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 mb-5">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
@@ -244,7 +264,7 @@ export function AddressStep({ onNext }: AddressStepProps) {
             </form>
           )}
 
-          {isLoggedIn && !showNewForm && (
+          {isLoggedIn && savedAddresses.length > 0 && !showNewForm && (
             <button onClick={handleContinue} className="w-full py-3.5 text-sm font-bold tracking-wide" style={{ backgroundColor: '#1A0A2E', color: '#C9A84C' }}>
               Continue to Payment →
             </button>

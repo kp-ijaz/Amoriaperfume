@@ -5,7 +5,13 @@ import { useRouter } from 'next/navigation';
 import { RootState } from '@/lib/store';
 import { login, logout, setGuest, clearGuest, AuthUser, GuestInfo } from '@/lib/store/authSlice';
 import { clearCart } from '@/lib/store/cartSlice';
-import { apiLogin, setStoredToken, clearStoredToken } from '@/lib/api/client';
+import {
+  apiLogin,
+  apiRegister,
+  setStoredToken,
+  clearStoredToken,
+  clearGuestOrdersToken,
+} from '@/lib/api/client';
 
 export function useAuth() {
   const dispatch = useDispatch();
@@ -33,9 +39,6 @@ export function useAuth() {
     return null;
   }
 
-  /** Register — currently the API has admin-only login; register saves locally
-   *  and falls back to the admin API login for demo purposes.
-   *  TODO: Replace when a customer register endpoint is available. */
   async function register(data: {
     firstName: string;
     lastName: string;
@@ -43,30 +46,20 @@ export function useAuth() {
     phone: string;
     password: string;
   }): Promise<string | null> {
-    // Attempt API login in case admin credentials are supplied
-    const res = await apiLogin(data.email, data.password);
-    if (res.success && res.data) {
-      const { user: apiUser, accessToken } = res.data;
-      const authUser: AuthUser = {
-        id: apiUser._id,
-        firstName: data.firstName,
-        lastName: data.lastName,
-        email: apiUser.email,
-        phone: data.phone,
-      };
-      setStoredToken(accessToken);
-      dispatch(login({ user: authUser, token: accessToken }));
-      return null;
+    const res = await apiRegister(data);
+    if (!res.success || !res.data) {
+      return res.message ?? 'Unable to register. Please try again.';
     }
-    // Fallback: store locally so the form appears to work for demo
+    const { user: apiUser, accessToken } = res.data;
     const authUser: AuthUser = {
-      id: `local_${Date.now()}`,
+      id: apiUser._id,
       firstName: data.firstName,
       lastName: data.lastName,
-      email: data.email,
+      email: apiUser.email,
       phone: data.phone,
     };
-    dispatch(login({ user: authUser, token: '' }));
+    setStoredToken(accessToken);
+    dispatch(login({ user: authUser, token: accessToken }));
     return null;
   }
 
@@ -78,8 +71,35 @@ export function useAuth() {
   /** Sign out and go home. */
   function signOut() {
     clearStoredToken();
+    clearGuestOrdersToken();
     dispatch(logout());
     dispatch(clearCart());
+    if (typeof document !== 'undefined') {
+      const cookies = document.cookie ? document.cookie.split(';') : [];
+      for (const cookie of cookies) {
+        const eqIdx = cookie.indexOf('=');
+        const rawName = eqIdx > -1 ? cookie.slice(0, eqIdx) : cookie;
+        const name = rawName.trim();
+        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
+      }
+    }
+    router.push('/');
+  }
+
+  function clearGuestSession() {
+    clearStoredToken();
+    clearGuestOrdersToken();
+    dispatch(clearGuest());
+    dispatch(clearCart());
+    if (typeof document !== 'undefined') {
+      const cookies = document.cookie ? document.cookie.split(';') : [];
+      for (const cookie of cookies) {
+        const eqIdx = cookie.indexOf('=');
+        const rawName = eqIdx > -1 ? cookie.slice(0, eqIdx) : cookie;
+        const name = rawName.trim();
+        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
+      }
+    }
     router.push('/');
   }
 
@@ -94,6 +114,6 @@ export function useAuth() {
     register,
     continueAsGuest,
     signOut,
-    clearGuest: () => dispatch(clearGuest()),
+    clearGuest: clearGuestSession,
   };
 }

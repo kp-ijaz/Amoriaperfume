@@ -13,6 +13,7 @@ import {
   ShippingQuoteRequest,
   ShippingQuoteResponse,
 } from './types';
+import { Address } from '@/types/user';
 
 export const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL;
 if (!API_BASE) {
@@ -77,9 +78,22 @@ export async function apiLogin(
   email: string,
   password: string
 ): Promise<ApiResponse<ApiLoginResponse>> {
-  return apiFetch('/api/admin/login', {
+  return apiFetch('/api/auth/login', {
     method: 'POST',
     body: JSON.stringify({ email, password }),
+  });
+}
+
+export async function apiRegister(data: {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  password: string;
+}): Promise<ApiResponse<ApiLoginResponse>> {
+  return apiFetch('/api/auth/register', {
+    method: 'POST',
+    body: JSON.stringify(data),
   });
 }
 
@@ -248,4 +262,29 @@ export async function apiGetShippingQuote(
     method: 'POST',
     body: JSON.stringify(data),
   });
+}
+
+// ─── User Addresses ────────────────────────────────────────────────────────────
+
+export async function apiListUserAddresses(token?: string | null): Promise<ApiResponse<Address[]>> {
+  return apiFetch('/api/user-addresses', {}, token);
+}
+
+export async function apiCreateUserAddress(
+  data: Omit<Address, 'id'>,
+  token?: string | null
+): Promise<ApiResponse<Address[]>> {
+  return apiFetch('/api/user-addresses', { method: 'POST', body: JSON.stringify(data) }, token);
+}
+
+export async function apiUpdateUserAddress(
+  id: string,
+  data: Partial<Omit<Address, 'id'>>,
+  token?: string | null
+): Promise<ApiResponse<Address[]>> {
+  return apiFetch(`/api/user-addresses/${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify(data) }, token);
+}
+
+export async function apiDeleteUserAddress(id: string, token?: string | null): Promise<ApiResponse<Address[]>> {
+  return apiFetch(`/api/user-addresses/${encodeURIComponent(id)}`, { method: 'DELETE' }, token);
 }
