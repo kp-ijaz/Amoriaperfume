@@ -6,6 +6,8 @@ export interface ProductImage {
 
 export interface ProductVariant {
   id: string;
+  variantId?: string;
+  sizeVariantId?: string;
   sizeMl: number;
   concentration: string;
   price: number;

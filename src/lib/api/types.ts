@@ -25,7 +25,7 @@ export interface ApiSizeVariant {
   sku: string;
   discount: number;
   discountType: 'percentage' | 'fixed';
-  finalPrice: number;   // in fils (÷100 → AED)
+  finalPrice: number;   // in AED
   outOfStock: boolean;
 }
 
@@ -39,6 +39,7 @@ export interface ApiProductVariant {
 
 export interface ApiProduct {
   _id: string;
+  slug: string;
   name: string;
   sku: string;
   brand: {
@@ -58,7 +59,7 @@ export interface ApiProduct {
   careGuide?: string;
   images: string[];
   thumbnail: string[];
-  mrp: number;          // in fils (÷100 → AED)
+  mrp: number;          // in AED
   freeShipping: boolean;
   refundable: boolean;
   returnable: boolean;
@@ -158,8 +159,8 @@ export interface ApiOrderItem {
   productName: string;
   brand: string;
   image: string;
-  price: number;      // in fils
-  totalPrice: number; // in fils
+  price: number;      // in AED
+  totalPrice: number; // in AED
 }
 
 export interface ApiOrder {
@@ -172,7 +173,7 @@ export interface ApiOrder {
     email: string;
     phone: string;
   };
-  shippingAddress: {
+  shippingAddress?: {
     fullAddress: string;
     city: string;
     state: string;
@@ -209,12 +210,29 @@ export interface ApiPromotion {
   code: string;
   kind: 'percent_off' | 'fixed_off' | 'free_shipping';
   value: number;
-  minSubtotal: number; // in fils
+  minSubtotal: number; // in AED
   active: boolean;
   startsAt: string;
   endsAt: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface ShippingQuoteRequest {
+  country: string;
+  subtotal: number;
+}
+
+export interface ShippingQuoteResponse {
+  shippingCharge: number;
+  freeShippingApplied: boolean;
+  matchedRule: {
+    _id: string;
+    name: string;
+    zone: 'AE' | 'GCC' | 'INTL' | 'OTHER';
+    baseRate: number;
+    freeOverSubtotal: number | null;
+  } | null;
 }
 
 // ─── Auth ────────────────────────────────────────────────────────────────────
@@ -238,12 +256,14 @@ export interface ApiLoginResponse {
 // ─── Create Order request ─────────────────────────────────────────────────────
 
 export interface CreateOrderRequest {
+  fulfillmentType?: 'DELIVERY' | 'PICKUP';
   customerDetails: {
     name: string;
     email: string;
-    phone: string;
+    phone?: string;
+    mobile?: string;
   };
-  shippingAddress: {
+  shippingAddress?: {
     fullAddress: string;
     city: string;
     state: string;
@@ -253,13 +273,19 @@ export interface CreateOrderRequest {
   items: {
     productId: string;
     variantId: string;
-    sizeId: string;
+    sizeVariantId: string;
     quantity: number;
-    price: number; // in fils
   }[];
-  paymentMethod: 'COD' | 'ONLINE';
-  subtotal: number;   // in fils
-  totalAmount: number; // in fils
-  couponCode?: string;
-  discount?: number;
+  paymentMethod?: 'COD' | 'ONLINE';
+  pricing?: {
+    discount?: number;
+    shippingCharge?: number;
+    tax?: number;
+  };
+  pickupDetails?: {
+    storeName: string;
+    storeAddress: string;
+    pickupSlot?: string;
+    pickupNote?: string;
+  };
 }

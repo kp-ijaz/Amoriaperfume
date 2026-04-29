@@ -16,13 +16,16 @@ function IGIcon({ size = 20 }: { size?: number }) {
 // NOTE: Replace these with real post image URLs from the Instagram Basic Display API
 // using your @amoriaperfumeofficial access token for live feed.
 const instagramImages = [
-  { src: 'https://images.unsplash.com/photo-1557053378-d3e8-4d49-a89f-1c3e7a2d6e1f?w=600&q=80', alt: 'Amoria oud collection' },
+  { src: 'https://images.unsplash.com/photo-1541643600914-78b084683702?w=600&q=80', alt: 'Amoria oud collection' },
   { src: 'https://images.unsplash.com/photo-1563170351-be82bc888aa4?w=600&q=80',                alt: 'Luxury perfume bottles' },
-  { src: 'https://images.unsplash.com/photo-1585386959984-a4155224a1ad?w=600&q=80',             alt: 'Arabian fragrance' },
+  { src: 'https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?w=600&q=80',             alt: 'Arabian fragrance' },
   { src: 'https://images.unsplash.com/photo-1541643600914-78b084683702?w=600&q=80',             alt: 'Perfume close-up' },
   { src: 'https://images.unsplash.com/photo-1588405748880-12d1d2a59f75?w=600&q=80',             alt: 'Gift set collection' },
   { src: 'https://images.unsplash.com/photo-1616096142563-ce4f6a1a7c79?w=600&q=80',             alt: 'Premium fragrance' },
 ];
+
+const hasNonEmptySrc = (value: string | undefined | null): value is string =>
+  typeof value === 'string' && value.trim().length > 0;
 
 export function InstagramFeed() {
   return (
@@ -73,13 +76,22 @@ export function InstagramFeed() {
               viewport={{ once: true }}
               transition={{ duration: 0.45, delay: i * 0.06 }}
             >
-              <Image
-                src={img.src}
-                alt={img.alt}
-                fill
-                className="object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
-                unoptimized
-              />
+              {hasNonEmptySrc(img.src) ? (
+                <Image
+                  src={img.src}
+                  alt={img.alt}
+                  fill
+                  className="object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
+                  unoptimized
+                />
+              ) : (
+                <div
+                  className="absolute inset-0 flex items-center justify-center text-xs uppercase tracking-wider"
+                  style={{ backgroundColor: '#F5F2EE', color: '#A89880' }}
+                >
+                  {img.alt}
+                </div>
+              )}
               {/* Hover overlay */}
               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/60 transition-colors duration-300 flex flex-col items-center justify-center">
                 <div className="opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-3 group-hover:translate-y-0 text-center text-white">

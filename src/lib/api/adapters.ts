@@ -2,8 +2,7 @@
  * Adapters: transform raw API responses into the internal types
  * used throughout the Amoria frontend.
  *
- * Key conversion: API prices are stored in fils (smallest unit).
- * Divide by 100 to get AED.
+ * API prices are treated as AED values.
  */
 
 import { Product, ProductVariant, ProductImage, Category, Brand, Review } from '@/types/product';
@@ -18,8 +17,8 @@ import {
 
 // ─── Price ────────────────────────────────────────────────────────────────────
 
-export function filsToAed(fils: number): number {
-  return parseFloat((fils / 100).toFixed(2));
+export function toAed(value: number): number {
+  return parseFloat(Number(value ?? 0).toFixed(2));
 }
 
 // ─── Product Variant ──────────────────────────────────────────────────────────
@@ -31,7 +30,7 @@ function adaptSizeVariant(
 ): ProductVariant {
   // Parse size: "50 ml" → 50
   const sizeMl = parseInt(size.size, 10) || 0;
-  const price = filsToAed(size.finalPrice);
+  const price = toAed(size.finalPrice);
 
   // Treat products with discount > 0 as on sale
   const hasDiscount = size.discount > 0;
@@ -41,6 +40,8 @@ function adaptSizeVariant(
 
   return {
     id: size._id,
+    variantId: apiVariant._id,
+    sizeVariantId: size._id,
     sizeMl,
     concentration,
     price: hasDiscount ? mrpPrice : price,
@@ -78,7 +79,7 @@ export function adaptProduct(api: ApiProduct): Product {
 
   return {
     id: api._id,
-    slug: api._id,           // use _id as URL slug
+    slug: api.slug || api._id,
     name: api.name,
     brand: api.brand?.name ?? '',
     category: api.category?.name ?? '',

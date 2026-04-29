@@ -21,7 +21,11 @@ const FREE_SHIPPING_THRESHOLD = 200;
 const SHIPPING_COST = 25;
 const COD_FEE = 10;
 
-export function useCart() {
+interface UseCartOptions {
+  shippingChargeOverride?: number | null;
+}
+
+export function useCart(options: UseCartOptions = {}) {
   const dispatch = useDispatch<AppDispatch>();
   const { items, coupon, savedItems } = useSelector((state: RootState) => state.cart);
 
@@ -36,8 +40,19 @@ export function useCart() {
       : 0;
 
   const afterCoupon = subtotal - couponDiscount;
-  const freeShipping = coupon?.type === 'freeshipping' || afterCoupon >= FREE_SHIPPING_THRESHOLD;
-  const shippingCost = freeShipping ? 0 : items.length > 0 ? SHIPPING_COST : 0;
+  const fallbackFreeShipping = coupon?.type === 'freeshipping' || afterCoupon >= FREE_SHIPPING_THRESHOLD;
+  const hasExternalShipping = typeof options.shippingChargeOverride === 'number';
+  const normalizedExternalShipping = hasExternalShipping
+    ? Math.max(0, Number(options.shippingChargeOverride) || 0)
+    : 0;
+  const freeShipping = hasExternalShipping ? normalizedExternalShipping === 0 : fallbackFreeShipping;
+  const shippingCost = hasExternalShipping
+    ? normalizedExternalShipping
+    : freeShipping
+      ? 0
+      : items.length > 0
+        ? SHIPPING_COST
+        : 0;
   const vat = calculateVAT(afterCoupon + shippingCost);
   const total = afterCoupon + shippingCost + vat;
   const itemCount = items.reduce((acc, item) => acc + item.quantity, 0);
@@ -47,6 +62,7 @@ export function useCart() {
     savedItems,
     coupon,
     subtotal,
+    afterCoupon,
     couponDiscount,
     shippingCost,
     vat,

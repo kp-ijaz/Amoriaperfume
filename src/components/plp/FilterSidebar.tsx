@@ -1,6 +1,6 @@
 'use client';
 
-import { ProductFilters } from '@/lib/hooks/useProducts';
+import { AvailableProductFilters, ProductFilters } from '@/lib/hooks/useProducts';
 import {
   Accordion,
   AccordionContent,
@@ -12,22 +12,17 @@ import { Label } from '@/components/ui/label';
 
 interface FilterSidebarProps {
   filters: ProductFilters;
+  availableFilters: AvailableProductFilters;
   onFilterChange: (key: keyof ProductFilters, value: ProductFilters[typeof key]) => void;
   onClearAll: () => void;
 }
-
-const categoryOptions = ['Attar & Oud', 'Bakhoor', 'Gift Sets', 'Niche', 'Premium Signature', 'Inspired Collections'];
-const brandOptions = ['Swiss Arabian', 'Ajmal', 'Rasasi', 'Lattafa', 'Armaf'];
-const genderOptions = [{ value: 'men', label: "Men's" }, { value: 'women', label: "Women's" }, { value: 'unisex', label: 'Unisex' }];
-const concentrationOptions = ['EDP', 'EDT', 'Parfum', 'Attar', 'Bakhoor'];
-const fragranceFamilyOptions = ['Woody Oud', 'Floral Oud', 'Oriental Spicy', 'Fresh Floral', 'Amber Woody', 'Musk', 'Citrus'];
 
 function CheckboxGroup<T extends string>({
   options,
   selected,
   onChange,
 }: {
-  options: { value: T; label: string }[];
+  options: { value: T; label: string; count: number }[];
   selected?: T[];
   onChange: (vals: T[]) => void;
 }) {
@@ -47,10 +42,14 @@ function CheckboxGroup<T extends string>({
           <Checkbox
             id={opt.value}
             checked={(selected ?? []).includes(opt.value)}
+            disabled={opt.count === 0}
             onCheckedChange={() => toggle(opt.value)}
           />
-          <Label htmlFor={opt.value} className="text-sm cursor-pointer font-normal">
-            {opt.label}
+          <Label
+            htmlFor={opt.value}
+            className={`text-sm font-normal ${opt.count === 0 ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
+          >
+            {opt.label} <span className="ml-1 text-xs text-gray-400">({opt.count})</span>
           </Label>
         </div>
       ))}
@@ -58,7 +57,7 @@ function CheckboxGroup<T extends string>({
   );
 }
 
-export function FilterSidebar({ filters, onFilterChange, onClearAll }: FilterSidebarProps) {
+export function FilterSidebar({ filters, availableFilters, onFilterChange, onClearAll }: FilterSidebarProps) {
   const activeCount = Object.values(filters).filter((v) =>
     Array.isArray(v) ? v.length > 0 : v !== undefined && v !== false
   ).length;
@@ -85,7 +84,7 @@ export function FilterSidebar({ filters, onFilterChange, onClearAll }: FilterSid
           <AccordionTrigger className="text-sm py-3">Category</AccordionTrigger>
           <AccordionContent>
             <CheckboxGroup
-              options={categoryOptions.map((c) => ({ value: c, label: c }))}
+              options={availableFilters.categories}
               selected={filters.categories as string[]}
               onChange={(v) => onFilterChange('categories', v)}
             />
@@ -96,7 +95,7 @@ export function FilterSidebar({ filters, onFilterChange, onClearAll }: FilterSid
           <AccordionTrigger className="text-sm py-3">Brand</AccordionTrigger>
           <AccordionContent>
             <CheckboxGroup
-              options={brandOptions.map((b) => ({ value: b, label: b }))}
+              options={availableFilters.brands}
               selected={filters.brands as string[]}
               onChange={(v) => onFilterChange('brands', v)}
             />
@@ -107,7 +106,7 @@ export function FilterSidebar({ filters, onFilterChange, onClearAll }: FilterSid
           <AccordionTrigger className="text-sm py-3">Gender</AccordionTrigger>
           <AccordionContent>
             <CheckboxGroup
-              options={genderOptions}
+              options={availableFilters.genders}
               selected={filters.genders as string[]}
               onChange={(v) => onFilterChange('genders', v as ('men' | 'women' | 'unisex')[])}
             />
@@ -118,7 +117,7 @@ export function FilterSidebar({ filters, onFilterChange, onClearAll }: FilterSid
           <AccordionTrigger className="text-sm py-3">Fragrance Family</AccordionTrigger>
           <AccordionContent>
             <CheckboxGroup
-              options={fragranceFamilyOptions.map((f) => ({ value: f, label: f }))}
+              options={availableFilters.fragranceFamilies}
               selected={filters.fragranceFamilies as string[]}
               onChange={(v) => onFilterChange('fragranceFamilies', v)}
             />
@@ -129,7 +128,7 @@ export function FilterSidebar({ filters, onFilterChange, onClearAll }: FilterSid
           <AccordionTrigger className="text-sm py-3">Concentration</AccordionTrigger>
           <AccordionContent>
             <CheckboxGroup
-              options={concentrationOptions.map((c) => ({ value: c, label: c }))}
+              options={availableFilters.concentrations}
               selected={filters.concentrations as string[]}
               onChange={(v) => onFilterChange('concentrations', v)}
             />

@@ -5,7 +5,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { ShoppingBag, Heart, CheckCircle, Minus, Plus, RotateCcw, Shield, Truck, Gift } from 'lucide-react';
 import { toast } from 'sonner';
-import { useApiProduct, useProductReviews, useProductsByLimit } from '@/lib/hooks/useApiProducts';
+import { useApiProductBySlug, useProductReviews, useProductsByLimit } from '@/lib/hooks/useApiProducts';
 import { ProductImageGallery } from '@/components/product/ProductImageGallery';
 import { ProductVariantSelector } from '@/components/product/ProductVariantSelector';
 import { FragranceNotes } from '@/components/product/FragranceNotes';
@@ -25,8 +25,7 @@ import { ProductVariant } from '@/types/product';
 export default function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params);
 
-  // slug is the MongoDB _id for API products
-  const { data: product, isLoading, error } = useApiProduct(slug);
+  const { data: product, isLoading, error } = useApiProductBySlug(slug);
 
   const { addItem } = useCart();
   const { isInWishlist, toggleWishlist } = useWishlist();

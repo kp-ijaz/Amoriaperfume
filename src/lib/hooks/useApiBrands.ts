@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { apiGetBrands, apiGetBrand } from '@/lib/api/client';
+import { apiGetBrands, apiGetBrand, apiGetBrandBySlug } from '@/lib/api/client';
 import { adaptBrands, adaptBrand } from '@/lib/api/adapters';
 
 export function useBrands() {
@@ -29,15 +29,13 @@ export function useBrand(id: string) {
   });
 }
 
-/** Find a brand by its slug from the full brands list. */
 export function useBrandBySlug(slug: string) {
   return useQuery({
     queryKey: ['brands', 'slug', slug],
     queryFn: async () => {
-      const res = await apiGetBrands();
-      if (!res.success || !Array.isArray(res.data)) return null;
-      const found = res.data.find((b) => b.slug === slug);
-      return found ? adaptBrand(found) : null;
+      const res = await apiGetBrandBySlug(slug);
+      if (!res.success || !res.data) return null;
+      return adaptBrand(res.data);
     },
     enabled: !!slug,
     staleTime: 15 * 60 * 1000,

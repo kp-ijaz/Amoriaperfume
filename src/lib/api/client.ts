@@ -10,16 +10,16 @@ import {
   ApiPromotion,
   ApiLoginResponse,
   CreateOrderRequest,
+  ShippingQuoteRequest,
+  ShippingQuoteResponse,
 } from './types';
 
-export const API_BASE = 'https://amoria-backend.onrender.com';
+export const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL;
+if (!API_BASE) {
+  throw new Error('NEXT_PUBLIC_API_URL is not set');
+}
 
 const TOKEN_KEY = 'amoria_access_token';
-
-// Admin credentials used to auto-authenticate all API calls that require auth.
-// This includes collections, orders, and promotions.
-const ADMIN_EMAIL    = 'admin@amoria.com';
-const ADMIN_PASSWORD = 'Admin@1234';
 
 export function getStoredToken(): string | null {
   if (typeof window === 'undefined') return null;
@@ -36,52 +36,18 @@ export function clearStoredToken(): void {
   localStorage.removeItem(TOKEN_KEY);
 }
 
-// Single in-flight promise so concurrent auth-gated calls don't race
-let _tokenRefreshPromise: Promise<string | null> | null = null;
-
-async function ensureToken(): Promise<string | null> {
-  const existing = getStoredToken();
-  if (existing) return existing;
-
-  if (!_tokenRefreshPromise) {
-    _tokenRefreshPromise = (async () => {
-      try {
-        const res = await fetch(`${API_BASE}/api/admin/login`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: ADMIN_EMAIL, password: ADMIN_PASSWORD }),
-        });
-        const json = await res.json();
-        if (json?.success && json?.data?.accessToken) {
-          setStoredToken(json.data.accessToken);
-          return json.data.accessToken as string;
-        }
-      } catch {
-        // Silently ignore login errors — callers handle missing auth gracefully
-      }
-      return null;
-    })().finally(() => {
-      _tokenRefreshPromise = null;
-    });
-  }
-
-  return _tokenRefreshPromise;
-}
-
 async function apiFetch<T>(
   path: string,
   options: RequestInit = {},
-  withAuth = false
+  token?: string | null
 ): Promise<T> {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...(options.headers as Record<string, string>),
   };
 
-  if (withAuth) {
-    const token = await ensureToken();
-    if (token) headers['Authorization'] = `Bearer ${token}`;
-  }
+  const authToken = token ?? getStoredToken();
+  if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
 
   const res = await fetch(`${API_BASE}${path}`, { ...options, headers });
   const json = await res.json();
@@ -106,13 +72,16 @@ export interface ProductsParams {
   page?: number;
   limit?: number;
   search?: string;
-  category?: string;  // MongoDB _id
-  brand?: string;     // MongoDB _id
+  category?: string;
+  categorySlug?: string;
+  brand?: string;
+  brandSlug?: string;
   featured?: boolean;
   sort?: 'price_asc' | 'price_desc' | 'newest' | 'rating';
   gender?: string;
   fragranceFamily?: string;
   concentration?: string;
+  collection?: string; // collection slug or _id
 }
 
 export async function apiGetProducts(
@@ -123,18 +92,25 @@ export async function apiGetProducts(
   if (params.limit)           qs.set('limit', String(params.limit));
   if (params.search)          qs.set('search', params.search);
   if (params.category)        qs.set('category', params.category);
+  if (params.categorySlug)    qs.set('categorySlug', params.categorySlug);
   if (params.brand)           qs.set('brand', params.brand);
+  if (params.brandSlug)       qs.set('brandSlug', params.brandSlug);
   if (params.featured != null) qs.set('featured', String(params.featured));
   if (params.sort)            qs.set('sort', params.sort);
   if (params.gender)          qs.set('gender', params.gender);
   if (params.fragranceFamily) qs.set('fragranceFamily', params.fragranceFamily);
   if (params.concentration)   qs.set('concentration', params.concentration);
+  if (params.collection)      qs.set('collection', params.collection);
   const query = qs.toString() ? `?${qs.toString()}` : '';
   return apiFetch(`/api/products${query}`);
 }
 
 export async function apiGetProduct(id: string): Promise<ApiResponse<ApiProduct>> {
   return apiFetch(`/api/products/${id}`);
+}
+
+export async function apiGetProductBySlug(slug: string): Promise<ApiResponse<ApiProduct>> {
+  return apiFetch(`/api/products/slug/${encodeURIComponent(slug)}`);
 }
 
 export async function apiGetProductReviews(
@@ -145,13 +121,10 @@ export async function apiGetProductReviews(
 
 export async function apiCreateProductReview(
   productId: string,
-  data: { rating: number; comment: string }
+  data: { rating: number; comment: string },
+  token?: string | null
 ): Promise<ApiResponse<ApiReview>> {
-  return apiFetch(
-    `/api/products/${productId}/reviews`,
-    { method: 'POST', body: JSON.stringify(data) },
-    true
-  );
+  return apiFetch(`/api/products/${productId}/reviews`, { method: 'POST', body: JSON.stringify(data) }, token);
 }
 
 // ─── Categories ───────────────────────────────────────────────────────────────
@@ -159,6 +132,10 @@ export async function apiCreateProductReview(
 export async function apiGetCategories(slug?: string): Promise<ApiResponse<PaginatedData<ApiCategory>>> {
   const query = slug ? `?slug=${encodeURIComponent(slug)}` : '';
   return apiFetch(`/api/categories${query}`);
+}
+
+export async function apiGetCategoryBySlug(slug: string): Promise<ApiResponse<ApiCategory>> {
+  return apiFetch(`/api/categories/slug/${encodeURIComponent(slug)}`);
 }
 
 // ─── Brands ───────────────────────────────────────────────────────────────────
@@ -171,27 +148,66 @@ export async function apiGetBrand(id: string): Promise<ApiResponse<ApiBrand>> {
   return apiFetch(`/api/brands/${id}`);
 }
 
+export async function apiGetBrandBySlug(slug: string): Promise<ApiResponse<ApiBrand>> {
+  return apiFetch(`/api/brands/slug/${encodeURIComponent(slug)}`);
+}
+
 // ─── Collections ──────────────────────────────────────────────────────────────
 
 export async function apiGetCollections(slug?: string): Promise<ApiResponse<ApiCollection[]>> {
-  const query = slug ? `?slug=${encodeURIComponent(slug)}` : '';
-  return apiFetch(`/api/collections${query}`, {}, true);
+  const res = await apiFetch<ApiResponse<ApiCollection[]>>('/api/collections/public');
+  if (!slug || !Array.isArray(res.data)) return res;
+  return {
+    ...res,
+    data: res.data.filter((collection) => collection.slug === slug),
+  };
 }
 
 // ─── Orders ───────────────────────────────────────────────────────────────────
 
-export async function apiGetOrders(): Promise<ApiResponse<ApiOrder[]>> {
-  return apiFetch('/api/orders', {}, true);
+export async function apiGetOrders(token?: string | null): Promise<ApiResponse<ApiOrder[]>> {
+  return apiFetch('/api/orders', {}, token);
 }
 
 export async function apiCreateOrder(
-  data: CreateOrderRequest
+  data: CreateOrderRequest,
+  token?: string | null
 ): Promise<ApiResponse<ApiOrder>> {
-  return apiFetch('/api/orders', { method: 'POST', body: JSON.stringify(data) }, true);
+  const path = token ? '/api/orders' : '/api/orders/guest';
+  return apiFetch(path, { method: 'POST', body: JSON.stringify(data) }, token);
+}
+
+export async function apiTrackGuestOrder(data: {
+  email: string;
+  orderId: string;
+}): Promise<ApiResponse<ApiOrder>> {
+  return apiFetch('/api/orders/guest/track', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function apiGetGuestOrders(data: {
+  email: string;
+  phone: string;
+}): Promise<ApiResponse<ApiOrder[]>> {
+  return apiFetch('/api/orders/guest/my-orders', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
 }
 
 // ─── Promotions ───────────────────────────────────────────────────────────────
 
 export async function apiGetPromotions(): Promise<ApiResponse<ApiPromotion[]>> {
-  return apiFetch('/api/promotions', {}, true);
+  return apiFetch('/api/promotions/public');
+}
+
+export async function apiGetShippingQuote(
+  data: ShippingQuoteRequest
+): Promise<ApiResponse<ShippingQuoteResponse>> {
+  return apiFetch('/api/shipping-rules/quote', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
 }

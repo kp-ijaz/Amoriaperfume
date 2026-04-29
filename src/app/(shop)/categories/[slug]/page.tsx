@@ -14,12 +14,12 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
 
   const { products, isLoading: prodsLoading, setFilters } = useApiProducts();
 
-  // Once the category ID is resolved, apply it as a filter
+  // Apply slug-based category filter for products API
   useEffect(() => {
-    if (category?.id) {
-      setFilters({ categories: [category.id] });
+    if (category?.slug) {
+      setFilters({ categorySlug: category.slug });
     }
-  }, [category?.id, setFilters]);
+  }, [category?.slug, setFilters]);
 
   if (!catLoading && !category) return notFound();
 

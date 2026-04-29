@@ -32,8 +32,7 @@ export function useValidatePromotion() {
     );
     if (!promo) return { valid: false, message: 'Invalid coupon code.' };
 
-    // minSubtotal is in fils — convert to AED for comparison
-    const minAed = promo.minSubtotal / 100;
+    const minAed = promo.minSubtotal;
     if (subtotalAed < minAed) {
       return {
         valid: false,

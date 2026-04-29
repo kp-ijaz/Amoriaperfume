@@ -2,15 +2,29 @@
 
 import Link from 'next/link';
 import { useCart } from '@/lib/hooks/useCart';
+import { useShippingQuote } from '@/lib/hooks/useApiShipping';
 import { CouponInput } from './CouponInput';
 import { Separator } from '@/components/ui/separator';
 
 interface CartSummaryProps {
   showCheckoutButton?: boolean;
   paymentMethod?: 'cod' | 'card' | 'applepay';
+  country?: string;
+  shippingChargeOverride?: number;
 }
 
-export function CartSummary({ showCheckoutButton = true, paymentMethod }: CartSummaryProps) {
+export function CartSummary({
+  showCheckoutButton = true,
+  paymentMethod,
+  country = 'UAE',
+  shippingChargeOverride,
+}: CartSummaryProps) {
+  const baseCart = useCart();
+  const quote = useShippingQuote(country, baseCart.afterCoupon);
+  const resolvedShippingCharge =
+    typeof shippingChargeOverride === 'number'
+      ? shippingChargeOverride
+      : quote.data?.shippingCharge;
   const {
     formattedSubtotal,
     formattedCouponDiscount,
@@ -22,7 +36,9 @@ export function CartSummary({ showCheckoutButton = true, paymentMethod }: CartSu
     freeShipping,
     total,
     COD_FEE,
-  } = useCart();
+  } = useCart({
+    shippingChargeOverride: resolvedShippingCharge,
+  });
 
   const codFee = paymentMethod === 'cod' ? COD_FEE : 0;
   const finalTotal = total + codFee;
@@ -57,6 +73,11 @@ export function CartSummary({ showCheckoutButton = true, paymentMethod }: CartSu
             {formattedShipping}
           </span>
         </div>
+        {quote.isLoading && typeof shippingChargeOverride !== 'number' && (
+          <p className="text-xs" style={{ color: 'var(--color-amoria-text-muted)' }}>
+            Updating shipping quote...
+          </p>
+        )}
         {codFee > 0 && (
           <div className="flex justify-between">
             <span style={{ color: 'var(--color-amoria-text-muted)' }}>COD Fee</span>
@@ -92,7 +113,7 @@ export function CartSummary({ showCheckoutButton = true, paymentMethod }: CartSu
 
       {!freeShipping && (
         <p className="text-xs text-center" style={{ color: 'var(--color-amoria-text-muted)' }}>
-          Add more items to qualify for free shipping (AED 200+)
+          Shipping is calculated from your country and subtotal.
         </p>
       )}
     </div>

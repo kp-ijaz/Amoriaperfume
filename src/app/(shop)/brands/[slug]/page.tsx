@@ -14,12 +14,12 @@ export default function BrandPage({ params }: { params: Promise<{ slug: string }
 
   const { products, isLoading: prodsLoading, setFilters } = useApiProducts();
 
-  // Once the brand ID is resolved, apply it as a filter
+  // Apply slug-based brand filter for products API
   useEffect(() => {
-    if (brand?.id) {
-      setFilters({ brands: [brand.id] });
+    if (brand?.slug) {
+      setFilters({ brandSlug: brand.slug });
     }
-  }, [brand?.id, setFilters]);
+  }, [brand?.slug, setFilters]);
 
   if (!brandLoading && !brand) return notFound();
 

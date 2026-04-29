@@ -55,7 +55,7 @@ export function CartPageClient() {
 
         {/* Summary */}
         <div className="lg:sticky lg:top-24 self-start">
-          <CartSummary />
+          <CartSummary country="UAE" />
         </div>
       </div>
     </div>

@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { apiGetCategories } from '@/lib/api/client';
+import { apiGetCategories, apiGetCategoryBySlug } from '@/lib/api/client';
 import { adaptCategories } from '@/lib/api/adapters';
 
 export function useCategories() {
@@ -20,8 +20,8 @@ export function useCategoryBySlug(slug: string) {
   return useQuery({
     queryKey: ['categories', 'slug', slug],
     queryFn: async () => {
-      const res = await apiGetCategories(slug);
-      const item = res.data?.items?.[0];
+      const res = await apiGetCategoryBySlug(slug);
+      const item = res.data;
       if (!item) return null;
       return { id: item._id, slug: item.slug, name: item.name, image: item.image, description: item.description };
     },

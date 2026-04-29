@@ -15,7 +15,7 @@ import { formatCurrency } from '@/lib/utils/formatCurrency';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-function filsToAed(fils: number) { return fils / 100; }
+function toAed(value: number) { return value; }
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-AE', {
@@ -91,7 +91,7 @@ function OrderTimeline({ order }: { order: ApiOrder }) {
               {status.toLowerCase()}
             </span>
             <p className="text-sm font-bold" style={{ color: '#C9A84C', fontFamily: 'var(--font-heading)' }}>
-              {formatCurrency(filsToAed(order.pricing?.totalAmount ?? 0))}
+              {formatCurrency(toAed(order.pricing?.totalAmount ?? 0))}
             </p>
           </div>
         </div>
@@ -190,7 +190,7 @@ function OrderTimeline({ order }: { order: ApiOrder }) {
                   <p className="text-xs mt-0.5" style={{ color: '#6B6B6B' }}>Qty: {item.quantity}</p>
                 </div>
                 <p className="text-sm font-bold flex-shrink-0" style={{ color: '#C9A84C' }}>
-                  {formatCurrency(filsToAed(item.totalPrice))}
+                  {formatCurrency(toAed(item.totalPrice))}
                 </p>
               </div>
             ))}
@@ -221,30 +221,30 @@ function OrderTimeline({ order }: { order: ApiOrder }) {
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
                 <span style={{ color: '#6B6B6B' }}>Subtotal</span>
-                <span>{formatCurrency(filsToAed(order.pricing?.subtotal ?? 0))}</span>
+                <span>{formatCurrency(toAed(order.pricing?.subtotal ?? 0))}</span>
               </div>
               {(order.pricing?.discount ?? 0) > 0 && (
                 <div className="flex justify-between">
                   <span style={{ color: '#6B6B6B' }}>Discount</span>
-                  <span style={{ color: '#22c55e' }}>−{formatCurrency(filsToAed(order.pricing.discount))}</span>
+                  <span style={{ color: '#22c55e' }}>−{formatCurrency(toAed(order.pricing.discount))}</span>
                 </div>
               )}
               <div className="flex justify-between">
                 <span style={{ color: '#6B6B6B' }}>Shipping</span>
                 <span style={{ color: (order.pricing?.shippingCharge ?? 0) === 0 ? '#22c55e' : undefined }}>
-                  {(order.pricing?.shippingCharge ?? 0) === 0 ? 'Free' : formatCurrency(filsToAed(order.pricing.shippingCharge))}
+                  {(order.pricing?.shippingCharge ?? 0) === 0 ? 'Free' : formatCurrency(toAed(order.pricing.shippingCharge))}
                 </span>
               </div>
               {(order.pricing?.tax ?? 0) > 0 && (
                 <div className="flex justify-between">
                   <span style={{ color: '#6B6B6B' }}>VAT (5%)</span>
-                  <span>{formatCurrency(filsToAed(order.pricing.tax))}</span>
+                  <span>{formatCurrency(toAed(order.pricing.tax))}</span>
                 </div>
               )}
               <div className="flex justify-between pt-2 font-semibold" style={{ borderTop: '1px solid #E8E3DC' }}>
                 <span style={{ color: '#1A0A2E' }}>Total</span>
                 <span style={{ color: '#C9A84C', fontFamily: 'var(--font-heading)' }}>
-                  {formatCurrency(filsToAed(order.pricing?.totalAmount ?? 0))}
+                  {formatCurrency(toAed(order.pricing?.totalAmount ?? 0))}
                 </span>
               </div>
             </div>
@@ -288,7 +288,7 @@ function OrderRow({ order, onSelect }: { order: ApiOrder; onSelect: (o: ApiOrder
           {status.toLowerCase()}
         </span>
         <p className="text-sm font-bold" style={{ color: '#C9A84C' }}>
-          {formatCurrency(filsToAed(order.pricing?.totalAmount ?? 0))}
+          {formatCurrency(toAed(order.pricing?.totalAmount ?? 0))}
         </p>
         <ArrowRight size={14} style={{ color: '#A89880' }} />
       </div>
@@ -306,15 +306,17 @@ function TrackOrderContent() {
 
   const [mode, setMode]               = useState<SearchMode>('orderId');
   const [inputValue, setInputValue]   = useState(paramOrderId);
+  const [emailValue, setEmailValue]   = useState('');
   const [orderIdTerm, setOrderIdTerm] = useState(paramOrderId);
   const [emailTerm, setEmailTerm]     = useState('');
+  const [phoneTerm, setPhoneTerm]     = useState('');
   const [selectedOrder, setSelectedOrder] = useState<ApiOrder | null>(null);
 
   const { data: singleOrder, isLoading: loadingById, isFetched: fetchedById } =
-    useOrderById(orderIdTerm);
+    useOrderById(orderIdTerm, emailTerm);
 
   const { data: emailOrders = [], isLoading: loadingByEmail, isFetched: fetchedByEmail } =
-    useOrdersByEmail(emailTerm);
+    useOrdersByEmail(emailTerm, phoneTerm);
 
   // Sync from URL on mount
   useEffect(() => {
@@ -330,16 +332,20 @@ function TrackOrderContent() {
     setSelectedOrder(null);
     if (mode === 'orderId') {
       setOrderIdTerm(inputValue.trim());
+      setEmailTerm(emailValue.trim());
     } else {
       setEmailTerm(inputValue.trim());
+      setPhoneTerm(emailValue.trim());
     }
   }
 
   function handleModeSwitch(m: SearchMode) {
     setMode(m);
     setInputValue('');
+    setEmailValue('');
     setOrderIdTerm('');
     setEmailTerm('');
+    setPhoneTerm('');
     setSelectedOrder(null);
   }
 
@@ -411,6 +417,28 @@ function TrackOrderContent() {
               style={{ color: '#1C1C1C' }}
               autoComplete={mode === 'email' ? 'email' : 'off'}
             />
+            {mode === 'orderId' && (
+              <input
+                type="email"
+                value={emailValue}
+                onChange={(e) => setEmailValue(e.target.value)}
+                placeholder="Email used at checkout"
+                className="w-64 py-4 px-2 text-sm outline-none bg-transparent border-l"
+                style={{ color: '#1C1C1C', borderColor: '#E8E3DC' }}
+                autoComplete="email"
+              />
+            )}
+            {mode === 'email' && (
+              <input
+                type="tel"
+                value={emailValue}
+                onChange={(e) => setEmailValue(e.target.value)}
+                placeholder="Phone used at checkout"
+                className="w-56 py-4 px-2 text-sm outline-none bg-transparent border-l"
+                style={{ color: '#1C1C1C', borderColor: '#E8E3DC' }}
+                autoComplete="tel"
+              />
+            )}
             {inputValue && (
               <button type="button" onClick={() => setInputValue('')} className="px-2" style={{ color: '#A89880' }}>
                 <X size={14} />
@@ -429,8 +457,8 @@ function TrackOrderContent() {
         {/* Helper hint */}
         <p className="text-center text-xs mt-3" style={{ color: '#A89880' }}>
           {mode === 'orderId'
-            ? 'Your order ID was shown on the confirmation screen and in your email.'
-            : 'Enter the email you used at checkout to see all your orders.'}
+            ? 'Enter your order ID and checkout email.'
+            : 'Enter your checkout email and phone to see your guest orders.'}
         </p>
       </div>
 

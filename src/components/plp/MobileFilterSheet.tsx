@@ -4,15 +4,16 @@ import { useState } from 'react';
 import { SlidersHorizontal } from 'lucide-react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { FilterSidebar } from './FilterSidebar';
-import { ProductFilters } from '@/lib/hooks/useProducts';
+import { AvailableProductFilters, ProductFilters } from '@/lib/hooks/useProducts';
 
 interface MobileFilterSheetProps {
   filters: ProductFilters;
+  availableFilters: AvailableProductFilters;
   onFilterChange: (key: keyof ProductFilters, value: ProductFilters[typeof key]) => void;
   onClearAll: () => void;
 }
 
-export function MobileFilterSheet({ filters, onFilterChange, onClearAll }: MobileFilterSheetProps) {
+export function MobileFilterSheet({ filters, availableFilters, onFilterChange, onClearAll }: MobileFilterSheetProps) {
   const activeCount = Object.values(filters).filter((v) =>
     Array.isArray(v) ? v.length > 0 : v !== undefined && v !== false
   ).length;
@@ -45,6 +46,7 @@ export function MobileFilterSheet({ filters, onFilterChange, onClearAll }: Mobil
         <div className="mt-4">
           <FilterSidebar
             filters={filters}
+            availableFilters={availableFilters}
             onFilterChange={onFilterChange}
             onClearAll={onClearAll}
           />

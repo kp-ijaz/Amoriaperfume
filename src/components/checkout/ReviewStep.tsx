@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Truck, Store, Calendar, Clock } from 'lucide-react';
 import { useCart } from '@/lib/hooks/useCart';
 import { useCreateOrder } from '@/lib/hooks/useApiOrders';
+import { useShippingQuote } from '@/lib/hooks/useApiShipping';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { Address } from '@/types/user';
 import { CartSummary } from '@/components/cart/CartSummary';
@@ -26,7 +27,13 @@ const methodLabels = { card: 'Credit/Debit Card', applepay: 'Apple Pay', cod: 'C
 
 export function ReviewStep({ address, paymentMethod, fulfillmentMethod, pickupSlot, onBack, guestInfo }: ReviewStepProps) {
   const router = useRouter();
-  const { items, subtotal, total, clearCart } = useCart();
+  const baseCart = useCart();
+  const shippingCountry = fulfillmentMethod === 'delivery' ? 'UAE' : 'UAE';
+  const shippingQuote = useShippingQuote(shippingCountry, baseCart.afterCoupon);
+  const quotedShippingCharge = shippingQuote.data?.shippingCharge ?? 0;
+  const { items, clearCart } = useCart({
+    shippingChargeOverride: quotedShippingCharge,
+  });
   const { user } = useAuth();
   const createOrder = useCreateOrder();
   const [loading, setLoading] = useState(false);
@@ -52,30 +59,39 @@ export function ReviewStep({ address, paymentMethod, fulfillmentMethod, pickupSl
       country: 'UAE',
     };
 
-    // Build line items (prices in fils = AED * 100)
+    // Build line items (prices in AED)
     const orderItems = items.map((item) => ({
       productId: item.product.id,
-      variantId: item.variant.id,
-      sizeId: item.variant.id,
+      variantId: item.variant.variantId ?? item.variant.id,
+      sizeVariantId: item.variant.sizeVariantId ?? item.variant.id,
       quantity: item.quantity,
-      price: Math.round((item.variant.salePrice ?? item.variant.price) * 100),
     }));
-
-    const subtotalFils = Math.round(subtotal * 100);
-    const totalFils = Math.round(total * 100);
 
     try {
       const res = await createOrder.mutateAsync({
+        fulfillmentType: fulfillmentMethod === 'pickup' ? 'PICKUP' : 'DELIVERY',
         customerDetails: {
           name: customerName,
           email: customerEmail,
-          phone: customerPhone,
+          mobile: customerPhone,
         },
-        shippingAddress: shippingAddr,
+        shippingAddress: fulfillmentMethod === 'delivery' ? shippingAddr : undefined,
+        pickupDetails:
+          fulfillmentMethod === 'pickup'
+            ? {
+                storeName: 'Dubai Mall',
+                storeAddress: 'Dubai Mall, Ground Floor',
+                pickupSlot: pickupSlot ? `${pickupSlot.date} ${pickupSlot.time}` : undefined,
+              }
+            : undefined,
         items: orderItems,
         paymentMethod: paymentMethod === 'cod' ? 'COD' : 'ONLINE',
-        subtotal: subtotalFils,
-        totalAmount: totalFils,
+        pricing: {
+          // Backend calculates subtotal from live catalog pricing.
+          discount: 0,
+          shippingCharge: fulfillmentMethod === 'pickup' ? 0 : quotedShippingCharge,
+          tax: 0,
+        },
       });
 
       if (!res.success) {
@@ -184,7 +200,12 @@ export function ReviewStep({ address, paymentMethod, fulfillmentMethod, pickupSl
         </div>
       </div>
 
-      <CartSummary showCheckoutButton={false} paymentMethod={paymentMethod ?? undefined} />
+      <CartSummary
+        showCheckoutButton={false}
+        paymentMethod={paymentMethod ?? undefined}
+        country={shippingCountry}
+        shippingChargeOverride={fulfillmentMethod === 'pickup' ? 0 : quotedShippingCharge}
+      />
 
       {error && (
         <div className="mt-4 p-3 text-sm text-red-700 bg-red-50 border border-red-200 rounded-sm">

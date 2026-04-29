@@ -22,8 +22,8 @@ const statusColors: Record<string, string> = {
   cancelled:  '#ef4444',
 };
 
-function filsToAed(fils: number) {
-  return (fils / 100).toFixed(2);
+function formatAed(value: number) {
+  return Number(value ?? 0).toFixed(2);
 }
 
 function formatDate(iso: string) {
@@ -34,7 +34,7 @@ function OrderCard({ order }: { order: ApiOrder }) {
   const [expanded, setExpanded] = useState(false);
   const status = order.status ?? order.payment?.paymentStatus ?? 'PENDING';
   const statusColor = statusColors[status] ?? '#6b7280';
-  const totalAed = filsToAed(order.pricing?.totalAmount ?? 0);
+  const totalAed = formatAed(order.pricing?.totalAmount ?? 0);
 
   return (
     <div className="border bg-white" style={{ borderColor: 'var(--color-amoria-border)' }}>
@@ -81,7 +81,7 @@ function OrderCard({ order }: { order: ApiOrder }) {
                   <p className="text-xs" style={{ color: 'var(--color-amoria-text-muted)' }}>{item.brand} · Qty: {item.quantity}</p>
                 </div>
                 <p className="text-sm font-semibold" style={{ color: 'var(--color-amoria-accent)' }}>
-                  AED {filsToAed(item.totalPrice)}
+                  AED {formatAed(item.totalPrice)}
                 </p>
               </div>
             ))}

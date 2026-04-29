@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useProducts, ProductFilters } from '@/lib/hooks/useProducts';
 import { FilterSidebar } from '@/components/plp/FilterSidebar';
 import { MobileFilterSheet } from '@/components/plp/MobileFilterSheet';
@@ -10,18 +11,28 @@ import { GridListToggle } from '@/components/plp/GridListToggle';
 import { ProductGrid } from '@/components/product/ProductGrid';
 
 export default function ProductsPage() {
+  const searchParams = useSearchParams();
+  const initialFilters = useMemo(
+    () => ({
+      collection: searchParams.get('collection') ?? undefined,
+      categorySlug: searchParams.get('category') ?? undefined,
+      brandSlug: searchParams.get('brand') ?? undefined,
+    }),
+    [searchParams]
+  );
   const {
     products,
     totalCount,
     hasMore,
     filters,
+    availableFilters,
     sortBy,
     setFilters,
     updateFilter,
     clearFilters,
     setSortBy,
     loadMore,
-  } = useProducts();
+  } = useProducts(initialFilters);
   const [view, setView] = useState<'grid' | 'list'>('grid');
 
   function handleRemoveFilter(key: keyof ProductFilters, value?: string) {
@@ -62,6 +73,7 @@ export default function ProductsPage() {
             <div className="lg:hidden">
               <MobileFilterSheet
                 filters={filters}
+                availableFilters={availableFilters}
                 onFilterChange={updateFilter}
                 onClearAll={clearFilters}
               />
@@ -88,6 +100,7 @@ export default function ProductsPage() {
           <aside className="hidden lg:block w-60 flex-shrink-0">
             <FilterSidebar
               filters={filters}
+              availableFilters={availableFilters}
               onFilterChange={updateFilter}
               onClearAll={clearFilters}
             />
