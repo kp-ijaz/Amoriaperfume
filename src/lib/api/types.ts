@@ -257,6 +257,7 @@ export interface ApiLoginResponse {
 
 export interface CreateOrderRequest {
   fulfillmentType?: 'DELIVERY' | 'PICKUP';
+  couponCode?: string;
   customerDetails: {
     name: string;
     email: string;

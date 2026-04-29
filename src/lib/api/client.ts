@@ -20,6 +20,7 @@ if (!API_BASE) {
 }
 
 const TOKEN_KEY = 'amoria_access_token';
+const GUEST_ORDERS_TOKEN_KEY = 'amoria_guest_orders_token';
 
 export function getStoredToken(): string | null {
   if (typeof window === 'undefined') return null;
@@ -34,6 +35,22 @@ export function setStoredToken(token: string): void {
 export function clearStoredToken(): void {
   if (typeof window === 'undefined') return;
   localStorage.removeItem(TOKEN_KEY);
+}
+
+export function getGuestOrdersToken(): string | null {
+  if (typeof window === 'undefined') return null;
+  return sessionStorage.getItem(GUEST_ORDERS_TOKEN_KEY) || localStorage.getItem(GUEST_ORDERS_TOKEN_KEY);
+}
+
+export function setGuestOrdersToken(token: string): void {
+  if (typeof window === 'undefined') return;
+  sessionStorage.setItem(GUEST_ORDERS_TOKEN_KEY, token);
+}
+
+export function clearGuestOrdersToken(): void {
+  if (typeof window === 'undefined') return;
+  sessionStorage.removeItem(GUEST_ORDERS_TOKEN_KEY);
+  localStorage.removeItem(GUEST_ORDERS_TOKEN_KEY);
 }
 
 async function apiFetch<T>(
@@ -195,6 +212,27 @@ export async function apiGetGuestOrders(data: {
     method: 'POST',
     body: JSON.stringify(data),
   });
+}
+
+export async function apiSendGuestOrdersOtp(data: { email: string }): Promise<ApiResponse<{ email: string; otpSent: boolean; testOtp: string }>> {
+  return apiFetch('/api/orders/guest/send-otp', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function apiVerifyGuestOrdersOtp(data: {
+  email: string;
+  otp: string;
+}): Promise<ApiResponse<{ token: string; email: string }>> {
+  return apiFetch('/api/orders/guest/verify-otp', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function apiGetVerifiedGuestOrders(token: string): Promise<ApiResponse<ApiOrder[]>> {
+  return apiFetch('/api/orders/guest/verified-orders', {}, token);
 }
 
 // ─── Promotions ───────────────────────────────────────────────────────────────

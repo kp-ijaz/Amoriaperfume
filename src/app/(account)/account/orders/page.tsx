@@ -1,10 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Package, ChevronDown, ChevronUp } from 'lucide-react';
-import { useOrders } from '@/lib/hooks/useApiOrders';
+import { useOrders, useSendGuestOrdersOtp, useVerifiedGuestOrders, useVerifyGuestOrdersOtp } from '@/lib/hooks/useApiOrders';
 import { ApiOrder } from '@/lib/api/types';
+import { getGuestOrdersToken, setGuestOrdersToken } from '@/lib/api/client';
+import { useAuth } from '@/lib/hooks/useAuth';
 
 const statusColors: Record<string, string> = {
   PENDING:    '#f59e0b',
@@ -110,13 +112,111 @@ function OrderCard({ order }: { order: ApiOrder }) {
 }
 
 export default function OrdersPage() {
-  const { data: orders = [], isLoading } = useOrders();
+  const { isLoggedIn } = useAuth();
+  const [guestToken, setGuestToken] = useState<string | null>(null);
+  const [guestEmail, setGuestEmail] = useState('');
+  const [otp, setOtp] = useState('');
+  const [otpSent, setOtpSent] = useState(false);
+  const [verifyError, setVerifyError] = useState('');
+  const sendOtp = useSendGuestOrdersOtp();
+  const verifyOtp = useVerifyGuestOrdersOtp();
+  const userOrders = useOrders();
+  const guestOrders = useVerifiedGuestOrders(guestToken);
+
+  useEffect(() => {
+    if (!isLoggedIn) {
+      setGuestToken(getGuestOrdersToken());
+    }
+  }, [isLoggedIn]);
+
+  const isLoading = isLoggedIn ? userOrders.isLoading : guestOrders.isLoading;
+  const orders = isLoggedIn ? (userOrders.data ?? []) : (guestOrders.data ?? []);
+
+  async function handleSendOtp() {
+    setVerifyError('');
+    const email = guestEmail.trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setVerifyError('Enter a valid email');
+      return;
+    }
+    const res = await sendOtp.mutateAsync(email);
+    if (!res.success) {
+      setVerifyError(res.message ?? 'Failed to send OTP');
+      return;
+    }
+    setOtpSent(true);
+  }
+
+  async function handleVerifyOtp() {
+    setVerifyError('');
+    try {
+      const res = await verifyOtp.mutateAsync({ email: guestEmail, otp });
+      if (!res.success || !res.data?.token) {
+        setVerifyError(res.message ?? 'OTP verification failed');
+        return;
+      }
+      setGuestOrdersToken(res.data.token);
+      setGuestToken(res.data.token);
+    } catch (error) {
+      setVerifyError(error instanceof Error ? error.message : 'OTP verification failed');
+    }
+  }
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-10">
       <h1 className="text-2xl font-semibold mb-8" style={{ fontFamily: 'var(--font-heading)', color: 'var(--color-amoria-primary)' }}>
         My Orders
       </h1>
+
+      {!isLoggedIn && !guestToken ? (
+        <div className="mb-8 border p-4 space-y-3" style={{ borderColor: 'var(--color-amoria-border)', backgroundColor: '#fff' }}>
+          <p className="text-sm" style={{ color: 'var(--color-amoria-text)' }}>
+            Verify your email to view guest orders.
+          </p>
+          <div className="flex gap-2">
+            <input
+              type="email"
+              value={guestEmail}
+              onChange={(e) => setGuestEmail(e.target.value)}
+              placeholder="Enter your checkout email"
+              className="flex-1 px-3 py-2 border text-sm"
+              style={{ borderColor: 'var(--color-amoria-border)' }}
+            />
+            <button
+              onClick={handleSendOtp}
+              disabled={sendOtp.isPending}
+              className="px-4 py-2 text-sm font-semibold"
+              style={{ backgroundColor: 'var(--color-amoria-primary)', color: '#fff' }}
+            >
+              Send OTP
+            </button>
+          </div>
+          {otpSent ? (
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={otp}
+                onChange={(e) => setOtp(e.target.value)}
+                placeholder="Enter OTP"
+                className="flex-1 px-3 py-2 border text-sm"
+                style={{ borderColor: 'var(--color-amoria-border)' }}
+              />
+              <button
+                onClick={handleVerifyOtp}
+                disabled={verifyOtp.isPending}
+                className="px-4 py-2 text-sm font-semibold"
+                style={{ backgroundColor: 'var(--color-amoria-accent)', color: '#1A0A2E' }}
+              >
+                Verify
+              </button>
+            </div>
+          ) : null}
+          <p className="text-xs" style={{ color: 'var(--color-amoria-text-muted)' }}>
+            Test OTP is `123123`.
+          </p>
+          {verifyError ? <p className="text-xs text-red-500">{verifyError}</p> : null}
+        </div>
+      ) : null}
 
       {isLoading ? (
         <div className="space-y-4">

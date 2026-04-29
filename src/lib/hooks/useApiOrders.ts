@@ -1,7 +1,15 @@
 'use client';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiCreateOrder, apiGetGuestOrders, apiGetOrders, apiTrackGuestOrder } from '@/lib/api/client';
+import {
+  apiCreateOrder,
+  apiGetGuestOrders,
+  apiGetOrders,
+  apiGetVerifiedGuestOrders,
+  apiSendGuestOrdersOtp,
+  apiTrackGuestOrder,
+  apiVerifyGuestOrdersOtp,
+} from '@/lib/api/client';
 import { ApiOrder, CreateOrderRequest } from '@/lib/api/types';
 import { useAuth } from '@/lib/hooks/useAuth';
 
@@ -65,6 +73,34 @@ export function useOrdersByEmail(email: string, phone: string) {
       return Array.isArray(res.data) ? res.data : [];
     },
     enabled: isValid && hasPhone,
+    staleTime: 2 * 60 * 1000,
+    retry: false,
+  });
+}
+
+export function useSendGuestOrdersOtp() {
+  return useMutation({
+    mutationFn: (email: string) => apiSendGuestOrdersOtp({ email: email.trim().toLowerCase() }),
+  });
+}
+
+export function useVerifyGuestOrdersOtp() {
+  return useMutation({
+    mutationFn: ({ email, otp }: { email: string; otp: string }) =>
+      apiVerifyGuestOrdersOtp({ email: email.trim().toLowerCase(), otp: otp.trim() }),
+  });
+}
+
+export function useVerifiedGuestOrders(token: string | null) {
+  return useQuery({
+    queryKey: ['orders', 'guest-verified', Boolean(token)],
+    queryFn: async (): Promise<ApiOrder[]> => {
+      if (!token) return [];
+      const res = await apiGetVerifiedGuestOrders(token);
+      if (!res.success) return [];
+      return Array.isArray(res.data) ? res.data : [];
+    },
+    enabled: !!token,
     staleTime: 2 * 60 * 1000,
     retry: false,
   });

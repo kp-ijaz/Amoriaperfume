@@ -31,7 +31,7 @@ export function ReviewStep({ address, paymentMethod, fulfillmentMethod, pickupSl
   const shippingCountry = fulfillmentMethod === 'delivery' ? 'UAE' : 'UAE';
   const shippingQuote = useShippingQuote(shippingCountry, baseCart.afterCoupon);
   const quotedShippingCharge = shippingQuote.data?.shippingCharge ?? 0;
-  const { items, clearCart } = useCart({
+  const { items, clearCart, coupon } = useCart({
     shippingChargeOverride: quotedShippingCharge,
   });
   const { user } = useAuth();
@@ -70,6 +70,7 @@ export function ReviewStep({ address, paymentMethod, fulfillmentMethod, pickupSl
     try {
       const res = await createOrder.mutateAsync({
         fulfillmentType: fulfillmentMethod === 'pickup' ? 'PICKUP' : 'DELIVERY',
+        couponCode: coupon?.code || undefined,
         customerDetails: {
           name: customerName,
           email: customerEmail,
@@ -86,12 +87,7 @@ export function ReviewStep({ address, paymentMethod, fulfillmentMethod, pickupSl
             : undefined,
         items: orderItems,
         paymentMethod: paymentMethod === 'cod' ? 'COD' : 'ONLINE',
-        pricing: {
-          // Backend calculates subtotal from live catalog pricing.
-          discount: 0,
-          shippingCharge: fulfillmentMethod === 'pickup' ? 0 : quotedShippingCharge,
-          tax: 0,
-        },
+        pricing: {},
       });
 
       if (!res.success) {
