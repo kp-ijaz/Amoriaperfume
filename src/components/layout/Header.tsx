@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@/lib/store';
 import { openCartDrawer, openMobileNav } from '@/lib/store/uiSlice';
-import { Heart, ShoppingBag, User, Search, Menu, ChevronDown, X, LogOut, Package, Settings, Truck, Pencil } from 'lucide-react';
+import { Heart, ShoppingBag, User, Search, Menu, ChevronDown, X, LogOut, Package, Settings, Truck, Pencil, Check, MapPin } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { formatCurrency } from '@/lib/utils/formatCurrency';
 import { useSearchProducts } from '@/lib/hooks/useApiProducts';
@@ -14,6 +14,126 @@ import Image from 'next/image';
 import { CartDrawer } from '@/components/cart/CartDrawer';
 import { MobileNav } from './MobileNav';
 import { useAuth } from '@/lib/hooks/useAuth';
+
+const LIVE_OFFERS = [
+  { id: 1, text: '🔥 FLASH SALE — Use code EID25 for 25% off all Gift Sets', color: '#dc2626' },
+  { id: 2, text: '🚚 Free Delivery on orders over AED 200 — Shop Now', color: '#16a34a' },
+  { id: 3, text: '✨ New Arrivals in — Attar & Oud Collection 2025', color: 'var(--color-amoria-accent)' },
+  { id: 4, text: '💎 Use WELCOME10 for 10% off your first order', color: '#7c3aed' },
+  { id: 5, text: '⏰ Limited Stock — Dehn El Oud only 4 left', color: '#ea580c' },
+];
+
+const LANGUAGES = [
+  { code: 'en', label: 'English', short: 'EN', flag: '🇬🇧' },
+  { code: 'ar', label: 'العربية', short: 'AR', flag: '🇦🇪' },
+  { code: 'fr', label: 'Français', short: 'FR', flag: '🇫🇷' },
+];
+
+function LiveOffersTicker() {
+  const [activeIdx, setActiveIdx] = useState(0);
+
+  useEffect(() => {
+    const t = setInterval(() => {
+      setActiveIdx((i) => (i + 1) % LIVE_OFFERS.length);
+    }, 3200);
+    return () => clearInterval(t);
+  }, []);
+
+  const offer = LIVE_OFFERS[activeIdx];
+
+  return (
+    <div className="flex items-center justify-center overflow-hidden w-full">
+      <AnimatePresence mode="wait">
+        <motion.span
+          key={activeIdx}
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -6 }}
+          transition={{ duration: 0.35, ease: 'easeInOut' }}
+          className="text-[13px] font-medium truncate text-center"
+          style={{ color: offer.color }}
+        >
+          {offer.text}
+        </motion.span>
+      </AnimatePresence>
+    </div>
+  );
+}
+
+function LanguageDropdown() {
+  const [open, setOpen] = useState(false);
+  const [current, setCurrent] = useState(LANGUAGES[0]);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const saved = localStorage.getItem('amoria_lang');
+    if (saved) {
+      const found = LANGUAGES.find((l) => l.code === saved);
+      if (found) setCurrent(found);
+    }
+  }, []);
+
+  useEffect(() => {
+    function handleOutside(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener('mousedown', handleOutside);
+    return () => document.removeEventListener('mousedown', handleOutside);
+  }, []);
+
+  function select(lang: (typeof LANGUAGES)[0]) {
+    setCurrent(lang);
+    setOpen(false);
+    localStorage.setItem('amoria_lang', lang.code);
+  }
+
+  return (
+    <div ref={ref} className="relative flex-shrink-0">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="flex items-center gap-1.5 px-2 py-0.5 rounded hover:bg-black/5 transition-colors"
+        style={{ color: 'var(--color-amoria-text-muted)' }}
+        aria-label="Select language"
+      >
+        <span className="text-base leading-none">{current.flag}</span>
+        <span className="text-[13px] font-semibold tracking-wide">{current.short}</span>
+        <ChevronDown
+          size={10}
+          className="transition-transform duration-200"
+          style={{ transform: open ? 'rotate(180deg)' : 'rotate(0deg)' }}
+        />
+      </button>
+
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, y: -4, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -4, scale: 0.97 }}
+            transition={{ duration: 0.15, ease: [0.22, 1, 0.36, 1] }}
+            className="absolute left-0 top-full mt-1 bg-white border shadow-lg z-50 min-w-[150px] overflow-hidden rounded-sm"
+            style={{ borderColor: 'var(--color-amoria-border)' }}
+          >
+            {LANGUAGES.map((lang) => (
+              <button
+                key={lang.code}
+                onClick={() => select(lang)}
+                className="flex items-center gap-2.5 w-full px-3 py-2.5 text-left hover:bg-gray-50 transition-colors"
+                style={{ color: 'var(--color-amoria-text)' }}
+              >
+                <span className="text-base leading-none">{lang.flag}</span>
+                <span className="text-[12px] font-medium">{lang.label}</span>
+                {current.code === lang.code && (
+                  <Check size={11} className="ml-auto" style={{ color: 'var(--color-amoria-accent)' }} />
+                )}
+              </button>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
 
 const navLinks = [
   { label: 'Home',              href: '/' },
@@ -91,12 +211,42 @@ export function Header() {
 
   return (
     <>
-      <header className="sticky top-0 z-40 w-full bg-white">
+      <header className="sticky top-0 z-40 w-full" style={{ backgroundColor: '#FAF8F5' }}>
+
+        {/* ── TOP UTILITY BAR — live offers + language ── */}
+        <div
+          className="border-b hidden sm:block"
+          style={{ borderColor: 'var(--color-amoria-border)', backgroundColor: '#FAF8F5' }}
+        >
+          <div className="max-w-7xl mx-auto px-4 lg:px-8 h-8 grid items-center" style={{ gridTemplateColumns: '1fr auto 1fr' }}>
+
+            {/* LEFT — language flag dropdown */}
+            <div className="flex items-center">
+              <LanguageDropdown />
+            </div>
+
+            {/* CENTER — offers ticker (truly centered) */}
+            <LiveOffersTicker />
+
+            {/* RIGHT — store locator */}
+            <div className="flex items-center justify-end">
+              <a
+                href="/contact"
+                className="hidden sm:flex items-center gap-1.5 flex-shrink-0 hover:opacity-70 transition-opacity"
+                style={{ color: 'var(--color-amoria-text-muted)' }}
+              >
+                <MapPin size={13} />
+                <span className="text-[13px] font-medium">Store Locator</span>
+              </a>
+            </div>
+
+          </div>
+        </div>
+
         {/* Main header row */}
         <div
-          className="border-b transition-all duration-300"
+          className="transition-all duration-300"
           style={{
-            borderColor: 'var(--color-amoria-border)',
             boxShadow: scrolled ? '0 2px 16px rgba(0,0,0,0.07)' : 'none',
           }}
         >

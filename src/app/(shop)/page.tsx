@@ -1,6 +1,6 @@
-import { VideoHero } from '@/components/home/VideoHero';
+import { CompactHeroBanner } from '@/components/home/CompactHeroBanner';
 import { CategoryIconStrip } from '@/components/home/CategoryIconStrip';
-import { ScentPillars } from '@/components/home/ScentPillars';
+import { BrandInspirations } from '@/components/home/ScentPillars';
 import { ProductSectionClient } from '@/components/home/ProductSectionClient';
 import { FeaturedCollections } from '@/components/home/FeaturedCollections';
 import { BrandShowcase } from '@/components/home/BrandShowcase';
@@ -15,8 +15,8 @@ import { FragranceFinderWidget } from '@/components/home/FragranceFinderWidget';
 export default function HomePage() {
   return (
     <>
-      {/* 1 — Full-screen video hero */}
-      <VideoHero />
+      {/* 1 — Compact 2-grid hero banner */}
+      <CompactHeroBanner />
 
       {/* 2 — Category icon strip (fetches from API) */}
       <CategoryIconStrip />
@@ -33,8 +33,8 @@ export default function HomePage() {
       {/* 4 — Editorial curated collections */}
       <FeaturedCollections />
 
-      {/* 5 — Three Pillars of Perfumery */}
-      <ScentPillars />
+      {/* 5 — Brand Inspirations */}
+      <BrandInspirations />
 
       {/* 6 — Best Sellers (featured products) */}
       <ProductSectionClient
