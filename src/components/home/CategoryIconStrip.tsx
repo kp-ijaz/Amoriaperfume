@@ -30,7 +30,7 @@ export function CategoryIconStrip() {
       className="relative overflow-hidden"
       style={{ backgroundColor: '#ffffff' }}
     >
-      <div className="max-w-5xl mx-auto px-6 sm:px-10 py-14 md:py-20">
+      <div className="max-w-5xl mx-auto px-4 py-7">
 
         {/* ── Section Header ── */}
         <motion.div
@@ -38,7 +38,7 @@ export function CategoryIconStrip() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
-          className="text-center mb-12 md:mb-14"
+          className="text-center mb-2 md:mb-3"
         >
           <p
             style={{
@@ -53,15 +53,19 @@ export function CategoryIconStrip() {
           </p>
         </motion.div>
 
-        {/* ── Icon Strip ── */}
+        {/* ── Icon Strip — horizontal scroll on mobile, centered row on desktop ── */}
         <div
           style={{
             display: 'flex',
             alignItems: 'flex-start',
             justifyContent: 'center',
-            gap: '98px',
-            flexWrap: 'wrap',
+            gap: '40px',
+            overflowX: 'auto',
+            scrollSnapType: 'x mandatory',
+            WebkitOverflowScrolling: 'touch',
+            paddingBottom: '4px',
           }}
+          className="no-scrollbar"
         >
           {categories.map((cat, i) => (
             <motion.div
@@ -70,6 +74,7 @@ export function CategoryIconStrip() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.55, delay: i * 0.07, ease: [0.22, 1, 0.36, 1] }}
+              style={{ scrollSnapAlign: 'start', flexShrink: 0 }}
             >
               <Link
                 href={`/categories/${cat.slug}`}
@@ -77,7 +82,7 @@ export function CategoryIconStrip() {
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
-                  gap: '11px',
+                  gap: '8px',
                   textDecoration: 'none',
                 }}
                 className="group"
@@ -86,9 +91,9 @@ export function CategoryIconStrip() {
                 {cat.type === 'photo' && cat.image && (
                   <div
                     style={{
-                      width: '110px',
-                      height: '110px',
-                      borderRadius: '22px',
+                      width: '80px',
+                      height: '80px',
+                      borderRadius: '16px',
                       overflow: 'hidden',
                       border: '1px solid #E8E3DC',
                       backgroundColor: '#F5E8D0',
@@ -102,7 +107,7 @@ export function CategoryIconStrip() {
                       alt={cat.name}
                       fill
                       className="object-cover"
-                      sizes="110px"
+                      sizes="80px"
                       unoptimized
                     />
                   </div>
@@ -110,7 +115,7 @@ export function CategoryIconStrip() {
                 {cat.type === 'photo' && !cat.image && (
                   <div
                     style={{
-                      width: '110px', height: '110px', borderRadius: '22px',
+                      width: '80px', height: '80px', borderRadius: '16px',
                       backgroundColor: '#F5E8D0', border: '1px solid #E8E3DC',
                     }}
                     className="group-hover:-translate-y-1 group-hover:scale-[1.03]"
@@ -121,14 +126,14 @@ export function CategoryIconStrip() {
                 {cat.type === 'green' && (
                   <div
                     style={{
-                      width: '110px',
-                      height: '110px',
-                      borderRadius: '22px',
+                      width: '80px',
+                      height: '80px',
+                      borderRadius: '16px',
                       backgroundColor: '#F5E8D0',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      padding: '10px',
+                      padding: '8px',
                       transition: 'transform 0.28s cubic-bezier(0.22,1,0.36,1)',
                     }}
                     className="group-hover:-translate-y-1 group-hover:scale-[1.03]"
@@ -136,7 +141,7 @@ export function CategoryIconStrip() {
                     <span
                       style={{
                         fontFamily: 'var(--font-heading, "Cormorant Garamond", serif)',
-                        fontSize: cat.name.length > 8 ? '15px' : '19px',
+                        fontSize: cat.name.length > 8 ? '12px' : '15px',
                         fontWeight: 500,
                         color: '#1A0A2E',
                         letterSpacing: '0.08em',
@@ -145,7 +150,6 @@ export function CategoryIconStrip() {
                         lineHeight: 1.25,
                       }}
                     >
-                      {/* Split multi-word names across lines */}
                       {cat.name.split(' ').length > 1 ? (
                         <>
                           {cat.name.split(' ')[0]}
@@ -161,19 +165,18 @@ export function CategoryIconStrip() {
                 {cat.type === 'ring' && (
                   <div
                     style={{
-                      width: '110px',
-                      height: '110px',
+                      width: '80px',
+                      height: '80px',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       position: 'relative',
                     }}
                   >
-                    {/* Spinning text ring */}
                     <svg
-                      viewBox="0 0 110 110"
-                      width="110"
-                      height="110"
+                      viewBox="0 0 80 80"
+                      width="80"
+                      height="80"
                       style={{
                         position: 'absolute',
                         top: 0,
@@ -183,24 +186,14 @@ export function CategoryIconStrip() {
                       xmlns="http://www.w3.org/2000/svg"
                     >
                       <defs>
-                        <path
-                          id="ring-arc"
-                          d="M55,9 a46,46 0 1,1 -0.01,0"
-                        />
+                        <path id="ring-arc" d="M40,6 a34,34 0 1,1 -0.01,0" />
                       </defs>
-                      <circle
-                        cx="55"
-                        cy="55"
-                        r="51"
-                        fill="none"
-                        stroke="#C9A84C"
-                        strokeWidth="1.2"
-                      />
+                      <circle cx="40" cy="40" r="37" fill="none" stroke="#C9A84C" strokeWidth="1" />
                       <text
-                        fontSize="7.5"
+                        fontSize="6"
                         fontFamily="Montserrat, sans-serif"
                         fontWeight="600"
-                        letterSpacing="5.8"
+                        letterSpacing="4.2"
                         fill="#C9A84C"
                         textAnchor="middle"
                       >
@@ -209,12 +202,10 @@ export function CategoryIconStrip() {
                         </textPath>
                       </text>
                     </svg>
-
-                    {/* Center label */}
                     <span
                       style={{
                         fontFamily: 'var(--font-heading, "Cormorant Garamond", serif)',
-                        fontSize: '13px',
+                        fontSize: '11px',
                         fontWeight: 400,
                         color: '#1A0A2E',
                         letterSpacing: '0.1em',
@@ -249,12 +240,13 @@ export function CategoryIconStrip() {
 
       </div>
 
-      {/* CSS for ring spin animation — injected once */}
       <style>{`
         @keyframes spin-ring {
           from { transform: rotate(0deg); }
           to   { transform: rotate(360deg); }
         }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
     </section>
   );

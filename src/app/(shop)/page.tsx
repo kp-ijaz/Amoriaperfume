@@ -43,7 +43,7 @@ export default function HomePage() {
         viewAllHref="/products"
         theme="light"
         sectionNumber="02"
-        limit={8}
+        limit={4}
         featured={true}
       />
 

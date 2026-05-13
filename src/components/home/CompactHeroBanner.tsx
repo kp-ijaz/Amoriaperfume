@@ -76,7 +76,7 @@ export function CompactHeroBanner() {
       `}</style>
 
       <section
-        className="w-full py-0 md:py-3"
+        className="w-full py-0 md:py-2"
         style={{ backgroundColor: 'var(--color-amoria-bg)' }}
       >
         <div className="amoria-hero-grid">

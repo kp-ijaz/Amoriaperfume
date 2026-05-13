@@ -15,10 +15,7 @@ import {
 } from './types';
 import { Address } from '@/types/user';
 
-export const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL;
-if (!API_BASE) {
-  throw new Error('NEXT_PUBLIC_API_URL is not set');
-}
+export const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? '';
 
 const TOKEN_KEY = 'amoria_access_token';
 const GUEST_ORDERS_TOKEN_KEY = 'amoria_guest_orders_token';
@@ -59,6 +56,9 @@ async function apiFetch<T>(
   options: RequestInit = {},
   token?: string | null
 ): Promise<T> {
+  if (!API_BASE) {
+    throw new Error('NEXT_PUBLIC_API_BASE_URL is not set. Add it to your .env.local file.');
+  }
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...(options.headers as Record<string, string>),

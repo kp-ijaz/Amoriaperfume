@@ -20,10 +20,12 @@ export const productKeys = {
   all: ['products'] as const,
   list: (params: ProductsParams) => ['products', 'list', params] as const,
   detail: (id: string) => ['products', 'detail', id] as const,
+  slug: (slug: string) => ['products', 'slug', slug] as const,
   reviews: (id: string) => ['products', 'reviews', id] as const,
+  section: (params: ProductsParams) => ['products', 'section', params] as const,
 };
 
-// ─── Product list with client-side filtering + sort ──────────────────────────
+// ─── Sorting & Filtering (client-side, used by PLP) ──────────────────────────
 
 export type ApiSortOption =
   | 'newest'
@@ -97,16 +99,9 @@ function getSortedProducts(products: Product[], sortBy: ApiSortOption): Product[
 
 function applyClientFilters(products: Product[], filters: ApiProductFilters): Product[] {
   let result = [...products];
-
-  if (filters.categories?.length) {
-    result = result.filter((p) => filters.categories!.includes(p.category));
-  }
-  if (filters.brands?.length) {
-    result = result.filter((p) => filters.brands!.includes(p.brand));
-  }
-  if (filters.genders?.length) {
-    result = result.filter((p) => filters.genders!.includes(p.gender));
-  }
+  if (filters.categories?.length) result = result.filter((p) => filters.categories!.includes(p.category));
+  if (filters.brands?.length) result = result.filter((p) => filters.brands!.includes(p.brand));
+  if (filters.genders?.length) result = result.filter((p) => filters.genders!.includes(p.gender));
   if (filters.priceRange) {
     const [min, max] = filters.priceRange;
     result = result.filter((p) => {
@@ -119,56 +114,69 @@ function applyClientFilters(products: Product[], filters: ApiProductFilters): Pr
       filters.fragranceFamilies!.some((f) => p.fragranceFamily.toLowerCase().includes(f.toLowerCase()))
     );
   }
-  if (filters.discountOnly) {
-    result = result.filter((p) => p.isOnSale);
-  }
-  if (filters.minRating) {
-    result = result.filter((p) => p.rating >= filters.minRating!);
-  }
+  if (filters.discountOnly) result = result.filter((p) => p.isOnSale);
+  if (filters.minRating) result = result.filter((p) => p.rating >= filters.minRating!);
   if (filters.concentrations?.length) {
     result = result.filter((p) =>
       filters.concentrations!.some((c) => p.concentration.toLowerCase() === c.toLowerCase())
     );
   }
-
   return result;
 }
 
 function buildFacetOptions(
   allValuesSource: Product[],
   countedSource: Product[],
-  getValue: (product: Product) => string,
-  getLabel?: (value: string) => string
+  getValue: (p: Product) => string,
+  getLabel?: (v: string) => string
 ): FilterOption[] {
   const allValues = new Set<string>();
-  for (const product of allValuesSource) {
-    const value = getValue(product);
-    if (value) allValues.add(value);
+  for (const p of allValuesSource) {
+    const v = getValue(p);
+    if (v) allValues.add(v);
   }
-
   const counts = new Map<string, number>();
-  for (const product of countedSource) {
-    const value = getValue(product);
-    if (!value) continue;
-    counts.set(value, (counts.get(value) ?? 0) + 1);
+  for (const p of countedSource) {
+    const v = getValue(p);
+    if (!v) continue;
+    counts.set(v, (counts.get(v) ?? 0) + 1);
   }
-
   return Array.from(allValues)
-    .map((value) => ({
-      value,
-      label: getLabel ? getLabel(value) : value,
-      count: counts.get(value) ?? 0,
-    }))
+    .map((v) => ({ value: v, label: getLabel ? getLabel(v) : v, count: counts.get(v) ?? 0 }))
     .sort((a, b) => a.label.localeCompare(b.label));
 }
 
-/** Fetch all products (up to 100) and filter/sort client-side. */
+// ─── Home page sections ───────────────────────────────────────────────────────
+
+/**
+ * Fetch products for a home-page section.
+ * The query key is keyed on params only (not limit) so multiple components
+ * with the same params share a single API call via React Query's cache.
+ * The limit is applied client-side as a slice.
+ */
+export function useProductsByLimit(limit = 8, params: ProductsParams = {}) {
+  // Strip limit from the cache key so same-param callers share one request
+  const { limit: _ignored, ...cacheParams } = params as ProductsParams & { limit?: number };
+
+  return useQuery({
+    queryKey: productKeys.section(cacheParams),
+    queryFn: async () => {
+      const res = await apiGetProducts({ ...cacheParams, limit: 20 });
+      if (!res.success || !res.data?.items) return [];
+      return adaptProducts(res.data.items);
+    },
+    staleTime: 10 * 60 * 1000,
+    select: (data) => data.slice(0, limit),
+  });
+}
+
+// ─── PLP — all products with client-side filtering ───────────────────────────
+
 export function useApiProducts(initialFilters: ApiProductFilters = {}) {
   const [filters, setFilters] = useState<ApiProductFilters>(initialFilters);
   const [sortBy, setSortBy] = useState<ApiSortOption>('newest');
   const [visibleCount, setVisibleCount] = useState(12);
 
-  // Build server-side params from filters
   const serverParams: ProductsParams = useMemo(() => ({
     limit: 100,
     search: filters.searchQuery || undefined,
@@ -179,63 +187,46 @@ export function useApiProducts(initialFilters: ApiProductFilters = {}) {
 
   const { data, isLoading, error } = useQuery({
     queryKey: productKeys.list(serverParams),
-    queryFn: () => apiGetProducts(serverParams),
+    queryFn: async () => {
+      const res = await apiGetProducts(serverParams);
+      if (!res.success || !res.data?.items) return [];
+      return adaptProducts(res.data.items);
+    },
     staleTime: 5 * 60 * 1000,
   });
 
-  const allProducts = useMemo(() => {
-    if (!data?.data?.items) return [];
-    return adaptProducts(data.data.items);
-  }, [data]);
+  const allProducts = data ?? [];
 
-  const contextProducts = allProducts;
+  const availableFilters = useMemo<AvailableProductFilters>(() => ({
+    categories: buildFacetOptions(allProducts, applyClientFilters(allProducts, { ...filters, categories: undefined }), (p) => p.category),
+    brands:     buildFacetOptions(allProducts, applyClientFilters(allProducts, { ...filters, brands: undefined }),     (p) => p.brand),
+    genders:    buildFacetOptions(allProducts, applyClientFilters(allProducts, { ...filters, genders: undefined }),    (p) => p.gender, (v) => GENDER_LABELS[v] ?? v),
+    fragranceFamilies: buildFacetOptions(allProducts, applyClientFilters(allProducts, { ...filters, fragranceFamilies: undefined }), (p) => p.fragranceFamily),
+    concentrations:    buildFacetOptions(allProducts, applyClientFilters(allProducts, { ...filters, concentrations: undefined }),    (p) => p.concentration),
+  }), [allProducts, filters]);
 
-  const availableFilters = useMemo<AvailableProductFilters>(() => {
-    const withoutCategory = applyClientFilters(contextProducts, { ...filters, categories: undefined });
-    const withoutBrand = applyClientFilters(contextProducts, { ...filters, brands: undefined });
-    const withoutGender = applyClientFilters(contextProducts, { ...filters, genders: undefined });
-    const withoutFamily = applyClientFilters(contextProducts, { ...filters, fragranceFamilies: undefined });
-    const withoutConcentration = applyClientFilters(contextProducts, { ...filters, concentrations: undefined });
-
-    return {
-      categories: buildFacetOptions(contextProducts, withoutCategory, (p) => p.category),
-      brands: buildFacetOptions(contextProducts, withoutBrand, (p) => p.brand),
-      genders: buildFacetOptions(contextProducts, withoutGender, (p) => p.gender, (v) => GENDER_LABELS[v] ?? v),
-      fragranceFamilies: buildFacetOptions(contextProducts, withoutFamily, (p) => p.fragranceFamily),
-      concentrations: buildFacetOptions(contextProducts, withoutConcentration, (p) => p.concentration),
-    };
-  }, [contextProducts, filters]);
-
-  // Client-side filtering
-  const filtered = useMemo(() => {
-    const result = applyClientFilters(contextProducts, filters);
-    return getSortedProducts(result, sortBy);
-  }, [contextProducts, filters, sortBy]);
-
-  const visible = filtered.slice(0, visibleCount);
-  const hasMore = visibleCount < filtered.length;
+  const filtered = useMemo(() => getSortedProducts(applyClientFilters(allProducts, filters), sortBy), [allProducts, filters, sortBy]);
 
   return {
-    products: visible,
+    products: filtered.slice(0, visibleCount),
     totalCount: filtered.length,
-    hasMore,
+    hasMore: visibleCount < filtered.length,
     isLoading,
     error,
     filters,
     availableFilters,
     sortBy,
     setFilters,
-    updateFilter: <K extends keyof ApiProductFilters>(
-      key: K,
-      value: ApiProductFilters[K]
-    ) => setFilters((prev) => ({ ...prev, [key]: value })),
+    updateFilter: <K extends keyof ApiProductFilters>(key: K, value: ApiProductFilters[K]) =>
+      setFilters((prev) => ({ ...prev, [key]: value })),
     clearFilters: () => setFilters({}),
     setSortBy,
     loadMore: () => setVisibleCount((prev) => prev + 12),
   };
 }
 
-/** Fetch a single product by MongoDB _id. */
+// ─── Single product ───────────────────────────────────────────────────────────
+
 export function useApiProduct(id: string) {
   return useQuery({
     queryKey: productKeys.detail(id),
@@ -249,10 +240,9 @@ export function useApiProduct(id: string) {
   });
 }
 
-/** Fetch a single product by slug. */
 export function useApiProductBySlug(slug: string) {
   return useQuery({
-    queryKey: ['products', 'detail-slug', slug],
+    queryKey: productKeys.slug(slug),
     queryFn: async () => {
       const res = await apiGetProductBySlug(slug);
       if (!res.success || !res.data) throw new Error(res.message ?? 'Not found');
@@ -263,7 +253,8 @@ export function useApiProductBySlug(slug: string) {
   });
 }
 
-/** Fetch reviews for a product. */
+// ─── Reviews ─────────────────────────────────────────────────────────────────
+
 export function useProductReviews(productId: string) {
   return useQuery({
     queryKey: productKeys.reviews(productId),
@@ -277,15 +268,12 @@ export function useProductReviews(productId: string) {
   });
 }
 
-/** Create a review for a product. */
 export function useCreateReview(productId: string) {
   const qc = useQueryClient();
   const { token } = useAuth();
   return useMutation({
     mutationFn: async (data: { rating: number; comment: string }) => {
-      if (!token) {
-        throw new Error('Please sign in to submit a review.');
-      }
+      if (!token) throw new Error('Please sign in to submit a review.');
       return apiCreateProductReview(productId, data, token);
     },
     onSuccess: () => {
@@ -295,33 +283,8 @@ export function useCreateReview(productId: string) {
   });
 }
 
-/** Fetch featured products for home page sections. */
-export function useFeaturedProducts(limit = 8) {
-  return useQuery({
-    queryKey: ['products', 'featured', limit],
-    queryFn: async () => {
-      const res = await apiGetProducts({ featured: true, limit });
-      if (!res.success || !res.data?.items) return [];
-      return adaptProducts(res.data.items);
-    },
-    staleTime: 10 * 60 * 1000,
-  });
-}
+// ─── Multiple products by ID (wishlist / recently viewed) ────────────────────
 
-/** Fetch products for a specific section (no featured filter needed). */
-export function useProductsByLimit(limit = 8, params: ProductsParams = {}) {
-  return useQuery({
-    queryKey: ['products', 'section', limit, params],
-    queryFn: async () => {
-      const res = await apiGetProducts({ limit, ...params });
-      if (!res.success || !res.data?.items) return [];
-      return adaptProducts(res.data.items);
-    },
-    staleTime: 10 * 60 * 1000,
-  });
-}
-
-/** Fetch multiple products by their MongoDB _ids (for wishlist / recently viewed). */
 export function useProductsByIds(ids: string[]) {
   const results = useQueries({
     queries: ids.map((id) => ({
@@ -336,15 +299,13 @@ export function useProductsByIds(ids: string[]) {
     })),
   });
 
-  const products = results
-    .map((r) => r.data)
-    .filter((p): p is Product => p !== null && p !== undefined);
+  const products = results.map((r) => r.data).filter((p): p is Product => p != null);
   const isLoading = results.some((r) => r.isLoading) && products.length === 0;
-
   return { products, isLoading };
 }
 
-/** Search products via API — pass a debounced query string, enabled when length >= 2. */
+// ─── Search ───────────────────────────────────────────────────────────────────
+
 export function useSearchProducts(query: string) {
   return useQuery({
     queryKey: ['products', 'search', query],
@@ -356,4 +317,10 @@ export function useSearchProducts(query: string) {
     enabled: query.trim().length >= 2,
     staleTime: 60 * 1000,
   });
+}
+
+// ─── Featured (kept for backward compat) ─────────────────────────────────────
+
+export function useFeaturedProducts(limit = 8) {
+  return useProductsByLimit(limit, { featured: true });
 }
