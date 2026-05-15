@@ -1,8 +1,14 @@
 import { CompactHeroBanner } from '@/components/home/CompactHeroBanner';
 import { CategoryIconStrip } from '@/components/home/CategoryIconStrip';
-import { BrandInspirations } from '@/components/home/ScentPillars';
+import { PromoStripBanner } from '@/components/home/PromoStripBanner';
 import { ProductSectionClient } from '@/components/home/ProductSectionClient';
+import { StaticProductSection } from '@/components/home/StaticProductSection';
+import { PromoBanners } from '@/components/home/PromoBanners';
+import { ShopByBrandsGrid } from '@/components/home/ShopByBrandsGrid';
+import { ShopByCategoryGrid } from '@/components/home/ShopByCategoryGrid';
+import { MenWomenBanner } from '@/components/home/MenWomenBanner';
 import { FeaturedCollections } from '@/components/home/FeaturedCollections';
+import { BrandInspirations } from '@/components/home/ScentPillars';
 import { BrandShowcase } from '@/components/home/BrandShowcase';
 import { FragranceFinderCTA } from '@/components/home/FragranceFinderCTA';
 import { LimitedDealsSection } from '@/components/home/LimitedDealsSection';
@@ -15,54 +21,97 @@ import { FragranceFinderWidget } from '@/components/home/FragranceFinderWidget';
 export default function HomePage() {
   return (
     <>
-      {/* 1 — Compact 2-grid hero banner */}
+      {/* 1 — Hero banner carousel + side panels */}
       <CompactHeroBanner />
 
-      {/* 2 — Category icon strip (fetches from API) */}
+      {/* 2 — Category icon strip (vperfumes circular icons) */}
       <CategoryIconStrip />
 
-      {/* 3 — New Arrivals */}
+      {/* 3 — Cashback promo strip (gold, vperfumes style) */}
+      <PromoStripBanner />
+
+      {/* 4 — New Arrivals */}
       <ProductSectionClient
         title="New Arrivals"
-        viewAllHref="/products"
+        subtitle="Just Landed"
+        viewAllHref="/products?sort=newest"
         theme="light"
         sectionNumber="01"
-        limit={4}
+        limit={5}
+        columns={5}
       />
 
-      {/* 4 — Editorial curated collections */}
-      <FeaturedCollections />
+      {/* 5 — Two side-by-side promotional banners (vperfumes style) */}
+      <PromoBanners />
 
-      {/* 5 — Brand Inspirations */}
-      <BrandInspirations />
+      {/* 6 — Top Luxury Perfumes */}
+      <StaticProductSection
+        title="Top Luxury Perfumes"
+        subtitle="Premium Selection"
+        viewAllHref="/products?sort=price-desc"
+        theme="light"
+        sectionNumber="02"
+        limit={5}
+        columns={5}
+        filter={{ minPrice: 300 }}
+        sortBy="price-desc"
+      />
 
-      {/* 6 — Best Sellers (featured products) */}
+      {/* 7 — Shop by Brands (dark section) */}
+      <ShopByBrandsGrid />
+
+      {/* 8 — Best Sellers (API data) */}
       <ProductSectionClient
         title="Best Sellers"
         subtitle="Most Loved"
-        viewAllHref="/products"
+        viewAllHref="/products?sort=bestsellers"
         theme="light"
-        sectionNumber="02"
-        limit={4}
+        sectionNumber="03"
+        limit={5}
+        columns={5}
         featured={true}
       />
 
-      {/* 7 — Brand marquee (fetches from API) */}
+      {/* 9 — Shop by Category grid */}
+      <ShopByCategoryGrid />
+
+      {/* 10 — Most Viewed Products */}
+      <StaticProductSection
+        title="Most Viewed"
+        subtitle="Trending Now"
+        viewAllHref="/products?sort=popular"
+        theme="light"
+        sectionNumber="04"
+        limit={5}
+        columns={5}
+        sortBy="reviewCount"
+      />
+
+      {/* 11 — Perfumes For Men & Women (with mini product picks) */}
+      <MenWomenBanner />
+
+      {/* 12 — Editorial curated collections */}
+      <FeaturedCollections />
+
+      {/* 13 — Brand Inspirations */}
+      <BrandInspirations />
+
+      {/* 14 — Brand logos marquee */}
       <BrandShowcase />
 
-      {/* 8 — Fragrance Finder quiz CTA */}
+      {/* 15 — Fragrance Finder quiz CTA */}
       <FragranceFinderCTA />
 
-      {/* 9 — Flash deals + countdown */}
+      {/* 16 — Flash deals + countdown */}
       <LimitedDealsSection />
 
-      {/* 10 — Testimonials + stats bar */}
+      {/* 17 — Testimonials + stats bar */}
       <TestimonialsSection />
 
-      {/* 11 — Instagram feed */}
+      {/* 18 — Instagram feed */}
       <InstagramFeed />
 
-      {/* 12 — Newsletter */}
+      {/* 19 — Newsletter */}
       <NewsletterSection />
 
       {/* Global overlays */}

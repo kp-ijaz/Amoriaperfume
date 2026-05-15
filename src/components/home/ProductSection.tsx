@@ -13,6 +13,7 @@ interface ProductSectionProps {
   showSkeleton?: boolean;
   theme?: 'light' | 'dark';
   sectionNumber?: string;
+  columns?: 2 | 3 | 4 | 5;
 }
 
 export function ProductSection({
@@ -23,6 +24,7 @@ export function ProductSection({
   showSkeleton = false,
   theme = 'light',
   sectionNumber = '01',
+  columns = 4,
 }: ProductSectionProps) {
   const isDark = theme === 'dark';
 
@@ -131,7 +133,7 @@ export function ProductSection({
         </div>
 
         {/* ── Product grid ──────────────────────── */}
-        <ProductGrid products={products} showSkeleton={showSkeleton} />
+        <ProductGrid products={products} showSkeleton={showSkeleton} columns={columns} />
       </div>
     </section>
   );

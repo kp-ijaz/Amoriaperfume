@@ -211,7 +211,7 @@ export function Header() {
 
   return (
     <>
-      <header className="sticky top-0 z-40 w-full" style={{ backgroundColor: '#FAF8F5' }}>
+      <header className="fixed top-0 left-0 right-0 z-40 w-full" style={{ backgroundColor: '#FAF8F5' }}>
 
         {/* ── TOP UTILITY BAR — live offers + language ── */}
         <div

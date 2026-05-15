@@ -3,8 +3,13 @@
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { useCountdown } from '@/lib/hooks/useCountdown';
-import { useProductsByLimit } from '@/lib/hooks/useApiProducts';
 import { ProductCard } from '@/components/product/ProductCard';
+import { products as allProducts } from '@/lib/data/products';
+
+// 5 deal products — on-sale items from dummy data
+const DEAL_PRODUCTS = allProducts
+  .filter((p) => p.isOnSale)
+  .slice(0, 5);
 
 function TimeUnit({ value, label }: { value: number; label: string }) {
   return (
@@ -30,15 +35,13 @@ function TimeUnit({ value, label }: { value: number; label: string }) {
 
 export function LimitedDealsSection() {
   const { hours, minutes, seconds } = useCountdown();
-  const { data: dealProducts = [] } = useProductsByLimit(4, { featured: true });
 
   return (
     <section
       className="relative overflow-hidden"
       style={{ backgroundColor: '#F5F2EE', borderTop: '1px solid #E8E3DC', borderBottom: '1px solid #E8E3DC' }}
     >
-
-<div className="relative z-10 max-w-7xl mx-auto px-5 sm:px-8 py-20 md:py-28">
+      <div className="relative z-10 max-w-7xl mx-auto px-5 sm:px-8 py-20 md:py-28">
 
         {/* ── Header row ──────────────────────────── */}
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 mb-14">
@@ -98,9 +101,9 @@ export function LimitedDealsSection() {
           </motion.div>
         </div>
 
-        {/* ── Product grid ─────────────────────────── */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-5">
-          {dealProducts.map((product, i) => (
+        {/* ── 5-product grid ─────────────────────── */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
+          {DEAL_PRODUCTS.map((product, i) => (
             <motion.div
               key={product.id}
               initial={{ opacity: 0, y: 24 }}

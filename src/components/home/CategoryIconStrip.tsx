@@ -3,77 +3,98 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
-import { useCategories } from '@/lib/hooks/useApiCategories';
 
-// Tile types cycle: photo → green → green → ring → repeat
-function getTileType(index: number): 'photo' | 'green' | 'ring' {
-  const cycle = ['photo', 'green', 'green', 'ring'] as const;
-  return cycle[index % cycle.length];
-}
+const CATEGORIES = [
+  {
+    id: 'online-deals',
+    slug: 'online-deals',
+    name: 'Online Deals',
+    image: '/images/products/prod1.jpg',
+    badge: 'SALE',
+  },
+  {
+    id: 'attar-oud',
+    slug: 'attar-oud',
+    name: 'Attar & Oud',
+    image: '/images/products/prod3.jpg',
+    badge: null,
+  },
+  {
+    id: 'bakhoor',
+    slug: 'bakhoor',
+    name: 'Bakhoor',
+    image: '/images/products/prod5.jpg',
+    badge: null,
+  },
+  {
+    id: 'gift-sets',
+    slug: 'gift-sets',
+    name: 'Gift Sets',
+    image: '/images/products/prod7.jpg',
+    badge: 'NEW',
+  },
+  {
+    id: 'niche-perfumes',
+    slug: 'niche-perfumes',
+    name: 'Niche Perfumes',
+    image: '/images/products/prod9.jpg',
+    badge: null,
+  },
+  {
+    id: 'mens',
+    slug: 'mens',
+    name: "Men's",
+    image: '/images/products/prod11.jpg',
+    badge: null,
+  },
+  {
+    id: 'womens',
+    slug: 'womens',
+    name: "Women's",
+    image: '/images/products/prod13.jpg',
+    badge: null,
+  },
+  {
+    id: 'mini-perfumes',
+    slug: 'mini-perfumes',
+    name: 'Mini Perfumes',
+    image: '/images/products/prod15.jpg',
+    badge: null,
+  },
+];
 
 export function CategoryIconStrip() {
-  const { data: apiCategories = [], isLoading } = useCategories();
-
-  // Limit to 4 for the strip layout
-  const categories = apiCategories.slice(0, 4).map((cat, i) => ({
-    id: cat.id,
-    slug: cat.slug,
-    name: cat.name,
-    type: getTileType(i),
-    image: cat.image,
-  }));
-
-  if (isLoading || categories.length === 0) return null;
-
   return (
-    <section
-      className="relative overflow-hidden"
-      style={{ backgroundColor: '#ffffff' }}
-    >
-      <div className="max-w-5xl mx-auto px-4 py-7">
-
-        {/* ── Section Header ── */}
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
-          className="text-center mb-2 md:mb-3"
-        >
-          <p
-            style={{
-              fontSize: '10px',
-              letterSpacing: '0.3em',
-              textTransform: 'uppercase',
-              fontWeight: 500,
-              color: '#7A7A7A',
-            }}
-          >
-            Our True Masterclass Into Handpicked Specialties
-          </p>
-        </motion.div>
-
-        {/* ── Icon Strip — horizontal scroll on mobile, centered row on desktop ── */}
+    <section style={{ backgroundColor: '#FFFFFF', borderBottom: '1px solid #E8E3DC' }}>
+      <div
+        style={{
+          maxWidth: 1280,
+          margin: '0 auto',
+          padding: '28px 16px 24px',
+        }}
+      >
+        {/* Scrollable strip — centers on desktop, scrolls on mobile */}
         <div
           style={{
             display: 'flex',
             alignItems: 'flex-start',
-            justifyContent: 'center',
-            gap: '40px',
+            gap: 0,
             overflowX: 'auto',
-            scrollSnapType: 'x mandatory',
+            scrollbarWidth: 'none',
+            msOverflowStyle: 'none',
             WebkitOverflowScrolling: 'touch',
-            paddingBottom: '4px',
+            scrollSnapType: 'x mandatory',
+            justifyContent: 'space-between',
           }}
-          className="no-scrollbar"
+          className="category-strip"
         >
-          {categories.map((cat, i) => (
+          {CATEGORIES.map((cat, i) => (
             <motion.div
               key={cat.id}
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 14 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.55, delay: i * 0.07, ease: [0.22, 1, 0.36, 1] }}
+              transition={{ duration: 0.42, delay: i * 0.055, ease: [0.22, 1, 0.36, 1] }}
               style={{ scrollSnapAlign: 'start', flexShrink: 0 }}
             >
               <Link
@@ -82,153 +103,74 @@ export function CategoryIconStrip() {
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
-                  gap: '8px',
+                  gap: 10,
                   textDecoration: 'none',
+                  padding: '0 14px',
+                  minWidth: 80,
                 }}
-                className="group"
+                className="category-icon-link"
               >
-                {/* Photo tile */}
-                {cat.type === 'photo' && cat.image && (
+                {/* Circle wrapper */}
+                <div
+                  style={{ position: 'relative', display: 'inline-block' }}
+                  className="category-circle-wrap"
+                >
                   <div
+                    className="category-circle"
                     style={{
-                      width: '80px',
-                      height: '80px',
-                      borderRadius: '16px',
+                      width: 82,
+                      height: 82,
+                      borderRadius: '50%',
                       overflow: 'hidden',
-                      border: '1px solid #E8E3DC',
-                      backgroundColor: '#F5E8D0',
+                      backgroundColor: '#F5F2EE',
+                      border: '2px solid #E8E3DC',
                       position: 'relative',
-                      transition: 'transform 0.28s cubic-bezier(0.22,1,0.36,1)',
+                      transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
                     }}
-                    className="group-hover:-translate-y-1 group-hover:scale-[1.03]"
                   >
                     <Image
                       src={cat.image}
                       alt={cat.name}
                       fill
                       className="object-cover"
-                      sizes="80px"
-                      unoptimized
+                      sizes="82px"
                     />
                   </div>
-                )}
-                {cat.type === 'photo' && !cat.image && (
-                  <div
-                    style={{
-                      width: '80px', height: '80px', borderRadius: '16px',
-                      backgroundColor: '#F5E8D0', border: '1px solid #E8E3DC',
-                    }}
-                    className="group-hover:-translate-y-1 group-hover:scale-[1.03]"
-                  />
-                )}
 
-                {/* Cream box */}
-                {cat.type === 'green' && (
-                  <div
-                    style={{
-                      width: '80px',
-                      height: '80px',
-                      borderRadius: '16px',
-                      backgroundColor: '#F5E8D0',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      padding: '8px',
-                      transition: 'transform 0.28s cubic-bezier(0.22,1,0.36,1)',
-                    }}
-                    className="group-hover:-translate-y-1 group-hover:scale-[1.03]"
-                  >
+                  {/* Sale/New badge */}
+                  {cat.badge && (
                     <span
-                      style={{
-                        fontFamily: 'var(--font-heading, "Cormorant Garamond", serif)',
-                        fontSize: cat.name.length > 8 ? '12px' : '15px',
-                        fontWeight: 500,
-                        color: '#1A0A2E',
-                        letterSpacing: '0.08em',
-                        textAlign: 'center',
-                        textTransform: 'uppercase',
-                        lineHeight: 1.25,
-                      }}
-                    >
-                      {cat.name.split(' ').length > 1 ? (
-                        <>
-                          {cat.name.split(' ')[0]}
-                          <br />
-                          {cat.name.split(' ').slice(1).join(' ')}
-                        </>
-                      ) : cat.name}
-                    </span>
-                  </div>
-                )}
-
-                {/* Spinning ring badge — New Arrivals */}
-                {cat.type === 'ring' && (
-                  <div
-                    style={{
-                      width: '80px',
-                      height: '80px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      position: 'relative',
-                    }}
-                  >
-                    <svg
-                      viewBox="0 0 80 80"
-                      width="80"
-                      height="80"
                       style={{
                         position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        animation: 'spin-ring 18s linear infinite',
-                      }}
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <defs>
-                        <path id="ring-arc" d="M40,6 a34,34 0 1,1 -0.01,0" />
-                      </defs>
-                      <circle cx="40" cy="40" r="37" fill="none" stroke="#C9A84C" strokeWidth="1" />
-                      <text
-                        fontSize="6"
-                        fontFamily="Montserrat, sans-serif"
-                        fontWeight="600"
-                        letterSpacing="4.2"
-                        fill="#C9A84C"
-                        textAnchor="middle"
-                      >
-                        <textPath href="#ring-arc" startOffset="50%">
-                          NEW · NEW · NEW · NEW · NEW ·
-                        </textPath>
-                      </text>
-                    </svg>
-                    <span
-                      style={{
-                        fontFamily: 'var(--font-heading, "Cormorant Garamond", serif)',
-                        fontSize: '11px',
-                        fontWeight: 400,
-                        color: '#1A0A2E',
-                        letterSpacing: '0.1em',
-                        textAlign: 'center',
-                        textTransform: 'uppercase',
-                        lineHeight: 1.2,
-                        zIndex: 1,
+                        top: 2,
+                        right: 2,
+                        backgroundColor: cat.badge === 'SALE' ? '#DC2626' : '#C9A84C',
+                        color: '#fff',
+                        fontSize: 7,
+                        fontWeight: 700,
+                        letterSpacing: '0.08em',
+                        padding: '2px 5px',
+                        borderRadius: 3,
+                        lineHeight: 1,
+                        zIndex: 10,
                       }}
                     >
-                      Arrivals
+                      {cat.badge}
                     </span>
-                  </div>
-                )}
+                  )}
+                </div>
 
-                {/* Label below */}
+                {/* Label */}
                 <span
                   style={{
-                    fontSize: '9px',
-                    letterSpacing: '0.22em',
-                    color: '#5A5A5A',
+                    fontSize: 11,
                     fontWeight: 500,
-                    textTransform: 'uppercase',
+                    color: '#3A3A3A',
                     textAlign: 'center',
+                    lineHeight: 1.3,
+                    maxWidth: 82,
+                    display: 'block',
+                    letterSpacing: '0.01em',
                   }}
                 >
                   {cat.name}
@@ -237,16 +179,25 @@ export function CategoryIconStrip() {
             </motion.div>
           ))}
         </div>
-
       </div>
 
+      {/* Hover styles + scrollbar hide */}
       <style>{`
-        @keyframes spin-ring {
-          from { transform: rotate(0deg); }
-          to   { transform: rotate(360deg); }
+        .category-strip::-webkit-scrollbar { display: none; }
+
+        .category-icon-link:hover .category-circle {
+          border-color: #C9A84C !important;
+          box-shadow: 0 0 0 3px rgba(201, 168, 76, 0.15);
         }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .category-icon-link:hover span:last-child {
+          color: #C9A84C;
+        }
+
+        @media (max-width: 767px) {
+          .category-strip {
+            justify-content: flex-start !important;
+          }
+        }
       `}</style>
     </section>
   );

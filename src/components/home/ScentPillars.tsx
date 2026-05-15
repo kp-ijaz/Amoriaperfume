@@ -48,6 +48,16 @@ const INSPIRED_PRODUCTS = [
     price: 99,
     originalPrice: null,
   },
+  {
+    id: 'insp-5',
+    slug: 'rose-elixir',
+    name: 'Rose Elixir',
+    brand: 'Armaf',
+    inspiredBy: 'La Vie Est Belle — Lancôme',
+    image: 'https://images.unsplash.com/photo-1587017539504-67cfbddac569?w=600&q=90',
+    price: 99,
+    originalPrice: 129,
+  },
 ];
 
 function InspirationCard({
@@ -205,7 +215,7 @@ export function BrandInspirations() {
         </motion.div>
 
         {/* ── Product grid ── */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-5 md:gap-7">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-5">
           {INSPIRED_PRODUCTS.map((product, i) => (
             <InspirationCard key={product.id} product={product} index={i} />
           ))}

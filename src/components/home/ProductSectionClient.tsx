@@ -11,6 +11,7 @@ interface ProductSectionClientProps {
   sectionNumber?: string;
   limit?: number;
   featured?: boolean;
+  columns?: 2 | 3 | 4 | 5;
 }
 
 export function ProductSectionClient({
@@ -21,6 +22,7 @@ export function ProductSectionClient({
   sectionNumber = '01',
   limit = 8,
   featured,
+  columns = 4,
 }: ProductSectionClientProps) {
   const params = featured != null ? { featured } : {};
   const { data: products = [], isLoading } = useProductsByLimit(limit, params);
@@ -34,6 +36,7 @@ export function ProductSectionClient({
       showSkeleton={isLoading}
       theme={theme}
       sectionNumber={sectionNumber}
+      columns={columns}
     />
   );
 }

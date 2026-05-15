@@ -1,48 +1,137 @@
 'use client';
 
 import Link from 'next/link';
-import { MagneticButton } from '@/components/ui/MagneticButton';
 
 export function PromoStripBanner() {
   return (
     <div
-      className="relative w-full py-3 px-4"
-      style={{ backgroundColor: '#1A0A2E' }}
+      style={{
+        backgroundColor: '#C9A84C',
+        width: '100%',
+        padding: '14px 16px',
+        position: 'relative',
+        overflow: 'hidden',
+      }}
     >
-      {/* Gold top line */}
-      <div className="absolute top-0 left-0 w-full h-px" style={{ background: 'linear-gradient(90deg, transparent, rgba(201,168,76,0.5), transparent)' }} />
-      {/* Gold bottom line */}
-      <div className="absolute bottom-0 left-0 w-full h-px" style={{ background: 'linear-gradient(90deg, transparent, rgba(201,168,76,0.5), transparent)' }} />
+      {/* Subtle pattern overlay */}
+      <div
+        style={{
+          position: 'absolute',
+          inset: 0,
+          backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(26,10,46,0.04) 4px, rgba(26,10,46,0.04) 8px)',
+          pointerEvents: 'none',
+        }}
+      />
 
-      <div className="max-w-7xl mx-auto flex items-center justify-center gap-3 sm:gap-6 flex-wrap">
-        {/* Diamond ornament */}
-        <svg width="8" height="8" viewBox="0 0 8 8" fill="none" className="flex-shrink-0 hidden sm:block">
-          <polygon points="4,0 8,4 4,8 0,4" fill="rgba(201,168,76,0.6)" />
-        </svg>
+      <div
+        style={{
+          maxWidth: 1280,
+          margin: '0 auto',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 16,
+          flexWrap: 'wrap',
+          position: 'relative',
+          zIndex: 1,
+        }}
+      >
+        {/* Left decorative line */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <svg width="22" height="2" viewBox="0 0 22 2" fill="none">
+            <line x1="0" y1="1" x2="22" y2="1" stroke="#1A0A2E" strokeOpacity="0.4" strokeWidth="1.5" />
+          </svg>
+          <svg width="6" height="6" viewBox="0 0 6 6" fill="none">
+            <polygon points="3,0 6,3 3,6 0,3" fill="#1A0A2E" fillOpacity="0.5" />
+          </svg>
+        </div>
 
-        <p className="text-[11px] tracking-wide text-center" style={{ color: 'rgba(255,255,255,0.55)' }}>
-          Free delivery on orders over AED 200
-          <span className="mx-2 opacity-30">·</span>
-          Use code{' '}
-          <span className="font-semibold tracking-widest" style={{ color: '#C9A84C' }}>CB30</span>
-          {' '}for 30% cashback
-        </p>
+        {/* Main message — centered */}
+        <div
+          style={{
+            flex: 1,
+            textAlign: 'center',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 6,
+            flexWrap: 'wrap',
+          }}
+        >
+          <span
+            style={{
+              fontFamily: 'var(--font-heading, "Cormorant Garamond", serif)',
+              fontSize: 'clamp(14px, 2.2vw, 20px)',
+              fontWeight: 600,
+              color: '#1A0A2E',
+              letterSpacing: '0.04em',
+              lineHeight: 1.2,
+            }}
+          >
+            Massive 30% Cashback
+          </span>
+          <span style={{ color: '#1A0A2E', opacity: 0.4, fontSize: 16 }}>|</span>
+          <span
+            style={{
+              fontFamily: 'var(--font-heading, "Cormorant Garamond", serif)',
+              fontSize: 'clamp(14px, 2.2vw, 20px)',
+              fontWeight: 400,
+              color: '#1A0A2E',
+              letterSpacing: '0.04em',
+              lineHeight: 1.2,
+            }}
+          >
+            Use Code:&nbsp;
+            <strong
+              style={{
+                fontWeight: 800,
+                letterSpacing: '0.12em',
+                fontSize: 'clamp(15px, 2.4vw, 22px)',
+                textTransform: 'uppercase',
+                backgroundColor: 'rgba(26,10,46,0.1)',
+                padding: '2px 8px',
+                borderRadius: 3,
+              }}
+            >
+              CB30
+            </strong>
+          </span>
+        </div>
 
-        <svg width="8" height="8" viewBox="0 0 8 8" fill="none" className="flex-shrink-0 hidden sm:block">
-          <polygon points="4,0 8,4 4,8 0,4" fill="rgba(201,168,76,0.6)" />
-        </svg>
+        {/* Right decorative + CTA */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <svg width="6" height="6" viewBox="0 0 6 6" fill="none">
+            <polygon points="3,0 6,3 3,6 0,3" fill="#1A0A2E" fillOpacity="0.5" />
+          </svg>
+          <svg width="22" height="2" viewBox="0 0 22 2" fill="none">
+            <line x1="0" y1="1" x2="22" y2="1" stroke="#1A0A2E" strokeOpacity="0.4" strokeWidth="1.5" />
+          </svg>
 
-        <MagneticButton as="div" strength={0.4}>
           <Link
             href="/products"
-            className="text-[11px] font-semibold tracking-[0.16em] uppercase flex-shrink-0 transition-opacity hover:opacity-70"
-            style={{ color: '#C9A84C' }}
-            data-cursor-label="SHOP"
+            style={{
+              color: '#1A0A2E',
+              fontSize: 11,
+              fontWeight: 700,
+              letterSpacing: '0.2em',
+              textTransform: 'uppercase',
+              textDecoration: 'none',
+              whiteSpace: 'nowrap',
+              borderBottom: '1.5px solid rgba(26,10,46,0.5)',
+              paddingBottom: 1,
+              transition: 'opacity 0.2s',
+              flexShrink: 0,
+            }}
+            className="promo-shop-link"
           >
             Shop Now →
           </Link>
-        </MagneticButton>
+        </div>
       </div>
+
+      <style>{`
+        .promo-shop-link:hover { opacity: 0.65; }
+      `}</style>
     </div>
   );
 }
