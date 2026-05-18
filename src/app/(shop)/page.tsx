@@ -5,12 +5,8 @@ import { ProductSectionClient } from '@/components/home/ProductSectionClient';
 import { StaticProductSection } from '@/components/home/StaticProductSection';
 import { PromoBanners } from '@/components/home/PromoBanners';
 import { ShopByBrandsGrid } from '@/components/home/ShopByBrandsGrid';
-import { ShopByCategoryGrid } from '@/components/home/ShopByCategoryGrid';
 import { MenWomenBanner } from '@/components/home/MenWomenBanner';
-import { FeaturedCollections } from '@/components/home/FeaturedCollections';
 import { BrandInspirations } from '@/components/home/ScentPillars';
-import { BrandShowcase } from '@/components/home/BrandShowcase';
-import { FragranceFinderCTA } from '@/components/home/FragranceFinderCTA';
 import { LimitedDealsSection } from '@/components/home/LimitedDealsSection';
 import { TestimonialsSection } from '@/components/home/TestimonialsSection';
 import { InstagramFeed } from '@/components/home/InstagramFeed';
@@ -44,18 +40,8 @@ export default function HomePage() {
       {/* 5 — Two side-by-side promotional banners (vperfumes style) */}
       <PromoBanners />
 
-      {/* 6 — Top Luxury Perfumes */}
-      <StaticProductSection
-        title="Top Luxury Perfumes"
-        subtitle="Premium Selection"
-        viewAllHref="/products?sort=price-desc"
-        theme="light"
-        sectionNumber="02"
-        limit={5}
-        columns={5}
-        filter={{ minPrice: 300 }}
-        sortBy="price-desc"
-      />
+      {/* 6 — Flash deals + countdown (moved here) */}
+      <LimitedDealsSection />
 
       {/* 7 — Shop by Brands (dark section) */}
       <ShopByBrandsGrid />
@@ -66,52 +52,37 @@ export default function HomePage() {
         subtitle="Most Loved"
         viewAllHref="/products?sort=bestsellers"
         theme="light"
-        sectionNumber="03"
+        sectionNumber="02"
         limit={5}
         columns={5}
         featured={true}
       />
 
-      {/* 9 — Shop by Category grid */}
-      <ShopByCategoryGrid />
-
-      {/* 10 — Most Viewed Products */}
+      {/* 9 — Trending Perfumes */}
       <StaticProductSection
-        title="Most Viewed"
-        subtitle="Trending Now"
+        title="Trending Perfumes"
+        subtitle="What's Hot Right Now"
         viewAllHref="/products?sort=popular"
         theme="light"
-        sectionNumber="04"
+        sectionNumber="03"
         limit={5}
         columns={5}
         sortBy="reviewCount"
       />
 
-      {/* 11 — Perfumes For Men & Women (with mini product picks) */}
+      {/* 10 — Perfumes For Men & Women (with mini product picks) */}
       <MenWomenBanner />
 
-      {/* 12 — Editorial curated collections */}
-      <FeaturedCollections />
-
-      {/* 13 — Brand Inspirations */}
+      {/* 11 — Brand Inspirations */}
       <BrandInspirations />
 
-      {/* 14 — Brand logos marquee */}
-      <BrandShowcase />
-
-      {/* 15 — Fragrance Finder quiz CTA */}
-      <FragranceFinderCTA />
-
-      {/* 16 — Flash deals + countdown */}
-      <LimitedDealsSection />
-
-      {/* 17 — Testimonials + stats bar */}
+      {/* 12 — Testimonials + stats bar */}
       <TestimonialsSection />
 
-      {/* 18 — Instagram feed */}
+      {/* 13 — Instagram feed */}
       <InstagramFeed />
 
-      {/* 19 — Newsletter */}
+      {/* 14 — Newsletter */}
       <NewsletterSection />
 
       {/* Global overlays */}

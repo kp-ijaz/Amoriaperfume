@@ -43,11 +43,11 @@ export function ReviewStep({ address, paymentMethod, fulfillmentMethod, pickupSl
     setLoading(true);
     setError(null);
 
-    // Build customer details
+    // Build customer details — fall back to address fields for delivery guests
     const customerName = user
       ? `${user.firstName} ${user.lastName}`.trim()
-      : guestInfo?.name ?? 'Guest';
-    const customerEmail = user?.email ?? guestInfo?.email ?? '';
+      : guestInfo?.name ?? address?.fullName ?? 'Guest';
+    const customerEmail = user?.email ?? guestInfo?.email ?? address?.email ?? '';
     const customerPhone = user?.phone ?? guestInfo?.phone ?? address?.phone ?? '';
 
     // Build shipping address

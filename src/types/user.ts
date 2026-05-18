@@ -2,6 +2,7 @@ export interface Address {
   id: string;
   fullName: string;
   phone: string;
+  email?: string;
   street: string;
   area: string;
   emirate: string;

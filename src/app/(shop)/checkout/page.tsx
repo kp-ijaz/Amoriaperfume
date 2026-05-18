@@ -2,325 +2,268 @@
 
 import { useState, Suspense } from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
-import { User, UserCheck, LogIn, ShoppingBag, Shield, Store, Truck, ChevronRight, Pencil, UserX } from 'lucide-react';
+import { User, UserCheck, LogIn, ShoppingBag, Shield, Store, Truck, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { useCart } from '@/lib/hooks/useCart';
 import { CheckoutStepper } from '@/components/checkout/CheckoutStepper';
-import { GuestInfoStep } from '@/components/checkout/GuestInfoStep';
 import { AddressStep, FulfillmentMethod, PickupSlot } from '@/components/checkout/AddressStep';
 import { PaymentStep } from '@/components/checkout/PaymentStep';
 import { ReviewStep } from '@/components/checkout/ReviewStep';
 import { Address } from '@/types/user';
-import { GuestInfo } from '@/lib/store/authSlice';
 
-type CheckoutFlow = 'gate' | 'guest-info' | 'guest-edit' | 1 | 2 | 3;
+type CheckoutFlow = 'gate' | 1 | 2 | 3;
 
 function CheckoutPageInner() {
-  const { isLoggedIn, isGuest, user, guestInfo, continueAsGuest, clearGuest } = useAuth();
+  const { isLoggedIn, isGuest, user, guestInfo, continueAsGuest } = useAuth();
   const { items } = useCart();
-  const searchParams = useSearchParams();
-  const editGuest = searchParams.get('editGuest') === '1';
 
-  // If editing guest details from header dropdown, go straight to guest-edit
-  // If already authenticated, skip gate; otherwise show gate
   function getInitialFlow(): CheckoutFlow {
-    if (editGuest && isGuest) return 'guest-edit';
     if (isLoggedIn || isGuest) return 1;
     return 'gate';
   }
 
-  // If already authenticated, skip gate
-  const [flow,           setFlow]           = useState<CheckoutFlow>(getInitialFlow);
-  const [address,        setAddress]        = useState<Address | null>(null);
-  const [fulfillment,    setFulfillment]    = useState<FulfillmentMethod>('delivery');
-  const [pickupSlot,     setPickupSlot]     = useState<PickupSlot | undefined>(undefined);
-  const [paymentMethod,  setPaymentMethod]  = useState<'card' | 'applepay' | 'cod' | null>(null);
+  const [flow,          setFlow]         = useState<CheckoutFlow>(getInitialFlow);
+  const [isGuestMode,   setIsGuestMode]  = useState(false);
+  const [address,       setAddress]      = useState<Address | null>(null);
+  const [fulfillment,   setFulfillment]  = useState<FulfillmentMethod>('delivery');
+  const [pickupSlot,    setPickupSlot]   = useState<PickupSlot | undefined>(undefined);
+  const [paymentMethod, setPaymentMethod] = useState<'card' | 'applepay' | 'cod' | null>(null);
 
-  // Cart empty guard
+  const effectiveIsGuest = isGuest || isGuestMode;
+
   if (items.length === 0) {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center px-5 text-center">
-        <ShoppingBag size={48} style={{ color: '#E8E3DC' }} className="mb-4" />
-        <h2 className="text-2xl font-light mb-2" style={{ fontFamily: 'var(--font-heading)', color: '#1A0A2E' }}>Your cart is empty</h2>
-        <p className="text-sm mb-6" style={{ color: '#6B6B6B' }}>Add items to your cart before checking out.</p>
-        <Link href="/products" className="px-8 py-3 text-sm font-bold tracking-wider uppercase" style={{ backgroundColor: '#1A0A2E', color: '#C9A84C' }}>
+        <ShoppingBag size={52} style={{ color: '#E8E3DC' }} className="mb-5" />
+        <h2 className="text-2xl font-light mb-2" style={{ fontFamily: 'var(--font-heading)', color: '#1A0A2E' }}>
+          Your cart is empty
+        </h2>
+        <p className="text-sm mb-6" style={{ color: '#6B6B6B' }}>
+          Add items before checking out.
+        </p>
+        <Link
+          href="/products"
+          className="px-8 py-3 text-sm font-bold tracking-wider uppercase"
+          style={{ backgroundColor: '#1A0A2E', color: '#C9A84C' }}
+        >
           Browse Collection
         </Link>
       </div>
     );
   }
 
-  const displayName = isLoggedIn
-    ? `${user!.firstName} ${user!.lastName}`
-    : guestInfo?.name ?? 'Guest';
-
-  function handleGuestInfo(info: GuestInfo) {
-    continueAsGuest(info);
+  function handleGuestContinue() {
+    setIsGuestMode(true);
     setFlow(1);
   }
 
-  function handleGuestEdit(info: GuestInfo) {
-    continueAsGuest(info);
-    setFlow(1);
-  }
-
-  function handleUseDifferent() {
-    clearGuest();
-    setFlow('guest-info');
+  function handleAddressNext(
+    addr: Address | null,
+    method: FulfillmentMethod,
+    slot?: PickupSlot,
+    guestContact?: { name: string; email: string }
+  ) {
+    setAddress(addr);
+    setFulfillment(method);
+    setPickupSlot(slot);
+    if (guestContact && effectiveIsGuest) {
+      continueAsGuest({ name: guestContact.name, email: guestContact.email, phone: addr?.phone ?? '' });
+    }
+    setFlow(2);
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-10">
-      {/* Header */}
-      <div className="text-center mb-8">
-        <h1
-          className="text-3xl font-light mb-1"
-          style={{ fontFamily: 'var(--font-heading)', color: '#1A0A2E' }}
-        >
-          Checkout
-        </h1>
-        {(isLoggedIn || isGuest) && (
-          <p className="text-sm" style={{ color: '#A89880' }}>
-            {isLoggedIn ? '👤' : '🛒'} Checking out as <strong style={{ color: '#1A0A2E' }}>{displayName}</strong>
-          </p>
-        )}
+    <div className="min-h-screen" style={{ backgroundColor: '#FAF8F5' }}>
+      {/* Trust bar */}
+      <div style={{ backgroundColor: '#1A0A2E' }}>
+        <div className="max-w-5xl mx-auto px-4 py-2.5 flex flex-wrap items-center justify-center gap-x-6 gap-y-1">
+          {[
+            { icon: <Shield size={11} />, label: 'SSL Secured Checkout' },
+            { icon: <Truck size={11} />, label: 'Free Delivery over AED 200' },
+            { icon: <Store size={11} />, label: 'Store Pickup Available' },
+          ].map(({ icon, label }) => (
+            <span key={label} className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-semibold" style={{ color: '#C9A84C' }}>
+              {icon} {label}
+            </span>
+          ))}
+        </div>
       </div>
 
-      <AnimatePresence mode="wait">
+      <div className="max-w-lg mx-auto px-4 py-10">
+        {/* Page header */}
+        <div className="text-center mb-8">
+          <div className="flex items-center justify-center gap-3 mb-3">
+            <span className="w-10 h-px" style={{ backgroundColor: '#C9A84C' }} />
+            <span className="text-[10px] font-black uppercase tracking-[0.25em]" style={{ color: '#A89880' }}>
+              Secure Checkout
+            </span>
+            <span className="w-10 h-px" style={{ backgroundColor: '#C9A84C' }} />
+          </div>
+          <h1 className="text-4xl font-light" style={{ fontFamily: 'var(--font-heading)', color: '#1A0A2E' }}>
+            {flow === 'gate' ? 'Complete Your Order' : 'Checkout'}
+          </h1>
+          {(isLoggedIn || isGuest) && guestInfo && (
+            <p className="text-sm mt-2" style={{ color: '#A89880' }}>
+              Checking out as{' '}
+              <strong style={{ color: '#1A0A2E' }}>
+                {isLoggedIn ? `${user!.firstName} ${user!.lastName}` : guestInfo.name}
+              </strong>
+            </p>
+          )}
+          {effectiveIsGuest && !guestInfo && (
+            <p className="text-sm mt-2" style={{ color: '#A89880' }}>Guest Checkout</p>
+          )}
+        </div>
 
-        {/* ── AUTH GATE ── */}
-        {flow === 'gate' && (
-          <motion.div
-            key="gate"
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -16 }}
-            transition={{ duration: 0.3 }}
-          >
-            {/* Trust bar */}
-            <div
-              className="flex flex-wrap items-center justify-center gap-4 px-5 py-3 mb-7 text-[10px] uppercase tracking-wider font-semibold"
-              style={{ backgroundColor: '#FAF8F5', border: '1px solid #E8E3DC' }}
+        <AnimatePresence mode="wait">
+
+          {/* ── AUTH GATE ── */}
+          {flow === 'gate' && (
+            <motion.div
+              key="gate"
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -12 }}
+              transition={{ duration: 0.28 }}
             >
-              <span className="flex items-center gap-1.5" style={{ color: '#6B6B6B' }}>
-                <Shield size={12} style={{ color: '#C9A84C' }} /> Secure Checkout
-              </span>
-              <span className="flex items-center gap-1.5" style={{ color: '#6B6B6B' }}>
-                <Truck size={12} style={{ color: '#C9A84C' }} /> Free Delivery over AED 200
-              </span>
-              <span className="flex items-center gap-1.5" style={{ color: '#6B6B6B' }}>
-                <Store size={12} style={{ color: '#C9A84C' }} /> Store Pickup Available
-              </span>
-            </div>
+              <div className="space-y-3">
 
-            <div className="space-y-3">
-              {/* Login option */}
-              <Link
-                href="/login?redirect=/checkout"
-                className="flex items-center gap-4 p-5 border-2 transition-all duration-200 hover:border-[#1A0A2E] group"
-                style={{ borderColor: '#E8E3DC', backgroundColor: 'white' }}
-              >
-                <div
-                  className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0"
-                  style={{ backgroundColor: 'rgba(26,10,46,0.07)' }}
+                {/* Sign In — most prominent */}
+                <Link
+                  href="/login?redirect=/checkout"
+                  className="flex items-center gap-4 p-5 transition-all duration-200 group"
+                  style={{ backgroundColor: '#1A0A2E' }}
+                  onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#2D1554')}
+                  onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#1A0A2E')}
                 >
-                  <LogIn size={20} style={{ color: '#1A0A2E' }} />
-                </div>
-                <div className="flex-1">
-                  <p className="font-semibold text-sm" style={{ color: '#1A0A2E' }}>Sign In to Your Account</p>
-                  <p className="text-xs mt-0.5" style={{ color: '#A89880' }}>Use saved addresses, track orders, earn loyalty points</p>
-                </div>
-                <ChevronRight size={16} className="flex-shrink-0 opacity-30 group-hover:opacity-70 transition-opacity" />
-              </Link>
+                  <div className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}>
+                    <LogIn size={20} className="text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-bold text-sm text-white">Sign In to Your Account</p>
+                    <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.5)' }}>
+                      Saved addresses · Order history · Loyalty rewards
+                    </p>
+                  </div>
+                  <ChevronRight size={16} style={{ color: '#C9A84C' }} />
+                </Link>
 
-              {/* Register option */}
-              <Link
-                href="/register?redirect=/checkout"
-                className="flex items-center gap-4 p-5 border-2 transition-all duration-200 hover:border-[#C9A84C] group"
-                style={{ borderColor: '#E8E3DC', backgroundColor: 'white' }}
-              >
-                <div
-                  className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0"
-                  style={{ backgroundColor: 'rgba(201,168,76,0.1)' }}
+                {/* Create Account */}
+                <Link
+                  href="/register?redirect=/checkout"
+                  className="flex items-center gap-4 p-5 border-2 transition-all duration-200 group hover:bg-amber-50/30"
+                  style={{ borderColor: '#C9A84C', backgroundColor: 'white' }}
                 >
-                  <UserCheck size={20} style={{ color: '#C9A84C' }} />
-                </div>
-                <div className="flex-1">
-                  <p className="font-semibold text-sm" style={{ color: '#1A0A2E' }}>Create an Account</p>
-                  <p className="text-xs mt-0.5" style={{ color: '#A89880' }}>Get 10% off your first order + faster checkout next time</p>
-                </div>
-                <ChevronRight size={16} className="flex-shrink-0 opacity-30 group-hover:opacity-70 transition-opacity" />
-              </Link>
+                  <div className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: 'rgba(201,168,76,0.12)' }}>
+                    <UserCheck size={20} style={{ color: '#C9A84C' }} />
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="font-bold text-sm" style={{ color: '#1A0A2E' }}>Create an Account</p>
+                      <span
+                        className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5"
+                        style={{ backgroundColor: '#C9A84C', color: '#1A0A2E' }}
+                      >
+                        10% OFF
+                      </span>
+                    </div>
+                    <p className="text-xs mt-0.5" style={{ color: '#A89880' }}>
+                      First order discount · Faster checkout next time
+                    </p>
+                  </div>
+                  <ChevronRight size={16} className="opacity-30 group-hover:opacity-60 transition-opacity" style={{ color: '#1A0A2E' }} />
+                </Link>
 
-              {/* Divider */}
-              <div className="flex items-center gap-3 py-1">
-                <div className="flex-1 h-px" style={{ backgroundColor: '#E8E3DC' }} />
-                <span className="text-xs" style={{ color: '#A89880' }}>or</span>
-                <div className="flex-1 h-px" style={{ backgroundColor: '#E8E3DC' }} />
+                {/* Divider */}
+                <div className="flex items-center gap-3 py-1">
+                  <div className="flex-1 h-px" style={{ backgroundColor: '#E8E3DC' }} />
+                  <span className="text-xs" style={{ color: '#A89880' }}>or</span>
+                  <div className="flex-1 h-px" style={{ backgroundColor: '#E8E3DC' }} />
+                </div>
+
+                {/* Continue as Guest */}
+                <button
+                  onClick={handleGuestContinue}
+                  className="w-full flex items-center gap-4 p-4 border-2 transition-all duration-200 group text-left hover:border-[#6B6B6B]"
+                  style={{ borderColor: '#E8E3DC', backgroundColor: '#FAFAF9' }}
+                >
+                  <div className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#F0EDE8' }}>
+                    <User size={20} style={{ color: '#6B6B6B' }} />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-semibold text-sm" style={{ color: '#1A0A2E' }}>Continue as Guest</p>
+                    <p className="text-xs mt-0.5" style={{ color: '#A89880' }}>
+                      No account needed · Checkout in minutes
+                    </p>
+                  </div>
+                  <ChevronRight size={15} className="opacity-20 group-hover:opacity-50 transition-opacity" style={{ color: '#1A0A2E' }} />
+                </button>
               </div>
 
-              {/* Guest option */}
-              <button
-                onClick={() => setFlow('guest-info')}
-                className="w-full flex items-center gap-4 p-5 border-2 transition-all duration-200 hover:border-[#6B6B6B] group text-left"
-                style={{ borderColor: '#E8E3DC', backgroundColor: '#FAFAFA' }}
+              {/* Store pickup note */}
+              <div
+                className="mt-6 p-4 flex items-start gap-3 text-sm"
+                style={{ backgroundColor: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.2)' }}
               >
-                <div
-                  className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0"
-                  style={{ backgroundColor: 'rgba(107,107,107,0.08)' }}
-                >
-                  <User size={20} style={{ color: '#6B6B6B' }} />
-                </div>
-                <div className="flex-1">
-                  <p className="font-semibold text-sm" style={{ color: '#1A0A2E' }}>Continue as Guest</p>
-                  <p className="text-xs mt-0.5" style={{ color: '#A89880' }}>No account needed — checkout in minutes</p>
-                </div>
-                <ChevronRight size={16} className="flex-shrink-0 opacity-30 group-hover:opacity-70 transition-opacity" />
-              </button>
-            </div>
+                <Store size={15} className="flex-shrink-0 mt-0.5" style={{ color: '#C9A84C' }} />
+                <p style={{ color: '#6B4A1E' }}>
+                  Prefer to collect in-store?{' '}
+                  <strong>Choose Store Pickup</strong> during checkout — ready in 2 hours at our Dubai Mall location.
+                </p>
+              </div>
+            </motion.div>
+          )}
 
-            {/* In-store note */}
-            <div
-              className="mt-6 p-4 flex items-start gap-3 text-sm"
-              style={{ backgroundColor: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.2)', borderRadius: '2px' }}
+          {/* ── STEPS 1–3 ── */}
+          {(flow === 1 || flow === 2 || flow === 3) && (
+            <motion.div
+              key="steps"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.28 }}
             >
-              <Store size={16} className="flex-shrink-0 mt-0.5" style={{ color: '#C9A84C' }} />
-              <p style={{ color: '#6B4A1E' }}>
-                Prefer to pick up in person? Choose <strong>Store Pickup</strong> during checkout — your order will be ready in 2 hours at our Dubai Mall store.
-              </p>
-            </div>
-          </motion.div>
-        )}
-
-        {/* ── GUEST INFO ── */}
-        {flow === 'guest-info' && (
-          <motion.div
-            key="guest-info"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.3 }}
-          >
-            <button onClick={() => setFlow('gate')} className="flex items-center gap-1 text-xs mb-6 hover:opacity-70 transition-opacity" style={{ color: '#A89880' }}>
-              ← Back
-            </button>
-            <GuestInfoStep onNext={handleGuestInfo} />
-          </motion.div>
-        )}
-
-        {/* ── GUEST EDIT ── */}
-        {flow === 'guest-edit' && (
-          <motion.div
-            key="guest-edit"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.3 }}
-          >
-            <button onClick={() => setFlow(1)} className="flex items-center gap-1 text-xs mb-6 hover:opacity-70 transition-opacity" style={{ color: '#A89880' }}>
-              ← Back
-            </button>
-            <GuestInfoStep
-              onNext={handleGuestEdit}
-              defaultValues={guestInfo ?? undefined}
-              isEditing
-            />
-          </motion.div>
-        )}
-
-        {/* ── STEPS 1–3 ── */}
-        {(flow === 1 || flow === 2 || flow === 3) && (
-          <motion.div
-            key="steps"
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            {/* Guest info card — always visible during steps so they can change details */}
-            {isGuest && guestInfo && (
-              <div
-                className="flex items-center justify-between gap-3 px-4 py-3 mb-5"
-                style={{ backgroundColor: '#FAF8F5', border: '1px solid #E8E3DC' }}
-              >
-                <div className="flex items-center gap-3 min-w-0">
-                  <div
-                    className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold"
-                    style={{ backgroundColor: 'rgba(201,168,76,0.15)', color: '#C9A84C' }}
-                  >
-                    {guestInfo.name.charAt(0).toUpperCase()}
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-sm font-semibold truncate" style={{ color: '#1A0A2E' }}>{guestInfo.name}</p>
-                    <p className="text-xs truncate" style={{ color: '#A89880' }}>{guestInfo.email} · {guestInfo.phone}</p>
-                  </div>
+              {/* Fulfillment badge (steps 2-3) */}
+              {flow !== 1 && (
+                <div
+                  className="flex items-center gap-2 px-4 py-2.5 mb-5 text-xs font-semibold"
+                  style={{ backgroundColor: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.2)' }}
+                >
+                  {fulfillment === 'pickup'
+                    ? <><Store size={13} style={{ color: '#C9A84C' }} /> Store Pickup — Dubai Mall</>
+                    : <><Truck size={13} style={{ color: '#C9A84C' }} /> Home Delivery</>}
                 </div>
-                <div className="flex items-center gap-1 flex-shrink-0">
-                  <button
-                    onClick={() => setFlow('guest-edit')}
-                    className="flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-semibold transition-colors hover:bg-gray-100"
-                    style={{ color: '#1A0A2E', border: '1px solid #E8E3DC' }}
-                    title="Edit your details"
-                  >
-                    <Pencil size={11} /> Edit
-                  </button>
-                  <button
-                    onClick={handleUseDifferent}
-                    className="flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-semibold transition-colors hover:bg-red-50"
-                    style={{ color: '#ef4444', border: '1px solid #fecaca' }}
-                    title="Order for someone else"
-                  >
-                    <UserX size={11} /> Change
-                  </button>
-                </div>
-              </div>
-            )}
+              )}
 
-            {/* Fulfillment badge */}
-            {flow !== 1 && (
-              <div
-                className="flex items-center gap-2 px-4 py-2 mb-5 text-xs font-semibold"
-                style={{ backgroundColor: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.2)' }}
-              >
-                {fulfillment === 'pickup'
-                  ? <><Store size={13} style={{ color: '#C9A84C' }} /> Store Pickup — Dubai Mall</>
-                  : <><Truck size={13} style={{ color: '#C9A84C' }} /> Home Delivery</>}
-              </div>
-            )}
+              <CheckoutStepper currentStep={flow as 1 | 2 | 3} />
 
-            <CheckoutStepper currentStep={flow as 1 | 2 | 3} />
-
-            {flow === 1 && (
-              <AddressStep
-                onNext={(addr, method, slot) => {
-                  setAddress(addr);
-                  setFulfillment(method);
-                  setPickupSlot(slot);
-                  setFlow(2);
-                }}
-              />
-            )}
-            {flow === 2 && (
-              <PaymentStep
-                onNext={(method) => { setPaymentMethod(method); setFlow(3); }}
-                onBack={() => setFlow(1)}
-              />
-            )}
-            {flow === 3 && (
-              <ReviewStep
-                address={address}
-                paymentMethod={paymentMethod}
-                fulfillmentMethod={fulfillment}
-                pickupSlot={pickupSlot}
-                onBack={() => setFlow(2)}
-                guestInfo={guestInfo}
-              />
-            )}
-          </motion.div>
-        )}
-      </AnimatePresence>
+              {flow === 1 && (
+                <AddressStep
+                  isGuest={effectiveIsGuest}
+                  onNext={handleAddressNext}
+                />
+              )}
+              {flow === 2 && (
+                <PaymentStep
+                  onNext={(method) => { setPaymentMethod(method); setFlow(3); }}
+                  onBack={() => setFlow(1)}
+                />
+              )}
+              {flow === 3 && (
+                <ReviewStep
+                  address={address}
+                  paymentMethod={paymentMethod}
+                  fulfillmentMethod={fulfillment}
+                  pickupSlot={pickupSlot}
+                  onBack={() => setFlow(2)}
+                  guestInfo={guestInfo}
+                />
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
     </div>
   );
 }
