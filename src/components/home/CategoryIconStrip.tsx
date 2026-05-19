@@ -72,14 +72,20 @@ export function CategoryIconStrip() {
 
   const categories = useMemo(() => {
     if (coverCats.length > 0) {
-      return coverCats.map((c) => ({
-        id: c._id,
-        slug: c.redirectUrl?.replace(/^\//, '') || 'products',
-        name: c.title || 'Category',
-        image: c.imageUrl,
-        badge: c.content?.trim() || null,
-        href: c.redirectUrl || '/products',
-      }));
+      return coverCats.map((c) => {
+        const col = c.collection;
+        const collectionHref = col?.slug
+          ? `/products?collection=${encodeURIComponent(col.slug)}`
+          : null;
+        return {
+          id: c._id,
+          slug: col?.slug || c.redirectUrl?.replace(/^\//, '') || 'products',
+          name: c.title || col?.name || 'Collection',
+          image: c.imageUrl,
+          badge: c.content?.trim() || null,
+          href: c.redirectUrl || collectionHref || '/products',
+        };
+      });
     }
     if (apiCategories.length > 0) {
       return apiCategories.slice(0, 8).map((c) => ({

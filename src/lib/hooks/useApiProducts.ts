@@ -48,6 +48,11 @@ export interface ApiProductFilters {
   concentrations?: string[];
   searchQuery?: string;
   collection?: string;
+  featured?: boolean;
+  bestSeller?: boolean;
+  trending?: boolean;
+  newArrival?: boolean;
+  limitedOffer?: boolean;
 }
 
 export interface FilterOption {
@@ -183,7 +188,22 @@ export function useApiProducts(initialFilters: ApiProductFilters = {}) {
     categorySlug: filters.categorySlug || undefined,
     brandSlug: filters.brandSlug || undefined,
     collection: filters.collection || undefined,
-  }), [filters.searchQuery, filters.categorySlug, filters.brandSlug, filters.collection]);
+    featured: filters.featured,
+    bestSeller: filters.bestSeller,
+    trending: filters.trending,
+    newArrival: filters.newArrival,
+    limitedOffer: filters.limitedOffer,
+  }), [
+    filters.searchQuery,
+    filters.categorySlug,
+    filters.brandSlug,
+    filters.collection,
+    filters.featured,
+    filters.bestSeller,
+    filters.trending,
+    filters.newArrival,
+    filters.limitedOffer,
+  ]);
 
   const { data, isLoading, error } = useQuery({
     queryKey: productKeys.list(serverParams),

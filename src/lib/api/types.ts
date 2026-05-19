@@ -66,6 +66,10 @@ export interface ApiProduct {
   returnable: boolean;
   cashOnDelivery: boolean;
   featured: boolean;
+  bestSeller?: boolean;
+  trending?: boolean;
+  newArrival?: boolean;
+  limitedOffer?: boolean;
   published: boolean;
   fragranceFamily: string;
   gender: 'men' | 'women' | 'unisex';

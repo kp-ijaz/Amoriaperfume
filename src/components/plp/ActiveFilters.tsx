@@ -30,6 +30,21 @@ export function ActiveFilters({ filters, onRemove, onClearAll }: ActiveFiltersPr
   if (filters.discountOnly) {
     chips.push({ key: 'discountOnly', value: 'true', label: 'On Sale' });
   }
+  if (filters.limitedOffer) {
+    chips.push({ key: 'limitedOffer', value: 'true', label: 'Limited offers' });
+  }
+  if (filters.featured) {
+    chips.push({ key: 'featured', value: 'true', label: 'Featured' });
+  }
+  if (filters.bestSeller) {
+    chips.push({ key: 'bestSeller', value: 'true', label: 'Best sellers' });
+  }
+  if (filters.trending) {
+    chips.push({ key: 'trending', value: 'true', label: 'Trending' });
+  }
+  if (filters.newArrival) {
+    chips.push({ key: 'newArrival', value: 'true', label: 'New arrivals' });
+  }
   if (filters.minRating) {
     chips.push({ key: 'minRating', value: String(filters.minRating), label: `${filters.minRating}+ Stars` });
   }

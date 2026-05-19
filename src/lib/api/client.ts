@@ -108,6 +108,10 @@ export interface ProductsParams {
   brand?: string;
   brandSlug?: string;
   featured?: boolean;
+  bestSeller?: boolean;
+  trending?: boolean;
+  newArrival?: boolean;
+  limitedOffer?: boolean;
   sort?: 'price_asc' | 'price_desc' | 'newest' | 'rating';
   gender?: string;
   fragranceFamily?: string;
@@ -127,6 +131,10 @@ export async function apiGetProducts(
   if (params.brand)           qs.set('brand', params.brand);
   if (params.brandSlug)       qs.set('brandSlug', params.brandSlug);
   if (params.featured != null) qs.set('featured', String(params.featured));
+  if (params.bestSeller != null) qs.set('bestSeller', String(params.bestSeller));
+  if (params.trending != null) qs.set('trending', String(params.trending));
+  if (params.newArrival != null) qs.set('newArrival', String(params.newArrival));
+  if (params.limitedOffer != null) qs.set('limitedOffer', String(params.limitedOffer));
   if (params.sort)            qs.set('sort', params.sort);
   if (params.gender)          qs.set('gender', params.gender);
   if (params.fragranceFamily) qs.set('fragranceFamily', params.fragranceFamily);

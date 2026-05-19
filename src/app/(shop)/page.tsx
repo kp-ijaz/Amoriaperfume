@@ -30,11 +30,12 @@ export default function HomePage() {
         slotKey="home-new-arrivals"
         title="New Arrivals"
         subtitle="Just Landed"
-        viewAllHref="/products?sort=newest"
+        viewAllHref="/products?newArrival=true"
         theme="light"
         sectionNumber="01"
         limit={5}
         columns={5}
+        fallback={{ newArrival: true }}
       />
 
       {/* 5 — Two side-by-side promotional banners (vperfumes style) */}
@@ -51,12 +52,12 @@ export default function HomePage() {
         slotKey="home-best-sellers"
         title="Best Sellers"
         subtitle="Most Loved"
-        viewAllHref="/products?sort=bestsellers"
+        viewAllHref="/products?bestSeller=true"
         theme="light"
         sectionNumber="02"
         limit={5}
         columns={5}
-        fallbackFeatured
+        fallback={{ bestSeller: true }}
       />
 
       {/* 9 — Trending Perfumes */}
@@ -64,11 +65,12 @@ export default function HomePage() {
         slotKey="home-most-viewed"
         title="Trending Perfumes"
         subtitle="What's Hot Right Now"
-        viewAllHref="/products?sort=popular"
+        viewAllHref="/products?trending=true"
         theme="light"
         sectionNumber="03"
         limit={5}
         columns={5}
+        fallback={{ trending: true }}
       />
 
       {/* 10 — Perfumes For Men & Women (with mini product picks) */}

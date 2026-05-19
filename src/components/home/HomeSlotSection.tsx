@@ -1,6 +1,6 @@
 'use client';
 
-import { useHomeSlotProducts } from '@/lib/hooks/usePublicCms';
+import { useHomeSlotProducts, type HomeSlotFallbackParams } from '@/lib/hooks/usePublicCms';
 import { ProductSection } from './ProductSection';
 
 interface HomeSlotSectionProps {
@@ -12,7 +12,8 @@ interface HomeSlotSectionProps {
   sectionNumber?: string;
   limit?: number;
   columns?: 2 | 3 | 4 | 5;
-  fallbackFeatured?: boolean;
+  /** Used when the home slot has no curated productIds */
+  fallback?: HomeSlotFallbackParams;
 }
 
 export function HomeSlotSection({
@@ -24,12 +25,11 @@ export function HomeSlotSection({
   sectionNumber = '01',
   limit = 5,
   columns = 5,
-  fallbackFeatured,
+  fallback,
 }: HomeSlotSectionProps) {
   const { data, isLoading } = useHomeSlotProducts(slotKey, {
     limit,
-    featured: fallbackFeatured,
-    sort: fallbackFeatured ? undefined : 'newest',
+    ...fallback,
   });
 
   const displayTitle = data?.title?.trim() || title;

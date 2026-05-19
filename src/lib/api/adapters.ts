@@ -98,8 +98,10 @@ export function adaptProduct(api: ApiProduct): Product {
     reviewCount: api.ratings?.count ?? 0,
     tags: api.tags ?? [],
     isFeatured: api.featured,
-    isNewArrival: false,
-    isBestseller: false,
+    isNewArrival: Boolean(api.newArrival),
+    isBestseller: Boolean(api.bestSeller),
+    isTrending: Boolean(api.trending),
+    isLimitedOffer: Boolean(api.limitedOffer),
     isOnSale,
   };
 }

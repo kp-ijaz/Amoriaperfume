@@ -116,9 +116,19 @@ export function usePublicHomeSlots() {
   });
 }
 
+export type HomeSlotFallbackParams = {
+  limit?: number;
+  featured?: boolean;
+  bestSeller?: boolean;
+  trending?: boolean;
+  newArrival?: boolean;
+  limitedOffer?: boolean;
+  sort?: 'newest';
+};
+
 export function useHomeSlotProducts(
   slotKey: string,
-  fallbackParams: { limit?: number; featured?: boolean; sort?: 'newest' } = {}
+  fallbackParams: HomeSlotFallbackParams = {}
 ) {
   const limit = fallbackParams.limit ?? 5;
   return useQuery({
@@ -152,7 +162,19 @@ export function useHomeSlotProducts(
       const res = await apiGetProducts({
         limit,
         featured: fallbackParams.featured,
-        sort: fallbackParams.sort === 'newest' ? 'newest' : undefined,
+        bestSeller: fallbackParams.bestSeller,
+        trending: fallbackParams.trending,
+        newArrival: fallbackParams.newArrival,
+        limitedOffer: fallbackParams.limitedOffer,
+        sort:
+          !fallbackParams.newArrival &&
+          !fallbackParams.bestSeller &&
+          !fallbackParams.trending &&
+          !fallbackParams.limitedOffer &&
+          !fallbackParams.featured &&
+          fallbackParams.sort === 'newest'
+            ? 'newest'
+            : undefined,
       });
       if (!res.success || !res.data?.items) return { title: '', products: [] };
       return { title: '', products: adaptProducts(res.data.items).slice(0, limit) };

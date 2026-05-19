@@ -6,7 +6,9 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useProductsByLimit } from '@/lib/hooks/useApiProducts';
+import { useQuery } from '@tanstack/react-query';
+import { apiGetProducts } from '@/lib/api/client';
+import { adaptProducts } from '@/lib/api/adapters';
 import { useCountdown } from '@/lib/hooks/useCountdown';
 import { formatCurrency } from '@/lib/utils/formatCurrency';
 import { Product } from '@/types/product';
@@ -42,11 +44,15 @@ export function LimitedOfferPopup() {
   useBodyLock(visible);
   const { hours, minutes, seconds } = useCountdown();
 
-  // Use featured products as "sale picks" — filter those with a salePrice
-  const { data: allFeatured = [] } = useProductsByLimit(10, { featured: true });
-  const deals = allFeatured
-    .filter((p: Product) => p.variants.some((v) => v.salePrice != null))
-    .slice(0, 3);
+  const { data: deals = [] } = useQuery({
+    queryKey: ['products', 'limited-offer-popup'],
+    queryFn: async (): Promise<Product[]> => {
+      const res = await apiGetProducts({ limit: 10, limitedOffer: true });
+      if (!res.success || !res.data?.items) return [];
+      return adaptProducts(res.data.items).slice(0, 3);
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
   useEffect(() => {
     if (sessionStorage.getItem(SESSION_KEY)) return;
@@ -211,7 +217,7 @@ export function LimitedOfferPopup() {
 
                 <div className="px-5 py-4 flex flex-col gap-2.5" style={{ borderTop: '1px solid rgba(26,10,46,0.08)' }}>
                   <Link
-                    href="/products?sale=true"
+                    href="/products?limitedOffer=true"
                     onClick={dismiss}
                     className="block w-full text-center py-3 text-[10px] font-black tracking-[0.22em] uppercase transition-all duration-200 hover:brightness-110 active:scale-[0.98] rounded-sm"
                     style={{ backgroundColor: '#C9A84C', color: '#1A0A2E' }}

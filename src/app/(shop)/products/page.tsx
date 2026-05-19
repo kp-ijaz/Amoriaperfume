@@ -17,6 +17,12 @@ export default function ProductsPage() {
       collection: searchParams.get('collection') ?? undefined,
       categorySlug: searchParams.get('category') ?? undefined,
       brandSlug: searchParams.get('brand') ?? undefined,
+      newArrival: searchParams.get('newArrival') === 'true' ? true : undefined,
+      bestSeller: searchParams.get('bestSeller') === 'true' ? true : undefined,
+      trending: searchParams.get('trending') === 'true' ? true : undefined,
+      featured: searchParams.get('featured') === 'true' ? true : undefined,
+      limitedOffer: searchParams.get('limitedOffer') === 'true' ? true : undefined,
+      discountOnly: searchParams.get('sale') === 'true' ? true : undefined,
     }),
     [searchParams]
   );

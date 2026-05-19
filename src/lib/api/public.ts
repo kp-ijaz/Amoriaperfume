@@ -25,6 +25,14 @@ export interface PublicCoverImage {
   redirectUrl?: string;
   order?: number;
   enabled?: boolean;
+  collection?: {
+    _id: string;
+    name: string;
+    slug: string;
+    description?: string;
+    image?: string;
+    heroImage?: string;
+  } | null;
 }
 
 export interface PublicHomeSlot {
