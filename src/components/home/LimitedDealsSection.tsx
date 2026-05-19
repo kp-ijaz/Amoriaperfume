@@ -112,8 +112,8 @@ export function LimitedDealsSection() {
                 <polygon points="3,0 6,3 3,6 0,3" fill="rgba(201,168,76,0.8)" />
               </svg>
               <div className="h-px w-8" style={{ backgroundColor: 'rgba(201,168,76,0.3)' }} />
-            </motion.div>
-          </motion.div>
+            </div>
+          </div>
 
           <div className="flex flex-col items-start sm:items-end gap-2">
             <p className="text-[10px] uppercase tracking-[0.18em] font-medium" style={{ color: '#A89880' }}>
@@ -125,7 +125,7 @@ export function LimitedDealsSection() {
               <TimeUnit value={minutes} label="Min" />
               <span className="text-xl font-light mb-3.5" style={{ color: '#C9A84C' }}>:</span>
               <TimeUnit value={seconds} label="Sec" />
-            </motion.div>
+            </div>
           </div>
         </motion.div>
 
