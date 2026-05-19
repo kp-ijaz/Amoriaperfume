@@ -46,6 +46,7 @@ export interface ApiProduct {
     _id: string;
     name: string;
     logo: string;
+    slug?: string;
   };
   description: string;
   category: {
@@ -106,6 +107,8 @@ export interface ApiBrand {
   active: boolean;
   slug: string;
   description?: string;
+  /** First published product image for this brand; null when no products. */
+  productCoverImage?: string | null;
   createdAt: string;
   updatedAt: string;
 }

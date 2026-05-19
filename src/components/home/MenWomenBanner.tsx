@@ -3,23 +3,12 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
-import { products as allProducts } from '@/lib/data/products';
 import { formatCurrency } from '@/lib/utils/formatCurrency';
+import { useProductsByLimit } from '@/lib/hooks/useApiProducts';
+import { usePublicCoverImages } from '@/lib/hooks/usePublicCms';
+import { Product } from '@/types/product';
 
-// Pick 4 men's + 4 women's products for the thumbnail strips
-const MEN_PRODUCTS = allProducts
-  .filter((p) => p.gender === 'men')
-  .slice(0, 4);
-
-const WOMEN_PRODUCTS = allProducts
-  .filter((p) => p.gender === 'women')
-  .slice(0, 4);
-
-function MiniProductThumb({
-  product,
-}: {
-  product: (typeof allProducts)[0];
-}) {
+function MiniProductThumb({ product }: { product: Product }) {
   const variant = product.variants[0];
   const price = variant?.salePrice ?? variant?.price ?? 0;
   const primaryImage = product.images.find((i) => i.isPrimary)?.url ?? product.images[0]?.url ?? '';
@@ -90,7 +79,7 @@ function GenderPanel({
   ctaLabel: string;
   href: string;
   bgImage: string;
-  products: typeof allProducts;
+  products: Product[];
   delay?: number;
 }) {
   return (
@@ -219,6 +208,13 @@ function GenderPanel({
 }
 
 export function MenWomenBanner() {
+  const { data: pool = [] } = useProductsByLimit(24);
+  const menProducts = pool.filter((p) => p.gender === 'men').slice(0, 4);
+  const womenProducts = pool.filter((p) => p.gender === 'women').slice(0, 4);
+  const { data: panels = [] } = usePublicCoverImages('men_women_banner');
+  const menPanel = panels[0];
+  const womenPanel = panels[1];
+
   return (
     <section style={{ backgroundColor: '#0D0A08', paddingBottom: 0 }}>
       {/* Section header */}
@@ -305,23 +301,23 @@ export function MenWomenBanner() {
       >
         <GenderPanel
           gender="For Him"
-          headline="Men's Collection"
-          sub="Bold, sophisticated, and lasting — discover our curated selection of men's fragrances crafted for the modern Arabian man."
+          headline={menPanel?.title || "Men's Collection"}
+          sub={menPanel?.subtitle || "Bold, sophisticated fragrances for him."}
           ctaLabel="Shop Men's"
-          href="/categories/mens"
-          bgImage="/images/products/prod10.jpg"
-          products={MEN_PRODUCTS}
+          href={menPanel?.redirectUrl || '/categories/mens'}
+          bgImage={menPanel?.imageUrl || menProducts[0]?.images[0]?.url || '/images/products/prod10.jpg'}
+          products={menProducts}
           delay={0}
         />
 
         <GenderPanel
           gender="For Her"
-          headline="Women's Collection"
-          sub="Feminine, captivating, and timeless — explore our exclusive women's fragrances inspired by the beauty of Arabian roses and oud."
+          headline={womenPanel?.title || "Women's Collection"}
+          sub={womenPanel?.subtitle || "Feminine, captivating fragrances for her."}
           ctaLabel="Shop Women's"
-          href="/categories/womens"
-          bgImage="/images/products/prod11.jpg"
-          products={WOMEN_PRODUCTS}
+          href={womenPanel?.redirectUrl || '/categories/womens'}
+          bgImage={womenPanel?.imageUrl || womenProducts[0]?.images[0]?.url || '/images/products/prod11.jpg'}
+          products={womenProducts}
           delay={0.1}
         />
       </div>

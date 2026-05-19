@@ -1,8 +1,7 @@
 import { CompactHeroBanner } from '@/components/home/CompactHeroBanner';
 import { CategoryIconStrip } from '@/components/home/CategoryIconStrip';
 import { PromoStripBanner } from '@/components/home/PromoStripBanner';
-import { ProductSectionClient } from '@/components/home/ProductSectionClient';
-import { StaticProductSection } from '@/components/home/StaticProductSection';
+import { HomeSlotSection } from '@/components/home/HomeSlotSection';
 import { PromoBanners } from '@/components/home/PromoBanners';
 import { ShopByBrandsGrid } from '@/components/home/ShopByBrandsGrid';
 import { MenWomenBanner } from '@/components/home/MenWomenBanner';
@@ -27,7 +26,8 @@ export default function HomePage() {
       <PromoStripBanner />
 
       {/* 4 — New Arrivals */}
-      <ProductSectionClient
+      <HomeSlotSection
+        slotKey="home-new-arrivals"
         title="New Arrivals"
         subtitle="Just Landed"
         viewAllHref="/products?sort=newest"
@@ -46,8 +46,9 @@ export default function HomePage() {
       {/* 7 — Shop by Brands (dark section) */}
       <ShopByBrandsGrid />
 
-      {/* 8 — Best Sellers (API data) */}
-      <ProductSectionClient
+      {/* 8 — Best Sellers */}
+      <HomeSlotSection
+        slotKey="home-best-sellers"
         title="Best Sellers"
         subtitle="Most Loved"
         viewAllHref="/products?sort=bestsellers"
@@ -55,11 +56,12 @@ export default function HomePage() {
         sectionNumber="02"
         limit={5}
         columns={5}
-        featured={true}
+        fallbackFeatured
       />
 
       {/* 9 — Trending Perfumes */}
-      <StaticProductSection
+      <HomeSlotSection
+        slotKey="home-most-viewed"
         title="Trending Perfumes"
         subtitle="What's Hot Right Now"
         viewAllHref="/products?sort=popular"
@@ -67,7 +69,6 @@ export default function HomePage() {
         sectionNumber="03"
         limit={5}
         columns={5}
-        sortBy="reviewCount"
       />
 
       {/* 10 — Perfumes For Men & Women (with mini product picks) */}

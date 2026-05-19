@@ -11,12 +11,8 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
-import { products } from '@/lib/data/products';
-import { reviewsMap } from '@/lib/data/reviews';
-import { coupons } from '@/lib/data/coupons';
 import { ReviewCard } from '@/components/product/ReviewCard';
-import { RelatedProducts } from '@/components/product/RelatedProducts';
-import { PeopleAlsoBought } from '@/components/product/PeopleAlsoBought';
+import { RelatedProductsFromApi, PeopleAlsoBoughtFromApi } from '@/components/product/ProductRecommendations';
 import { RecentlyViewed } from '@/components/product/RecentlyViewed';
 import { useCart } from '@/lib/hooks/useCart';
 import { useWishlist } from '@/lib/hooks/useWishlist';
@@ -24,6 +20,9 @@ import { useDispatch } from 'react-redux';
 import { addToRecentlyViewed } from '@/lib/store/uiSlice';
 import { formatCurrency } from '@/lib/utils/formatCurrency';
 import { ProductVariant } from '@/types/product';
+import { useApiProductBySlug, useProductReviews } from '@/lib/hooks/useApiProducts';
+import { usePromotions } from '@/lib/hooks/useApiPromotions';
+import { ApiPromotion } from '@/lib/api/types';
 
 /* ── helpers ── */
 function getLongevity(c: string) {
@@ -216,16 +215,25 @@ function RatingBars({ reviews }: { reviews: { rating: number }[] }) {
 /* ══════════════════════════════════════
    PAGE
 ══════════════════════════════════════ */
+function promotionToCoupon(p: ApiPromotion) {
+  const type =
+    p.kind === 'free_shipping' ? 'freeshipping' : p.kind === 'percent_off' ? 'percentage' : 'fixed';
+  const discount = p.kind === 'percent_off' ? p.value / 100 : p.value;
+  return { code: p.code, discount, type, description: p.name };
+}
+
 export default function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params);
   const router = useRouter();
-  const product = products.find((p) => p.slug === slug) ?? null;
+  const { data: product, isLoading, isError } = useApiProductBySlug(slug);
+  const { data: apiReviews = [] } = useProductReviews(product?.id ?? '');
+  const { data: promotions = [] } = usePromotions();
 
   const { addItem } = useCart();
   const { isInWishlist, toggleWishlist } = useWishlist();
   const dispatch = useDispatch();
 
-  const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(product?.variants[0] ?? null);
+  const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
   const [quantity] = useState(1);
   const [addedState, setAddedState] = useState<'idle' | 'loading' | 'success'>('idle');
   const addToCartRef = useRef<HTMLButtonElement>(null);
@@ -235,6 +243,10 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
   const [deliveryTab, setDeliveryTab] = useState<'standard' | 'express'>('standard');
   const [activeTab, setActiveTab] = useState<'specs' | 'notes' | 'about' | 'howtouse' | 'reviews' | 'faqs'>('specs');
   const [visibleReviews, setVisibleReviews] = useState(4);
+
+  useEffect(() => {
+    if (product?.variants[0]) setSelectedVariant(product.variants[0]);
+  }, [product?.id, product?.variants]);
 
   useEffect(() => {
     if (product?.id) dispatch(addToRecentlyViewed(product.id));
@@ -249,12 +261,21 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
     return () => obs.disconnect();
   }, []);
 
-  if (!product) return notFound();
+  if (isLoading) {
+    return (
+      <motion.div className="min-h-screen flex items-center justify-center bg-white">
+        <span className="w-10 h-10 border-2 border-[#1A0A2E]/20 border-t-[#1A0A2E] rounded-full animate-spin" />
+      </motion.div>
+    );
+  }
 
-  const dummyReviews = reviewsMap[product.id] ?? [];
-  const relatedProducts = products.filter((p) => p.id !== product.id && p.category === product.category).slice(0, 4);
-  const alsoBought = products.filter((p) => p.id !== product.id).slice(0, 6);
-  const couponList = Object.entries(coupons);
+  if (isError || !product) return notFound();
+
+  const displayReviews = apiReviews;
+  const couponList = promotions.slice(0, 4).map(promotionToCoupon);
+  const brandHref = product.brandSlug
+    ? `/brands/${product.brandSlug}`
+    : `/products?search=${encodeURIComponent(product.brand)}`;
 
   const variant = selectedVariant ?? product.variants[0];
   const price = variant?.salePrice ?? variant?.price ?? 0;
@@ -326,7 +347,7 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
 
       {/* Brand */}
       <Link
-        href={`/brands/${product.brand.toLowerCase().replace(/\s+/g, '-')}`}
+        href={brandHref}
         className="text-[13px] font-semibold mb-1 hover:underline inline-block"
         style={{ color: '#1A0A2E' }}
       >
@@ -505,10 +526,10 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
             >
               <div className="p-2.5 bg-white">
                 <div className="grid grid-cols-2 gap-2">
-                  {couponList.map(([code, data], i) => (
+                  {couponList.map((data, i) => (
                     <CouponCard
-                      key={code}
-                      code={code}
+                      key={data.code}
+                      code={data.code}
                       discount={data.discount}
                       type={data.type}
                       description={data.description}
@@ -818,16 +839,16 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
                       </div>
                       <span className="text-[12px]" style={{ color: '#78716C' }}>{product.reviewCount.toLocaleString()} ratings</span>
                     </div>
-                    <div className="flex-1 flex items-center"><RatingBars reviews={dummyReviews} /></div>
+                    <div className="flex-1 flex items-center"><RatingBars reviews={displayReviews} /></div>
                   </div>
-                  {dummyReviews.length > 0 ? (
+                  {displayReviews.length > 0 ? (
                     <>
-                      {dummyReviews.slice(0, visibleReviews).map((review, i) => (
+                      {displayReviews.slice(0, visibleReviews).map((review, i) => (
                         <motion.div key={review.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}>
                           <ReviewCard review={review} />
                         </motion.div>
                       ))}
-                      {visibleReviews < dummyReviews.length && (
+                      {visibleReviews < displayReviews.length && (
                         <button onClick={() => setVisibleReviews((v) => v + 4)} className="mt-5 px-8 py-2.5 text-[13px] font-semibold border transition-colors hover:bg-[#1A0A2E] hover:text-white" style={{ borderColor: '#1A0A2E', color: '#1A0A2E' }}>
                           Load More Reviews
                         </button>
@@ -864,8 +885,8 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
       {/* ── Below fold ── */}
       <div className="border-t" style={{ borderColor: '#E8E3DC', backgroundColor: '#FAFAF8' }}>
         <div className="max-w-7xl mx-auto px-4 lg:px-8 py-12 space-y-14">
-          <PeopleAlsoBought products={alsoBought} />
-          <RelatedProducts products={relatedProducts} />
+          <PeopleAlsoBoughtFromApi product={product} />
+          <RelatedProductsFromApi product={product} />
           <RecentlyViewed />
         </div>
       </div>

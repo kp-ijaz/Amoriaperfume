@@ -1,8 +1,12 @@
 'use client';
 
+import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiGetBrands, apiGetBrand, apiGetBrandBySlug } from '@/lib/api/client';
-import { adaptBrands, adaptBrand } from '@/lib/api/adapters';
+import { adaptBrands, adaptBrand, brandDisplayImage } from '@/lib/api/adapters';
+
+/** Max brands in the homepage “Shop by Brands” row (matches desktop grid columns). */
+export const HOME_BRANDS_ROW_LIMIT = 5;
 
 export function useBrands() {
   return useQuery({
@@ -40,4 +44,33 @@ export function useBrandBySlug(slug: string) {
     enabled: !!slug,
     staleTime: 15 * 60 * 1000,
   });
+}
+
+export type HomeBrandTile = {
+  id: string;
+  slug: string;
+  name: string;
+  tagline: string;
+  count: string;
+  image: string;
+  accent: string;
+};
+
+/** Homepage brand row — uses API `productCoverImage` per brand, falls back to logo. */
+export function useHomeBrandsRow() {
+  const { data: apiBrands = [], isLoading } = useBrands();
+
+  const brands = useMemo((): HomeBrandTile[] => {
+    return apiBrands.slice(0, HOME_BRANDS_ROW_LIMIT).map((b) => ({
+      id: b.id,
+      slug: b.slug,
+      name: b.name,
+      tagline: b.description?.slice(0, 40) || 'Explore',
+      count: '',
+      image: brandDisplayImage(b) || '/images/products/prod1.jpg',
+      accent: '#C9A84C',
+    }));
+  }, [apiBrands]);
+
+  return { brands, isLoading };
 }

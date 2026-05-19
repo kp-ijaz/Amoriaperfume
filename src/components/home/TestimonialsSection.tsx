@@ -4,8 +4,9 @@ import { motion } from 'framer-motion';
 import useEmblaCarousel from 'embla-carousel-react';
 import Autoplay from 'embla-carousel-autoplay';
 import { Star } from 'lucide-react';
+import { useTestimonials } from '@/lib/hooks/usePublicCms';
 
-const testimonials = [
+const FALLBACK_TESTIMONIALS = [
   {
     id: 1,
     name: 'Ahmed Al Rashid',
@@ -64,6 +65,26 @@ const stats = [
 ];
 
 export function TestimonialsSection() {
+  const apiItems = useTestimonials();
+  const testimonials =
+    apiItems.length > 0
+      ? apiItems.map((t, i) => ({
+          id: i + 1,
+          name: t.name,
+          location: t.location,
+          rating: t.rating,
+          text: t.text,
+          initials: t.name
+            .split(' ')
+            .map((n) => n[0])
+            .join('')
+            .slice(0, 2)
+            .toUpperCase(),
+        }))
+      : FALLBACK_TESTIMONIALS;
+
+  if (testimonials.length === 0) return null;
+
   const [emblaRef] = useEmblaCarousel({ loop: true, align: 'start' }, [Autoplay({ delay: 4500 })]);
 
   return (

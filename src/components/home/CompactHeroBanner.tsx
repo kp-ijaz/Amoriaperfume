@@ -6,34 +6,39 @@ import Image from 'next/image';
 import useEmblaCarousel from 'embla-carousel-react';
 import Autoplay from 'embla-carousel-autoplay';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { banners } from '@/lib/data/banners';
-
-const SIDE_PANELS = [
-  {
-    id: 'side1',
-    image: '/images/products/prod3.jpg',
-    badge: 'LIMITED OFFER',
-    badgeColor: '#E53E3E',
-    title: 'Eid Gift Sets',
-    subtitle: 'Up to 25% off all gift sets',
-    code: 'EID25',
-    href: '/products?category=gift-sets',
-    cta: 'Shop Gifts',
-  },
-  {
-    id: 'side2',
-    image: '/images/products/prod4.jpg',
-    badge: 'NEW IN',
-    badgeColor: 'var(--color-amoria-accent)',
-    title: 'Attar & Oud',
-    subtitle: 'Free delivery over AED 200',
-    code: null,
-    href: '/products?category=attar-oud',
-    cta: 'Explore',
-  },
-];
+import { useHeroCoverImages } from '@/lib/hooks/usePublicCms';
+import { FALLBACK_HERO_SIDE_PANELS, FALLBACK_HERO_SLIDES } from '@/components/home/heroFallbacks';
 
 export function CompactHeroBanner() {
+  const { data, isLoading, isError } = useHeroCoverImages();
+
+  const sliderBanners = data?.sliders ?? [];
+  const sidePanelBanners = data?.sidePanels ?? [];
+  const usingFallback = !isLoading && (isError || sliderBanners.length === 0);
+
+  const banners = (usingFallback ? FALLBACK_HERO_SLIDES : sliderBanners.map((b) => ({
+    id: b._id,
+    image: b.imageUrl,
+    title: b.title || 'Discover Amoria',
+    subtitle: b.subtitle || '',
+    ctaLink: b.redirectUrl || '/products',
+    ctaText: b.content?.trim() || 'Shop Now',
+  })));
+
+  const sidePanels = (usingFallback
+    ? FALLBACK_HERO_SIDE_PANELS
+    : sidePanelBanners.slice(0, 2).map((b) => ({
+    id: b._id,
+    image: b.imageUrl,
+    badge: b.content?.split('|')[0]?.trim() || 'OFFER',
+    badgeColor: '#E53E3E',
+    title: b.title || '',
+    subtitle: b.subtitle || '',
+    code: b.content?.includes('|') ? b.content.split('|')[1]?.trim() : null,
+    href: b.redirectUrl || '/products',
+    cta: 'Shop Now',
+  })));
+
   const [emblaRef, emblaApi] = useEmblaCarousel(
     { loop: true },
     [Autoplay({ delay: 4500, stopOnInteraction: false })]
@@ -47,6 +52,14 @@ export function CompactHeroBanner() {
     if (!emblaApi) return;
     emblaApi.on('select', () => setSelectedIndex(emblaApi.selectedScrollSnap()));
   }, [emblaApi]);
+
+  if (isLoading) {
+    return (
+      <section className="w-full h-[260px] md:h-[420px] bg-[var(--color-amoria-bg)] flex items-center justify-center">
+        <span className="w-8 h-8 border-2 border-[#1A0A2E]/20 border-t-[#1A0A2E] rounded-full animate-spin" />
+      </section>
+    );
+  }
 
   return (
     <>
@@ -173,7 +186,7 @@ export function CompactHeroBanner() {
 
           {/* RIGHT — two stacked offer panels, desktop only */}
           <div className="hidden md:flex flex-col gap-2 lg:gap-3 h-full">
-            {SIDE_PANELS.map((panel) => (
+            {sidePanels.map((panel) => (
               <Link
                 key={panel.id}
                 href={panel.href}

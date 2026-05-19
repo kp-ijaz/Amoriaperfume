@@ -3,8 +3,11 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
+import { useMemo } from 'react';
+import { useCategories } from '@/lib/hooks/useApiCategories';
+import { usePublicCoverImages } from '@/lib/hooks/usePublicCms';
 
-const CATEGORIES = [
+const FALLBACK_CATEGORIES = [
   {
     id: 'online-deals',
     slug: 'online-deals',
@@ -64,6 +67,33 @@ const CATEGORIES = [
 ];
 
 export function CategoryIconStrip() {
+  const { data: apiCategories = [] } = useCategories();
+  const { data: coverCats = [] } = usePublicCoverImages('category_cover');
+
+  const categories = useMemo(() => {
+    if (coverCats.length > 0) {
+      return coverCats.map((c) => ({
+        id: c._id,
+        slug: c.redirectUrl?.replace(/^\//, '') || 'products',
+        name: c.title || 'Category',
+        image: c.imageUrl,
+        badge: c.content?.trim() || null,
+        href: c.redirectUrl || '/products',
+      }));
+    }
+    if (apiCategories.length > 0) {
+      return apiCategories.slice(0, 8).map((c) => ({
+        id: c.id,
+        slug: c.slug,
+        name: c.name,
+        image: c.image || '/images/products/prod1.jpg',
+        badge: null,
+        href: `/categories/${c.slug}`,
+      }));
+    }
+    return FALLBACK_CATEGORIES.map((c) => ({ ...c, href: `/categories/${c.slug}` }));
+  }, [coverCats, apiCategories]);
+
   return (
     <section style={{ backgroundColor: '#FFFFFF', borderBottom: '1px solid #E8E3DC' }}>
       <div
@@ -78,17 +108,17 @@ export function CategoryIconStrip() {
           style={{
             display: 'flex',
             alignItems: 'flex-start',
-            gap: 0,
+            gap: 3,
             overflowX: 'auto',
             scrollbarWidth: 'none',
             msOverflowStyle: 'none',
             WebkitOverflowScrolling: 'touch',
             scrollSnapType: 'x mandatory',
-            justifyContent: 'space-between',
+            justifyContent: 'center',
           }}
           className="category-strip"
         >
-          {CATEGORIES.map((cat, i) => (
+          {categories.map((cat, i) => (
             <motion.div
               key={cat.id}
               initial={{ opacity: 0, y: 14 }}
@@ -98,7 +128,7 @@ export function CategoryIconStrip() {
               style={{ scrollSnapAlign: 'start', flexShrink: 0 }}
             >
               <Link
-                href={`/categories/${cat.slug}`}
+                href={'href' in cat && cat.href ? cat.href : `/categories/${cat.slug}`}
                 style={{
                   display: 'flex',
                   flexDirection: 'column',

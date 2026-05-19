@@ -4,12 +4,8 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { useCountdown } from '@/lib/hooks/useCountdown';
 import { ProductCard } from '@/components/product/ProductCard';
-import { products as allProducts } from '@/lib/data/products';
-
-// 5 deal products — on-sale items from dummy data
-const DEAL_PRODUCTS = allProducts
-  .filter((p) => p.isOnSale)
-  .slice(0, 5);
+import { useProductsByLimit } from '@/lib/hooks/useApiProducts';
+import { usePublicCoverImages } from '@/lib/hooks/usePublicCms';
 
 function TimeUnit({ value, label }: { value: number; label: string }) {
   return (
@@ -35,6 +31,12 @@ function TimeUnit({ value, label }: { value: number; label: string }) {
 
 export function LimitedDealsSection() {
   const { hours, minutes, seconds } = useCountdown();
+  const { data: pool = [], isLoading } = useProductsByLimit(24);
+  const dealProducts = pool.filter((p) => p.isOnSale).slice(0, 5);
+  const { data: flashHeaders = [] } = usePublicCoverImages('flash_banner');
+  const flashHeader = flashHeaders[0];
+
+  if (!isLoading && dealProducts.length === 0) return null;
 
   return (
     <section
@@ -68,7 +70,7 @@ export function LimitedDealsSection() {
                 letterSpacing: '0.03em',
               }}
             >
-              Limited Offers
+              {flashHeader?.title || 'Limited Offers'}
             </h2>
             {/* Left-aligned gold accent */}
             <div className="flex items-center gap-3 mt-4">
@@ -103,7 +105,7 @@ export function LimitedDealsSection() {
 
         {/* ── 5-product grid ─────────────────────── */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
-          {DEAL_PRODUCTS.map((product, i) => (
+          {dealProducts.map((product, i) => (
             <motion.div
               key={product.id}
               initial={{ opacity: 0, y: 24 }}

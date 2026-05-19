@@ -13,9 +13,9 @@ function IGIcon({ size = 20 }: { size?: number }) {
   );
 }
 
-// NOTE: Replace these with real post image URLs from the Instagram Basic Display API
-// using your @amoriaperfumeofficial access token for live feed.
-const instagramImages = [
+import { usePublicCoverImages } from '@/lib/hooks/usePublicCms';
+
+const FALLBACK_INSTAGRAM = [
   { src: 'https://images.unsplash.com/photo-1541643600914-78b084683702?w=600&q=80', alt: 'Amoria oud collection' },
   { src: 'https://images.unsplash.com/photo-1563170351-be82bc888aa4?w=600&q=80',                alt: 'Luxury perfume bottles' },
   { src: 'https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?w=600&q=80',             alt: 'Arabian fragrance' },
@@ -28,6 +28,14 @@ const hasNonEmptySrc = (value: string | undefined | null): value is string =>
   typeof value === 'string' && value.trim().length > 0;
 
 export function InstagramFeed() {
+  const { data: reels = [] } = usePublicCoverImages('reels');
+  const instagramImages =
+    reels.length > 0
+      ? reels.map((r) => ({ src: r.imageUrl, alt: r.title || 'Amoria social', href: r.redirectUrl }))
+      : FALLBACK_INSTAGRAM.map((i) => ({ ...i, href: undefined }));
+
+  if (instagramImages.length === 0) return null;
+
   return (
     <section className="relative py-20 overflow-hidden" style={{ backgroundColor: '#FAF8F5' }}>
       {/* Top border */}

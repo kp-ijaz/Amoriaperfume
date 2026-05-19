@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
+import { useNewsletterConfig } from '@/lib/hooks/usePublicCms';
 
 function ArabicRosette() {
   return (
@@ -27,8 +28,14 @@ function ArabicRosette() {
 }
 
 export function NewsletterSection() {
+  const config = useNewsletterConfig();
   const [email, setEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
+  const title = config.title || 'Join the Amoria Circle';
+  const subtitle =
+    config.subtitle ||
+    'Be the first to discover new arrivals, exclusive offers, and fragrance stories.';
+  const buttonLabel = config.buttonLabel || 'Subscribe';
 
   function handleSubmit(e: React.SyntheticEvent<HTMLFormElement>) {
     e.preventDefault();

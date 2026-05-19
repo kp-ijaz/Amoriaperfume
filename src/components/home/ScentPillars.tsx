@@ -6,8 +6,10 @@ import { motion } from 'framer-motion';
 import { Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatCurrency } from '@/lib/utils/formatCurrency';
+import { useHomeSlotProducts } from '@/lib/hooks/usePublicCms';
+import { ProductCard } from '@/components/product/ProductCard';
 
-const INSPIRED_PRODUCTS = [
+const FALLBACK_INSPIRED = [
   {
     id: 'insp-1',
     slug: 'club-de-nuit-intense',
@@ -64,7 +66,7 @@ function InspirationCard({
   product,
   index,
 }: {
-  product: (typeof INSPIRED_PRODUCTS)[0];
+  product: (typeof FALLBACK_INSPIRED)[0];
   index: number;
 }) {
   function handleAdd(e: React.MouseEvent) {
@@ -152,6 +154,9 @@ function InspirationCard({
 }
 
 export function BrandInspirations() {
+  const { data: slotData, isLoading } = useHomeSlotProducts('home-scent-pillars', { limit: 5 });
+  const apiProducts = slotData?.products ?? [];
+
   return (
     <section
       className="relative overflow-hidden"
@@ -200,8 +205,10 @@ export function BrandInspirations() {
               letterSpacing: '0.03em',
             }}
           >
-            Scents{' '}
-            <em style={{ color: '#C9A84C', fontStyle: 'italic' }}>You'll Love</em>
+            {slotData?.title || 'Scents'}{' '}
+            <em style={{ color: '#C9A84C', fontStyle: 'italic' }}>
+              {slotData?.subtitle || "You'll Love"}
+            </em>
           </h2>
 
           <div className="flex items-center justify-center gap-3 mt-5">
@@ -216,9 +223,12 @@ export function BrandInspirations() {
 
         {/* ── Product grid ── */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-5">
-          {INSPIRED_PRODUCTS.map((product, i) => (
-            <InspirationCard key={product.id} product={product} index={i} />
-          ))}
+          {apiProducts.length > 0
+            ? apiProducts.map((product) => <ProductCard key={product.id} product={product} />)
+            : !isLoading &&
+              FALLBACK_INSPIRED.map((product, i) => (
+                <InspirationCard key={product.id} product={product} index={i} />
+              ))}
         </div>
 
         {/* ── View All ── */}

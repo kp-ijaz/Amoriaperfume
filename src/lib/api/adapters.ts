@@ -82,7 +82,9 @@ export function adaptProduct(api: ApiProduct): Product {
     slug: api.slug || api._id,
     name: api.name,
     brand: api.brand?.name ?? '',
+    brandSlug: api.brand?.slug,
     category: api.category?.name ?? '',
+    categorySlug: api.category?.slug,
     gender: api.gender,
     fragranceFamily: api.fragranceFamily,
     concentration: api.concentration,
@@ -131,7 +133,13 @@ export function adaptBrand(api: ApiBrand): Brand {
     name: api.name,
     logo: api.logo,
     description: api.description ?? '',
+    productCoverImage: api.productCoverImage ?? null,
   };
+}
+
+/** Tile image: first product photo when available, otherwise brand logo. */
+export function brandDisplayImage(brand: Pick<Brand, 'productCoverImage' | 'logo'>): string {
+  return brand.productCoverImage || brand.logo || '';
 }
 
 export function adaptBrands(items: ApiBrand[]): Brand[] {

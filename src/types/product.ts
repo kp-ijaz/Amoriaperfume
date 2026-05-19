@@ -20,7 +20,9 @@ export interface Product {
   slug: string;
   name: string;
   brand: string;
+  brandSlug?: string;
   category: string;
+  categorySlug?: string;
   gender: 'men' | 'women' | 'unisex';
   fragranceFamily: string;
   concentration: string;
@@ -53,6 +55,7 @@ export interface Brand {
   name: string;
   logo: string;
   description: string;
+  productCoverImage?: string | null;
 }
 
 export interface Review {

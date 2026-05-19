@@ -3,8 +3,13 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
+import {
+  HOME_BRANDS_ROW_LIMIT,
+  useHomeBrandsRow,
+  type HomeBrandTile,
+} from '@/lib/hooks/useApiBrands';
 
-const BRANDS = [
+const FALLBACK_BRANDS: HomeBrandTile[] = [
   {
     id: 'swiss-arabian',
     slug: 'swiss-arabian',
@@ -50,9 +55,9 @@ const BRANDS = [
     image: '/images/products/prod5.jpg',
     accent: '#C9A84C',
   },
-];
+].slice(0, HOME_BRANDS_ROW_LIMIT);
 
-function BrandTile({ brand, index }: { brand: (typeof BRANDS)[0]; index: number }) {
+function BrandTile({ brand, index }: { brand: HomeBrandTile; index: number }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 18 }}
@@ -70,8 +75,8 @@ function BrandTile({ brand, index }: { brand: (typeof BRANDS)[0]; index: number 
         }}
         className="brand-tile"
       >
-        {/* Image */}
-        <div style={{ position: 'relative', height: 200 }}>
+        {/* Image — clipped so hover scale does not cover the bottom bar */}
+        <div className="brand-tile-media">
           <Image
             src={brand.image}
             alt={brand.name}
@@ -178,6 +183,12 @@ function BrandTile({ brand, index }: { brand: (typeof BRANDS)[0]; index: number 
 }
 
 export function ShopByBrandsGrid() {
+  const { brands: apiBrands, isLoading } = useHomeBrandsRow();
+  const brands =
+    !isLoading && apiBrands.length === 0 ? FALLBACK_BRANDS : apiBrands;
+
+  if (!isLoading && brands.length === 0) return null;
+
   return (
     <section style={{ backgroundColor: '#0D0A08', padding: '64px 0' }}>
       {/* Gold top border */}
@@ -190,7 +201,6 @@ export function ShopByBrandsGrid() {
       />
 
       <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 16px' }}>
-        {/* Section header */}
         <motion.div
           initial={{ opacity: 0, y: 18 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -255,19 +265,22 @@ export function ShopByBrandsGrid() {
           </div>
         </motion.div>
 
-        {/* Brands grid */}
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(2, 1fr)',
-            gap: 8,
-          }}
-          className="brands-grid"
-        >
-          {BRANDS.map((brand, i) => (
-            <BrandTile key={brand.id} brand={brand} index={i} />
-          ))}
-        </div>
+        {/* Single row of brands (max 5) */}
+        <motion.div className="brands-grid" aria-busy={isLoading}>
+          {isLoading
+            ? Array.from({ length: HOME_BRANDS_ROW_LIMIT }).map((_, i) => (
+                <div
+                  key={i}
+                  style={{
+                    height: 248,
+                    backgroundColor: 'rgba(255,255,255,0.06)',
+                  }}
+                />
+              ))
+            : brands.map((brand, i) => (
+                <BrandTile key={brand.id} brand={brand} index={i} />
+              ))}
+        </motion.div>
 
         {/* View all brands */}
         <motion.div
@@ -278,7 +291,7 @@ export function ShopByBrandsGrid() {
           style={{ textAlign: 'center', marginTop: 36 }}
         >
           <Link
-            href="/products"
+            href="/brands"
             style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -313,15 +326,47 @@ export function ShopByBrandsGrid() {
       />
 
       <style>{`
-        @media (min-width: 480px) {
-          .brands-grid {
-            grid-template-columns: repeat(3, 1fr) !important;
+        .brands-grid {
+          display: flex;
+          flex-wrap: nowrap;
+          gap: 8px;
+          overflow-x: auto;
+          scroll-snap-type: x mandatory;
+          -webkit-overflow-scrolling: touch;
+          scrollbar-width: none;
+        }
+        .brands-grid::-webkit-scrollbar {
+          display: none;
+        }
+        .brands-grid > * {
+          flex: 0 0 calc(50% - 4px);
+          scroll-snap-align: start;
+          min-width: 0;
+        }
+        @media (min-width: 640px) {
+          .brands-grid > * {
+            flex: 0 0 calc(33.333% - 6px);
           }
         }
         @media (min-width: 768px) {
           .brands-grid {
-            grid-template-columns: repeat(5, 1fr) !important;
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            overflow: visible;
           }
+          .brands-grid > * {
+            flex: unset;
+          }
+        }
+        .brand-tile-media {
+          position: relative;
+          height: 200px;
+          overflow: hidden;
+          isolation: isolate;
+        }
+        .brand-tile-bar {
+          position: relative;
+          z-index: 2;
         }
         .brand-tile-img {
           transition: transform 0.6s cubic-bezier(0.22,1,0.36,1);

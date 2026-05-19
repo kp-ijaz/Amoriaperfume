@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { Phone, Mail, MapPin, MessageCircle } from 'lucide-react';
+import { Mail, MapPin, MessageCircle } from 'lucide-react';
+import { apiSubmitContact } from '@/lib/api/public';
 
 export default function ContactPage() {
   const [form, setForm] = useState({ name: '', email: '', subject: '', message: '' });
@@ -11,10 +12,16 @@ export default function ContactPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 800));
-    setLoading(false);
-    setForm({ name: '', email: '', subject: '', message: '' });
-    toast.success('Message sent! We\'ll get back to you within 24 hours.');
+    try {
+      const res = await apiSubmitContact(form);
+      if (!res.success) throw new Error(res.message ?? 'Failed to send');
+      setForm({ name: '', email: '', subject: '', message: '' });
+      toast.success(res.message || "Message sent! We'll get back to you within 24 hours.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to send message');
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (

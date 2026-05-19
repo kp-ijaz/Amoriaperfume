@@ -14,7 +14,21 @@ export default function OrderConfirmationPage() {
 
   // Read real orderId from ReviewStep redirect; fall back to a placeholder
   const rawOrderId  = searchParams.get('orderId') ?? '';
-  const orderNumber = rawOrderId || `AMR-${Math.floor(100000 + Math.random() * 900000)}`;
+  const orderNumber = rawOrderId;
+
+  if (!orderNumber) {
+    return (
+      <div className="max-w-lg mx-auto px-4 py-16 text-center">
+        <h1 className="text-2xl font-light mb-4" style={{ fontFamily: 'var(--font-heading)' }}>
+          Order not found
+        </h1>
+        <p className="text-sm text-stone-500 mb-6">We could not find an order reference. Check your email or track your order.</p>
+        <Link href="/track-order" className="underline" style={{ color: 'var(--color-amoria-accent)' }}>
+          Track order
+        </Link>
+      </div>
+    );
+  }
 
   // Pickup-ready notification state (simulated after 6 seconds for demo)
   const [showPickupReady, setShowPickupReady] = useState(false);

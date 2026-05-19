@@ -1,8 +1,17 @@
 'use client';
 
 import Link from 'next/link';
+import { usePlatformAnnouncement } from '@/lib/hooks/usePublicCms';
 
 export function PromoStripBanner() {
+  const platform = usePlatformAnnouncement();
+  const text = platform?.flashAnnouncementText?.trim();
+
+  if (!text) return null;
+
+  const codeMatch = text.match(/code[:\s]+([A-Z0-9]+)/i);
+  const promoCode = codeMatch?.[1];
+
   return (
     <div
       style={{
@@ -68,34 +77,38 @@ export function PromoStripBanner() {
               lineHeight: 1.2,
             }}
           >
-            Massive 30% Cashback
+            {text.split('|')[0]?.trim() || text}
           </span>
-          <span style={{ color: '#1A0A2E', opacity: 0.4, fontSize: 16 }}>|</span>
-          <span
-            style={{
-              fontFamily: 'var(--font-heading, "Cormorant Garamond", serif)',
-              fontSize: 'clamp(14px, 2.2vw, 20px)',
-              fontWeight: 400,
-              color: '#1A0A2E',
-              letterSpacing: '0.04em',
-              lineHeight: 1.2,
-            }}
-          >
-            Use Code:&nbsp;
-            <strong
-              style={{
-                fontWeight: 800,
-                letterSpacing: '0.12em',
-                fontSize: 'clamp(15px, 2.4vw, 22px)',
-                textTransform: 'uppercase',
-                backgroundColor: 'rgba(26,10,46,0.1)',
-                padding: '2px 8px',
-                borderRadius: 3,
-              }}
-            >
-              CB30
-            </strong>
-          </span>
+          {promoCode && (
+            <>
+              <span style={{ color: '#1A0A2E', opacity: 0.4, fontSize: 16 }}>|</span>
+              <span
+                style={{
+                  fontFamily: 'var(--font-heading, "Cormorant Garamond", serif)',
+                  fontSize: 'clamp(14px, 2.2vw, 20px)',
+                  fontWeight: 400,
+                  color: '#1A0A2E',
+                  letterSpacing: '0.04em',
+                  lineHeight: 1.2,
+                }}
+              >
+                Use Code:&nbsp;
+                <strong
+                  style={{
+                    fontWeight: 800,
+                    letterSpacing: '0.12em',
+                    fontSize: 'clamp(15px, 2.4vw, 22px)',
+                    textTransform: 'uppercase',
+                    backgroundColor: 'rgba(26,10,46,0.1)',
+                    padding: '2px 8px',
+                    borderRadius: 3,
+                  }}
+                >
+                  {promoCode}
+                </strong>
+              </span>
+            </>
+          )}
         </div>
 
         {/* Right decorative + CTA */}

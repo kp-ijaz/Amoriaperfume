@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { toast } from 'sonner';
+import { apiRequestPasswordReset } from '@/lib/api/public';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
@@ -12,10 +13,16 @@ export default function ForgotPasswordPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 800));
-    setSent(true);
-    setLoading(false);
-    toast.success('Reset link sent to your email');
+    try {
+      const res = await apiRequestPasswordReset(email);
+      if (!res.success) throw new Error(res.message ?? 'Request failed');
+      setSent(true);
+      toast.success(res.data?.message || res.message || 'Check your email for reset instructions');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Request failed');
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -30,7 +37,7 @@ export default function ForgotPasswordPage() {
           Reset Password
         </h1>
         <p className="text-sm mb-6" style={{ color: 'var(--color-amoria-text-muted)' }}>
-          Enter your email and we&apos;ll send you a reset link
+          Enter your email and we&apos;ll send you reset instructions if an account exists
         </p>
 
         {!sent ? (
@@ -56,15 +63,15 @@ export default function ForgotPasswordPage() {
             </button>
           </form>
         ) : (
-          <div className="p-4 border text-sm" style={{ borderColor: 'var(--color-amoria-accent)', backgroundColor: 'rgba(201,168,76,0.08)' }}>
-            <p style={{ color: 'var(--color-amoria-primary)' }}>
-              ✓ Reset link sent to <strong>{email}</strong>. Please check your inbox.
-            </p>
-          </div>
+          <p className="text-sm" style={{ color: 'var(--color-amoria-text-muted)' }}>
+            If an account exists for <strong>{email}</strong>, you will receive an email shortly.
+          </p>
         )}
 
-        <p className="text-center text-sm mt-6" style={{ color: 'var(--color-amoria-text-muted)' }}>
-          <Link href="/login" style={{ color: 'var(--color-amoria-accent)' }}>Back to Login</Link>
+        <p className="text-center text-sm mt-6">
+          <Link href="/login" className="hover:underline" style={{ color: 'var(--color-amoria-accent)' }}>
+            Back to Sign In
+          </Link>
         </p>
       </div>
     </div>
