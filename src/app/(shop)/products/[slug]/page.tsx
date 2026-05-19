@@ -21,6 +21,7 @@ import { addToRecentlyViewed } from '@/lib/store/uiSlice';
 import { formatCurrency } from '@/lib/utils/formatCurrency';
 import { ProductVariant } from '@/types/product';
 import { useApiProductBySlug, useProductReviews } from '@/lib/hooks/useApiProducts';
+import { recordProductView } from '@/lib/utils/recordProductView';
 import { usePromotions } from '@/lib/hooks/useApiPromotions';
 import { ApiPromotion } from '@/lib/api/types';
 
@@ -249,7 +250,10 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
   }, [product?.id, product?.variants]);
 
   useEffect(() => {
-    if (product?.id) dispatch(addToRecentlyViewed(product.id));
+    if (product?.id) {
+      dispatch(addToRecentlyViewed(product.id));
+      recordProductView(product.id);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [product?.id]);
 

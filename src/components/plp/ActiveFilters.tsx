@@ -45,6 +45,9 @@ export function ActiveFilters({ filters, onRemove, onClearAll }: ActiveFiltersPr
   if (filters.newArrival) {
     chips.push({ key: 'newArrival', value: 'true', label: 'New arrivals' });
   }
+  if (filters.serverSort === 'most_viewed') {
+    chips.push({ key: 'serverSort', value: 'most_viewed', label: 'Most viewed' });
+  }
   if (filters.minRating) {
     chips.push({ key: 'minRating', value: String(filters.minRating), label: `${filters.minRating}+ Stars` });
   }

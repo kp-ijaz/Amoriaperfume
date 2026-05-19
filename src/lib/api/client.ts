@@ -112,7 +112,7 @@ export interface ProductsParams {
   trending?: boolean;
   newArrival?: boolean;
   limitedOffer?: boolean;
-  sort?: 'price_asc' | 'price_desc' | 'newest' | 'rating';
+  sort?: 'price_asc' | 'price_desc' | 'newest' | 'rating' | 'most_viewed';
   gender?: string;
   fragranceFamily?: string;
   concentration?: string;
@@ -142,6 +142,10 @@ export async function apiGetProducts(
   if (params.collection)      qs.set('collection', params.collection);
   const query = qs.toString() ? `?${qs.toString()}` : '';
   return apiFetch(`/api/products${query}`);
+}
+
+export async function apiRecordProductView(productId: string): Promise<ApiResponse<{ viewCount: number }>> {
+  return apiFetch(`/api/public/products/${productId}/view`, { method: 'POST' });
 }
 
 export async function apiGetProduct(id: string): Promise<ApiResponse<ApiProduct>> {

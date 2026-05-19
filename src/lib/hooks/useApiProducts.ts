@@ -53,6 +53,8 @@ export interface ApiProductFilters {
   trending?: boolean;
   newArrival?: boolean;
   limitedOffer?: boolean;
+  /** When set, product order comes from the API (e.g. most_viewed). */
+  serverSort?: 'most_viewed';
 }
 
 export interface FilterOption {
@@ -193,6 +195,7 @@ export function useApiProducts(initialFilters: ApiProductFilters = {}) {
     trending: filters.trending,
     newArrival: filters.newArrival,
     limitedOffer: filters.limitedOffer,
+    sort: filters.serverSort,
   }), [
     filters.searchQuery,
     filters.categorySlug,
@@ -203,6 +206,7 @@ export function useApiProducts(initialFilters: ApiProductFilters = {}) {
     filters.trending,
     filters.newArrival,
     filters.limitedOffer,
+    filters.serverSort,
   ]);
 
   const { data, isLoading, error } = useQuery({
@@ -225,7 +229,11 @@ export function useApiProducts(initialFilters: ApiProductFilters = {}) {
     concentrations:    buildFacetOptions(allProducts, applyClientFilters(allProducts, { ...filters, concentrations: undefined }),    (p) => p.concentration),
   }), [allProducts, filters]);
 
-  const filtered = useMemo(() => getSortedProducts(applyClientFilters(allProducts, filters), sortBy), [allProducts, filters, sortBy]);
+  const filtered = useMemo(() => {
+    const applied = applyClientFilters(allProducts, filters);
+    if (filters.serverSort) return applied;
+    return getSortedProducts(applied, sortBy);
+  }, [allProducts, filters, sortBy]);
 
   return {
     products: filtered.slice(0, visibleCount),

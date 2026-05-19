@@ -12,6 +12,7 @@ import { useWishlist } from '@/lib/hooks/useWishlist';
 import { formatCurrency } from '@/lib/utils/formatCurrency';
 import { useDispatch } from 'react-redux';
 import { addToRecentlyViewed } from '@/lib/store/uiSlice';
+import { recordProductView } from '@/lib/utils/recordProductView';
 
 interface ProductCardProps {
   product: Product;
@@ -112,6 +113,7 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
           href={`/products/${product.slug}`}
           onClick={() => {
             dispatch(addToRecentlyViewed(product.id));
+            recordProductView(product.id);
           }}
           className="block w-full h-full"
         >
@@ -271,7 +273,11 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
         <p className="text-[9px] uppercase tracking-[0.2em] mb-1" style={{ color: '#A89880' }}>
           {product.brand}
         </p>
-        <Link href={`/products/${product.slug}`} className="block group/name">
+        <Link
+          href={`/products/${product.slug}`}
+          className="block group/name"
+          onClick={() => recordProductView(product.id)}
+        >
           <h3
             className="text-sm font-normal leading-tight line-clamp-1 transition-opacity duration-200 group-hover/name:opacity-50"
             style={{ color: '#1C1C1C' }}

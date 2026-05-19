@@ -70,6 +70,7 @@ export interface ApiProduct {
   trending?: boolean;
   newArrival?: boolean;
   limitedOffer?: boolean;
+  viewCount?: number;
   published: boolean;
   fragranceFamily: string;
   gender: 'men' | 'women' | 'unisex';

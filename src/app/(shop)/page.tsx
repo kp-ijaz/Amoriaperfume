@@ -2,6 +2,7 @@ import { CompactHeroBanner } from '@/components/home/CompactHeroBanner';
 import { CategoryIconStrip } from '@/components/home/CategoryIconStrip';
 import { PromoStripBanner } from '@/components/home/PromoStripBanner';
 import { HomeSlotSection } from '@/components/home/HomeSlotSection';
+import { MostViewedSection } from '@/components/home/MostViewedSection';
 import { PromoBanners } from '@/components/home/PromoBanners';
 import { ShopByBrandsGrid } from '@/components/home/ShopByBrandsGrid';
 import { MenWomenBanner } from '@/components/home/MenWomenBanner';
@@ -60,18 +61,8 @@ export default function HomePage() {
         fallback={{ bestSeller: true }}
       />
 
-      {/* 9 — Trending Perfumes */}
-      <HomeSlotSection
-        slotKey="home-most-viewed"
-        title="Trending Perfumes"
-        subtitle="What's Hot Right Now"
-        viewAllHref="/products?trending=true"
-        theme="light"
-        sectionNumber="03"
-        limit={5}
-        columns={5}
-        fallback={{ trending: true }}
-      />
+      {/* 9 — Most viewed (tracked from storefront clicks) */}
+      <MostViewedSection />
 
       {/* 10 — Perfumes For Men & Women (with mini product picks) */}
       <MenWomenBanner />
