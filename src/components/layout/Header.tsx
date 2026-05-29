@@ -14,32 +14,24 @@ import Image from 'next/image';
 import { CartDrawer } from '@/components/cart/CartDrawer';
 import { MobileNav } from './MobileNav';
 import { useAuth } from '@/lib/hooks/useAuth';
+import { useLanguage } from '@/lib/context/LanguageContext';
 
-const LIVE_OFFERS = [
-  { id: 1, text: '🔥 FLASH SALE — Use code EID25 for 25% off all Gift Sets', color: '#dc2626' },
-  { id: 2, text: '🚚 Free Delivery on orders over AED 200 — Shop Now', color: '#16a34a' },
-  { id: 3, text: '✨ New Arrivals in — Attar & Oud Collection 2025', color: 'var(--color-amoria-accent)' },
-  { id: 4, text: '💎 Use WELCOME10 for 10% off your first order', color: '#7c3aed' },
-  { id: 5, text: '⏰ Limited Stock — Dehn El Oud only 4 left', color: '#ea580c' },
-];
-
-const LANGUAGES = [
-  { code: 'en', label: 'English', short: 'EN', flag: '🇬🇧' },
-  { code: 'ar', label: 'العربية', short: 'AR', flag: '🇦🇪' },
-  { code: 'fr', label: 'Français', short: 'FR', flag: '🇫🇷' },
-];
+const OFFER_COLORS = ['#dc2626', '#16a34a', 'var(--color-amoria-accent)', '#7c3aed', '#ea580c'];
 
 function LiveOffersTicker() {
   const [activeIdx, setActiveIdx] = useState(0);
+  const { tArr } = useLanguage();
+  const offers = tArr('liveOffers');
 
   useEffect(() => {
-    const t = setInterval(() => {
-      setActiveIdx((i) => (i + 1) % LIVE_OFFERS.length);
+    const timer = setInterval(() => {
+      setActiveIdx((i) => (i + 1) % offers.length);
     }, 3200);
-    return () => clearInterval(t);
-  }, []);
+    return () => clearInterval(timer);
+  }, [offers.length]);
 
-  const offer = LIVE_OFFERS[activeIdx];
+  const text = offers[activeIdx] ?? '';
+  const color = OFFER_COLORS[activeIdx % OFFER_COLORS.length];
 
   return (
     <div className="flex items-center justify-center overflow-hidden w-full">
@@ -51,9 +43,9 @@ function LiveOffersTicker() {
           exit={{ opacity: 0, y: -6 }}
           transition={{ duration: 0.35, ease: 'easeInOut' }}
           className="text-[13px] font-medium truncate text-center"
-          style={{ color: offer.color }}
+          style={{ color }}
         >
-          {offer.text}
+          {text}
         </motion.span>
       </AnimatePresence>
     </div>
@@ -62,16 +54,8 @@ function LiveOffersTicker() {
 
 function LanguageDropdown() {
   const [open, setOpen] = useState(false);
-  const [current, setCurrent] = useState(LANGUAGES[0]);
   const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const saved = localStorage.getItem('amoria_lang');
-    if (saved) {
-      const found = LANGUAGES.find((l) => l.code === saved);
-      if (found) setCurrent(found);
-    }
-  }, []);
+  const { lang, setLang } = useLanguage();
 
   useEffect(() => {
     function handleOutside(e: MouseEvent) {
@@ -81,11 +65,7 @@ function LanguageDropdown() {
     return () => document.removeEventListener('mousedown', handleOutside);
   }, []);
 
-  function select(lang: (typeof LANGUAGES)[0]) {
-    setCurrent(lang);
-    setOpen(false);
-    localStorage.setItem('amoria_lang', lang.code);
-  }
+  const currentLabel = lang === 'ar' ? 'العربية' : 'English';
 
   return (
     <div ref={ref} className="relative flex-shrink-0">
@@ -95,8 +75,7 @@ function LanguageDropdown() {
         style={{ color: 'var(--color-amoria-text-muted)' }}
         aria-label="Select language"
       >
-        <span className="text-base leading-none">{current.flag}</span>
-        <span className="text-[13px] font-semibold tracking-wide">{current.short}</span>
+        <span className="text-[13px] font-semibold tracking-wide">{currentLabel}</span>
         <ChevronDown
           size={10}
           className="transition-transform duration-200"
@@ -111,23 +90,26 @@ function LanguageDropdown() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -4, scale: 0.97 }}
             transition={{ duration: 0.15, ease: [0.22, 1, 0.36, 1] }}
-            className="absolute left-0 top-full mt-1 bg-white border shadow-lg z-50 min-w-[150px] overflow-hidden rounded-sm"
+            className="absolute right-0 top-full mt-1 bg-white border shadow-lg z-50 min-w-[140px] overflow-hidden rounded-sm"
             style={{ borderColor: 'var(--color-amoria-border)' }}
           >
-            {LANGUAGES.map((lang) => (
-              <button
-                key={lang.code}
-                onClick={() => select(lang)}
-                className="flex items-center gap-2.5 w-full px-3 py-2.5 text-left hover:bg-gray-50 transition-colors"
-                style={{ color: 'var(--color-amoria-text)' }}
-              >
-                <span className="text-base leading-none">{lang.flag}</span>
-                <span className="text-[12px] font-medium">{lang.label}</span>
-                {current.code === lang.code && (
-                  <Check size={11} className="ml-auto" style={{ color: 'var(--color-amoria-accent)' }} />
-                )}
-              </button>
-            ))}
+            {(['en', 'ar'] as const).map((code) => {
+              const label = code === 'ar' ? 'العربية' : 'English';
+              return (
+                <button
+                  key={code}
+                  onClick={() => { setLang(code); setOpen(false); }}
+                  className="flex items-center gap-2.5 w-full px-3 py-2.5 text-left hover:bg-gray-50 transition-colors"
+                  style={{ color: 'var(--color-amoria-text)' }}
+                  dir={code === 'ar' ? 'rtl' : 'ltr'}
+                >
+                  <span className="text-[13px] font-medium">{label}</span>
+                  {lang === code && (
+                    <Check size={11} className="ml-auto" style={{ color: 'var(--color-amoria-accent)' }} />
+                  )}
+                </button>
+              );
+            })}
           </motion.div>
         )}
       </AnimatePresence>
@@ -135,18 +117,19 @@ function LanguageDropdown() {
   );
 }
 
-const navLinks = [
-  { label: 'Home',              href: '/' },
-  { label: 'Collections',       href: '/collections' },
-  { label: 'Brand Inspiration', href: '/brand-inspiration' },
-  { label: 'Gift Sets',         href: '/gift-sets' },
-  { label: 'Bakhoor',           href: '/bakhoor' },
-  { label: 'Sale',              href: '/products?sale=true', isRed: true },
+const NAV_LINK_KEYS: { key: string; href: string; isRed?: boolean }[] = [
+  { key: 'navHome',              href: '/' },
+  { key: 'navCollections',       href: '/collections' },
+  { key: 'navBrandInspiration',  href: '/brand-inspiration' },
+  { key: 'navGiftSets',          href: '/gift-sets' },
+  { key: 'navBakhoor',           href: '/bakhoor' },
+  { key: 'navSale',              href: '/products?sale=true', isRed: true },
 ];
 
 export function Header() {
   const dispatch = useDispatch();
   const pathname = usePathname();
+  const { t } = useLanguage();
   const cartItems = useSelector((state: RootState) => state.cart.items);
   const wishlistItems = useSelector((state: RootState) => state.wishlist.items);
   const [scrolled, setScrolled] = useState(false);
@@ -220,24 +203,24 @@ export function Header() {
         >
           <div className="max-w-7xl mx-auto px-4 lg:px-8 h-8 grid items-center" style={{ gridTemplateColumns: '1fr auto 1fr' }}>
 
-            {/* LEFT — language flag dropdown */}
-            <div className="flex items-center">
-              <LanguageDropdown />
-            </div>
+            {/* LEFT — empty placeholder to keep ticker centered */}
+            <div />
 
             {/* CENTER — offers ticker (truly centered) */}
             <LiveOffersTicker />
 
-            {/* RIGHT — store locator */}
-            <div className="flex items-center justify-end">
+            {/* RIGHT — store locator + language */}
+            <div className="flex items-center justify-end gap-3">
               <a
                 href="/contact"
                 className="hidden sm:flex items-center gap-1.5 flex-shrink-0 hover:opacity-70 transition-opacity"
                 style={{ color: 'var(--color-amoria-text-muted)' }}
               >
                 <MapPin size={13} />
-                <span className="text-[13px] font-medium">Store Locator</span>
+                <span className="text-[13px] font-medium">{t('storeLocator')}</span>
               </a>
+              <span className="hidden sm:block w-px h-3 opacity-25" style={{ backgroundColor: 'var(--color-amoria-text-muted)' }} />
+              <LanguageDropdown />
             </div>
 
           </div>
@@ -264,25 +247,31 @@ export function Header() {
             {/* Logo — left */}
             <Link
               href="/"
-              className="flex items-center gap-1 flex-shrink-0 transition-transform duration-300"
+              className="flex items-center gap-2 flex-shrink-0 transition-transform duration-300"
               style={{ transform: scrolled ? 'scale(0.92)' : 'scale(1)', transformOrigin: 'left center' }}
             >
+              <Image
+                src="/brand-icon.png"
+                alt="Amoria"
+                width={40}
+                height={40}
+                className="transition-all duration-300 object-contain"
+                style={{ width: scrolled ? 32 : 40, height: scrolled ? 32 : 40 }}
+                priority
+              />
               <span
                 className="text-2xl font-bold tracking-[0.18em]"
                 style={{ fontFamily: 'var(--font-heading)', color: 'var(--color-amoria-primary)' }}
               >
                 AMORIA
               </span>
-              <span
-                className="w-[5px] h-[5px] rounded-full mb-3"
-                style={{ backgroundColor: 'var(--color-amoria-accent)' }}
-              />
             </Link>
 
             {/* Center nav — desktop only */}
             <nav className="hidden md:flex items-center justify-center flex-1 gap-0.5 px-4">
-              {navLinks.map((link) => {
+              {NAV_LINK_KEYS.map((link) => {
                 const active = !link.isRed && isActive(link.href);
+                const label = t(link.key as Parameters<typeof t>[0]);
                 return (
                   <Link
                     key={link.href}
@@ -295,7 +284,7 @@ export function Header() {
                           : 'text-[#4A4A4A] hover:text-[#1A0A2E]'
                     }`}
                   >
-                    {link.label}
+                    {label}
                     {link.isRed && (
                       <span
                         className="ml-1 text-[9px] font-bold uppercase tracking-wider px-1 py-0.5 rounded-sm"
@@ -348,7 +337,7 @@ export function Header() {
                       <input
                         ref={searchInputRef}
                         type="search"
-                        placeholder="Search perfumes..."
+                        placeholder={t('searchPlaceholder')}
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         onKeyDown={(e) => {
@@ -440,12 +429,12 @@ export function Header() {
                             className="block px-4 py-2.5 text-xs text-center border-t transition-colors hover:bg-gray-50"
                             style={{ color: 'var(--color-amoria-accent)', borderColor: 'var(--color-amoria-border)' }}
                           >
-                            View all results for &quot;{searchQuery}&quot; →
+                            {t('searchViewAll')} &quot;{searchQuery}&quot; →
                           </Link>
                         </>
                       ) : (
                         <div className="px-4 py-3 text-sm" style={{ color: 'var(--color-amoria-text-muted)' }}>
-                          No results for &quot;{searchQuery}&quot;
+                          {t('searchNoResults')} &quot;{searchQuery}&quot;
                         </div>
                       )}
                     </motion.div>
@@ -516,16 +505,16 @@ export function Header() {
                         <p className="text-[11px] truncate" style={{ color: '#A89880' }}>{user!.email}</p>
                       </div>
                       <Link href="/account/orders" className="flex items-center gap-2.5 px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors" style={{ color: 'var(--color-amoria-text)' }}>
-                        <Package size={14} style={{ color: '#A89880' }} /> My Orders
+                        <Package size={14} style={{ color: '#A89880' }} /> {t('myOrders')}
                       </Link>
                       <Link href="/track-order" className="flex items-center gap-2.5 px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors" style={{ color: 'var(--color-amoria-text)' }}>
-                        <Truck size={14} style={{ color: '#A89880' }} /> Track Order
+                        <Truck size={14} style={{ color: '#A89880' }} /> {t('trackOrder')}
                       </Link>
                       <Link href="/account/wishlist" className="flex items-center gap-2.5 px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors" style={{ color: 'var(--color-amoria-text)' }}>
-                        <Heart size={14} style={{ color: '#A89880' }} /> My Wishlist
+                        <Heart size={14} style={{ color: '#A89880' }} /> {t('myWishlist')}
                       </Link>
                       <Link href="/account/profile" className="flex items-center gap-2.5 px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors" style={{ color: 'var(--color-amoria-text)' }}>
-                        <Settings size={14} style={{ color: '#A89880' }} /> Profile Settings
+                        <Settings size={14} style={{ color: '#A89880' }} /> {t('profileSettings')}
                       </Link>
                       <div className="border-t" style={{ borderColor: 'var(--color-amoria-border)' }} />
                       <button
@@ -533,7 +522,7 @@ export function Header() {
                         className="flex items-center gap-2.5 w-full px-4 py-2.5 text-sm hover:bg-red-50 transition-colors text-left"
                         style={{ color: '#dc2626' }}
                       >
-                        <LogOut size={14} /> Sign Out
+                        <LogOut size={14} /> {t('signOut')}
                       </button>
                     </>
                   ) : (
@@ -552,36 +541,36 @@ export function Header() {
                           <div className="flex gap-2">
                             <Link href="/checkout?editGuest=1" className="flex items-center gap-1 text-[11px] font-semibold px-2 py-1 transition-colors hover:bg-gray-100"
                               style={{ color: '#1A0A2E', border: '1px solid #E8E3DC' }}>
-                              <Pencil size={10} /> Edit Details
+                              <Pencil size={10} /> {t('editDetails')}
                             </Link>
                             <button onClick={clearGuest}
                               className="text-[11px] font-semibold px-2 py-1 transition-colors hover:bg-red-50"
                               style={{ color: '#ef4444', border: '1px solid #fecaca' }}>
-                              Clear
+                              {t('clear')}
                             </button>
                           </div>
                         </div>
                       ) : (
                         <>
                           <Link href="/login" className="block px-4 py-2.5 text-sm font-semibold hover:bg-gray-50 transition-colors border-b" style={{ color: '#1A0A2E', borderColor: 'var(--color-amoria-border)' }}>
-                            Sign In
+                            {t('signIn')}
                           </Link>
                           <Link href="/register" className="block px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors border-b" style={{ color: 'var(--color-amoria-text)', borderColor: 'var(--color-amoria-border)' }}>
-                            Create Account
+                            {t('createAccount')}
                           </Link>
                         </>
                       )}
                       <Link href="/account/orders" className="flex items-center gap-2.5 px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors" style={{ color: 'var(--color-amoria-text)' }}>
-                        <Package size={14} style={{ color: '#A89880' }} /> My Orders
+                        <Package size={14} style={{ color: '#A89880' }} /> {t('myOrders')}
                       </Link>
                       <Link href="/track-order" className="flex items-center gap-2.5 px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors border-b" style={{ color: 'var(--color-amoria-text)', borderColor: 'var(--color-amoria-border)' }}>
                         <Truck size={14} style={{ color: '#C9A84C' }} />
-                        <span>Track Order</span>
+                        <span>{t('trackOrder')}</span>
                       </Link>
                       {!isGuest && (
                         <div className="px-4 py-2.5">
                           <Link href="/checkout" className="block text-xs font-semibold" style={{ color: '#C9A84C' }}>
-                            → Guest Checkout
+                            {t('guestCheckout')}
                           </Link>
                         </div>
                       )}

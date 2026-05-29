@@ -6,20 +6,23 @@ import { closeMobileNav } from '@/lib/store/uiSlice';
 import { useBodyLock } from '@/lib/hooks/useBodyLock';
 import Link from 'next/link';
 import { X, Search, ChevronRight, Package, Truck } from 'lucide-react';
+import Image from 'next/image';
 import { AnimatePresence, motion } from 'framer-motion';
+import { useLanguage } from '@/lib/context/LanguageContext';
 
-const navLinks = [
-  { label: 'Home',              href: '/' },
-  { label: 'Collections',       href: '/collections' },
-  { label: 'Brand Inspiration', href: '/brand-inspiration' },
-  { label: 'Gift Sets',         href: '/gift-sets' },
-  { label: 'Bakhoor',           href: '/bakhoor' },
-  { label: 'Sale',              href: '/products?sale=true', isRed: true },
+const NAV_LINK_KEYS: { key: string; href: string; isRed?: boolean }[] = [
+  { key: 'navHome',             href: '/' },
+  { key: 'navCollections',      href: '/collections' },
+  { key: 'navBrandInspiration', href: '/brand-inspiration' },
+  { key: 'navGiftSets',         href: '/gift-sets' },
+  { key: 'navBakhoor',          href: '/bakhoor' },
+  { key: 'navSale',             href: '/products?sale=true', isRed: true },
 ];
 
 export function MobileNav() {
   const dispatch = useDispatch();
   const isOpen = useSelector((state: RootState) => state.ui.mobileNavOpen);
+  const { t } = useLanguage();
   useBodyLock(isOpen);
 
   return (
@@ -45,12 +48,21 @@ export function MobileNav() {
           >
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b" style={{ borderColor: 'rgba(255,255,255,0.1)' }}>
-              <span
-                className="text-xl font-bold tracking-[0.15em]"
-                style={{ fontFamily: 'var(--font-heading)', color: 'var(--color-amoria-accent)' }}
-              >
-                AMORIA
-              </span>
+              <div className="flex items-center gap-2">
+                <Image
+                  src="/brand-icon.png"
+                  alt="Amoria"
+                  width={32}
+                  height={32}
+                  className="object-contain"
+                />
+                <span
+                  className="text-xl font-bold tracking-[0.15em]"
+                  style={{ fontFamily: 'var(--font-heading)', color: 'var(--color-amoria-accent)' }}
+                >
+                  AMORIA
+                </span>
+              </div>
               <button
                 onClick={() => dispatch(closeMobileNav())}
                 className="p-2 text-white/70 hover:text-white"
@@ -65,7 +77,7 @@ export function MobileNav() {
                 <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/50" />
                 <input
                   type="search"
-                  placeholder="Search perfumes..."
+                  placeholder={t('mobileSearchPlaceholder')}
                   className="w-full pl-9 pr-4 py-2.5 text-sm rounded-none outline-none text-white placeholder:text-white/50"
                   style={{ backgroundColor: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)' }}
                 />
@@ -77,7 +89,7 @@ export function MobileNav() {
               className="flex-1 overflow-y-auto py-2"
               style={{ paddingBottom: 'calc(64px + env(safe-area-inset-bottom))' }}
             >
-              {navLinks.map((link) => (
+              {NAV_LINK_KEYS.map((link) => (
                 <Link
                   key={link.href}
                   href={link.href}
@@ -86,7 +98,7 @@ export function MobileNav() {
                   style={{ color: link.isRed ? '#f87171' : 'rgba(255,255,255,0.85)', borderColor: 'rgba(255,255,255,0.06)' }}
                 >
                   <span className="flex items-center gap-2">
-                    {link.label}
+                    {t(link.key as Parameters<typeof t>[0])}
                     {link.isRed && (
                       <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded-sm" style={{ backgroundColor: '#fee2e2', color: '#dc2626' }}>
                         HOT
@@ -97,19 +109,19 @@ export function MobileNav() {
                 </Link>
               ))}
 
-              {/* Orders & Tracking — always visible for both guests and logged-in */}
+              {/* Orders & Tracking */}
               <div className="mt-4 pt-4 border-t" style={{ borderColor: 'rgba(255,255,255,0.1)' }}>
                 <p className="px-4 text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'var(--color-amoria-accent)' }}>
-                  Orders
+                  {t('mobileOrders')}
                 </p>
                 <Link href="/account/orders" onClick={() => dispatch(closeMobileNav())} className="flex items-center gap-3 px-4 py-3 text-sm transition-colors hover:bg-white/5 border-b" style={{ color: 'rgba(255,255,255,0.85)', borderColor: 'rgba(255,255,255,0.06)' }}>
                   <Package size={15} style={{ color: 'rgba(201,168,76,0.7)' }} />
-                  My Orders
+                  {t('myOrders')}
                   <ChevronRight size={14} className="ml-auto opacity-40" />
                 </Link>
                 <Link href="/track-order" onClick={() => dispatch(closeMobileNav())} className="flex items-center gap-3 px-4 py-3 text-sm transition-colors hover:bg-white/5 border-b" style={{ color: 'rgba(255,255,255,0.85)', borderColor: 'rgba(255,255,255,0.06)' }}>
                   <Truck size={15} style={{ color: 'rgba(201,168,76,0.7)' }} />
-                  Track Order
+                  {t('trackOrder')}
                   <ChevronRight size={14} className="ml-auto opacity-40" />
                 </Link>
               </div>
@@ -117,15 +129,16 @@ export function MobileNav() {
               {/* Account */}
               <div className="mt-4 pt-4 border-t" style={{ borderColor: 'rgba(255,255,255,0.1)' }}>
                 <p className="px-4 text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'var(--color-amoria-accent)' }}>
-                  Account
+                  {t('mobileAccount')}
                 </p>
                 <Link href="/login" onClick={() => dispatch(closeMobileNav())} className="flex items-center justify-between px-4 py-3 text-sm transition-colors hover:bg-white/5" style={{ color: 'rgba(255,255,255,0.7)' }}>
-                  Login
+                  {t('mobileLogin')}
                 </Link>
                 <Link href="/register" onClick={() => dispatch(closeMobileNav())} className="flex items-center justify-between px-4 py-3 text-sm transition-colors hover:bg-white/5" style={{ color: 'rgba(255,255,255,0.7)' }}>
-                  Register
+                  {t('mobileRegister')}
                 </Link>
               </div>
+
             </nav>
           </motion.div>
         </>

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Product } from '@/types/product';
 import { ProductGrid } from '@/components/product/ProductGrid';
+import { useLanguage } from '@/lib/context/LanguageContext';
 
 interface ProductSectionProps {
   title: string;
@@ -27,6 +28,7 @@ export function ProductSection({
   columns = 4,
 }: ProductSectionProps) {
   const isDark = theme === 'dark';
+  const { t } = useLanguage();
 
   return (
     <section
@@ -124,7 +126,7 @@ export function ProductSection({
                 borderColor: isDark ? 'rgba(201,168,76,0.3)' : 'rgba(26,10,46,0.25)',
               }}
             >
-              View All
+              {t('viewAll')}
               <svg width="16" height="10" viewBox="0 0 16 10" fill="none">
                 <path d="M0 5h14M10 1l4 4-4 4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>

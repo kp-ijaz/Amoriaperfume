@@ -3,6 +3,7 @@ import { Footer } from '@/components/layout/Footer';
 import { BottomTabBar } from '@/components/layout/BottomTabBar';
 import { ScrollToTop } from '@/components/ScrollToTop';
 import { PageTransition } from '@/components/layout/PageTransition';
+import { FloatingSidebar } from '@/components/layout/FloatingSidebar';
 
 export default function ShopLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -18,6 +19,7 @@ export default function ShopLayout({ children }: { children: React.ReactNode }) 
       </div>
       <BottomTabBar />
       <ScrollToTop />
+      <FloatingSidebar />
     </>
   );
 }

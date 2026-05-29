@@ -2,8 +2,10 @@
 
 import Link from 'next/link';
 import { usePlatformAnnouncement } from '@/lib/hooks/usePublicCms';
+import { useLanguage } from '@/lib/context/LanguageContext';
 
 export function PromoStripBanner() {
+  const { t } = useLanguage();
   const platform = usePlatformAnnouncement();
   const text = platform?.flashAnnouncementText?.trim();
 
@@ -92,7 +94,7 @@ export function PromoStripBanner() {
                   lineHeight: 1.2,
                 }}
               >
-                Use Code:&nbsp;
+                {t('useCode')}&nbsp;
                 <strong
                   style={{
                     fontWeight: 800,
@@ -137,7 +139,7 @@ export function PromoStripBanner() {
             }}
             className="promo-shop-link"
           >
-            Shop Now →
+            {t('shopNow')}
           </Link>
         </div>
       </div>

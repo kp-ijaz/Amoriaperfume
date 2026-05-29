@@ -5,8 +5,9 @@ import Link from 'next/link';
 import { useCountdown } from '@/lib/hooks/useCountdown';
 import { ProductCard } from '@/components/product/ProductCard';
 import { useHomeSlotProducts, usePublicCoverImages } from '@/lib/hooks/usePublicCms';
+import { useLanguage } from '@/lib/context/LanguageContext';
 
-function TimeUnit({ value, label }: { value: number; label: string }) {
+function TimeUnit({ value, label }: { value: number; label: string; }) {
   return (
     <motion.div
       className="flex flex-col items-center"
@@ -39,13 +40,14 @@ function TimeUnit({ value, label }: { value: number; label: string }) {
 
 export function LimitedDealsSection() {
   const { hours, minutes, seconds } = useCountdown();
+  const { t } = useLanguage();
   const { data, isLoading } = useHomeSlotProducts('home-limited-offers', {
     limit: 5,
     limitedOffer: true,
   });
   const dealProducts = data?.products ?? [];
-  const sectionTitle = data?.title?.trim() || 'Limited Offers';
-  const sectionSubtitle = data?.subtitle?.trim() || 'Today Only';
+  const sectionTitle = data?.title?.trim() || t('slotLimitedOffers');
+  const sectionSubtitle = data?.subtitle?.trim() || t('slotLimitedOffersSubtitle');
   const { data: flashHeaders = [] } = usePublicCoverImages('flash_banner');
   const flashHeader = flashHeaders[0];
 
@@ -117,14 +119,14 @@ export function LimitedDealsSection() {
 
           <div className="flex flex-col items-start sm:items-end gap-2">
             <p className="text-[10px] uppercase tracking-[0.18em] font-medium" style={{ color: '#A89880' }}>
-              Ends tonight at midnight
+              {t('endsTonight')}
             </p>
             <div className="flex items-end gap-2">
-              <TimeUnit value={hours} label="Hrs" />
+              <TimeUnit value={hours} label={t('timerHrs')} />
               <span className="text-xl font-light mb-3.5" style={{ color: '#C9A84C' }}>:</span>
-              <TimeUnit value={minutes} label="Min" />
+              <TimeUnit value={minutes} label={t('timerMin')} />
               <span className="text-xl font-light mb-3.5" style={{ color: '#C9A84C' }}>:</span>
-              <TimeUnit value={seconds} label="Sec" />
+              <TimeUnit value={seconds} label={t('timerSec')} />
             </div>
           </div>
         </motion.div>
@@ -172,7 +174,7 @@ export function LimitedDealsSection() {
             className="group inline-flex items-center gap-2.5 text-[11px] font-bold tracking-[0.22em] uppercase border-b pb-0.5 transition-all hover:gap-4 duration-300"
             style={{ color: '#1A0A2E', borderColor: 'rgba(26,10,46,0.25)' }}
           >
-            View All Deals
+            {t('viewAllDeals')}
             <svg width="16" height="10" viewBox="0 0 16 10" fill="none">
               <path
                 d="M0 5h14M10 1l4 4-4 4"

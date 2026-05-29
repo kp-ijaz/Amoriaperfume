@@ -6,16 +6,22 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { X, ChevronLeft, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@/lib/store';
+import { openFinder, closeFinder } from '@/lib/store/uiSlice';
 import { quizQuestions } from '@/lib/data/quiz';
 import { useProductsByLimit } from '@/lib/hooks/useApiProducts';
 import { formatCurrency } from '@/lib/utils/formatCurrency';
 
 export function FragranceFinderWidget() {
-  const [open, setOpen]       = useState(false);
-  const cartDrawerOpen = useSelector((s: RootState) => s.ui.cartDrawerOpen);
+  const dispatch = useDispatch();
+  const open = useSelector((s: RootState) => s.ui.finderOpen);
   useBodyLock(open);
+
+  function setOpen(val: boolean) {
+    if (val) dispatch(openFinder());
+    else dispatch(closeFinder());
+  }
   const [step, setStep]       = useState(0);
   const [answers, setAnswers] = useState<Record<number, string>>({});
   const [started, setStarted] = useState(false);
@@ -64,34 +70,6 @@ export function FragranceFinderWidget() {
 
   return (
     <>
-      {/* Floating trigger — hidden when cart drawer is open */}
-      <AnimatePresence>
-        {!open && !cartDrawerOpen && (
-          <motion.button
-            initial={{ opacity: 0, x: 40 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 40 }}
-            transition={{ duration: 0.4, delay: 0.5, ease: [0.22, 1, 0.36, 1] }}
-            onClick={() => setOpen(true)}
-            className="fixed bottom-24 right-0 z-[150] flex items-center gap-2 py-3 pl-4 pr-5 shadow-xl"
-            style={{
-              backgroundColor: '#1A0A2E',
-              borderLeft: '3px solid #C9A84C',
-              borderTop: '1px solid rgba(201,168,76,0.25)',
-              borderBottom: '1px solid rgba(201,168,76,0.25)',
-              borderRight: 'none',
-              borderRadius: '6px 0 0 6px',
-            }}
-            aria-label="Find Your Scent"
-          >
-            <Sparkles size={15} style={{ color: '#C9A84C' }} />
-            <span className="text-[11px] font-bold tracking-[0.16em] uppercase" style={{ color: '#C9A84C' }}>
-              Find Your Scent
-            </span>
-          </motion.button>
-        )}
-      </AnimatePresence>
-
       {/* Panel */}
       <AnimatePresence>
         {open && (

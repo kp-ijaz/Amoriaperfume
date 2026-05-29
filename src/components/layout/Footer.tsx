@@ -1,7 +1,30 @@
+'use client';
+
 import Link from 'next/link';
 import { Camera, MessageCircle, Phone, Mail, MapPin } from 'lucide-react';
+import { useLanguage } from '@/lib/context/LanguageContext';
 
 export function Footer() {
+  const { t } = useLanguage();
+
+  const quickLinks = [
+    { labelKey: 'footerLinkHome' as const,             href: '/' },
+    { labelKey: 'footerLinkAllProducts' as const,      href: '/products' },
+    { labelKey: 'footerLinkBrands' as const,           href: '/brands' },
+    { labelKey: 'footerLinkFragranceGuide' as const,   href: '/fragrance-guide' },
+    { labelKey: 'footerLinkAboutUs' as const,          href: '/about' },
+    { labelKey: 'footerLinkFragranceFinder' as const,  href: '/fragrance-finder' },
+  ];
+
+  const serviceLinks = [
+    { labelKey: 'footerLinkFAQs' as const,      href: '/faqs' },
+    { labelKey: 'footerLinkTrackOrder' as const, href: '/track-order' },
+    { labelKey: 'footerLinkReturns' as const,    href: '/faqs#returns' },
+    { labelKey: 'footerLinkContact' as const,    href: '/contact' },
+    { labelKey: 'footerLinkPrivacy' as const,    href: '/privacy' },
+    { labelKey: 'footerLinkTerms' as const,      href: '/terms' },
+  ];
+
   return (
     <footer style={{ backgroundColor: 'var(--color-amoria-dark)' }}>
       <div className="max-w-7xl mx-auto px-4 pt-16 pb-8">
@@ -18,7 +41,7 @@ export function Footer() {
               <span className="w-2 h-2 rounded-full mt-1" style={{ backgroundColor: 'var(--color-amoria-accent)' }} />
             </Link>
             <p className="text-sm leading-relaxed mb-6" style={{ color: 'rgba(255,255,255,0.55)' }}>
-              Your destination for authentic Arabian fragrances. We bring you the finest attars, ouds, and perfumes from the most celebrated houses of the region.
+              {t('footerAbout')}
             </p>
             <div className="flex gap-3">
               <a
@@ -54,24 +77,17 @@ export function Footer() {
           {/* Col 2: Quick Links */}
           <div>
             <h4 className="text-sm font-semibold uppercase tracking-wider mb-4" style={{ color: 'var(--color-amoria-accent)' }}>
-              Quick Links
+              {t('footerQuickLinks')}
             </h4>
             <ul className="space-y-2.5">
-              {[
-                { label: 'Home', href: '/' },
-                { label: 'All Products', href: '/products' },
-                { label: 'Brands', href: '/brands' },
-                { label: 'Fragrance Guide', href: '/fragrance-guide' },
-                { label: 'About Us', href: '/about' },
-                { label: 'Fragrance Finder', href: '/fragrance-finder' },
-              ].map((link) => (
+              {quickLinks.map((link) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}
                     className="text-sm transition-colors hover:opacity-100"
                     style={{ color: 'rgba(255,255,255,0.55)' }}
                   >
-                    {link.label}
+                    {t(link.labelKey)}
                   </Link>
                 </li>
               ))}
@@ -81,24 +97,17 @@ export function Footer() {
           {/* Col 3: Customer Service */}
           <div>
             <h4 className="text-sm font-semibold uppercase tracking-wider mb-4" style={{ color: 'var(--color-amoria-accent)' }}>
-              Customer Service
+              {t('footerCustomerService')}
             </h4>
             <ul className="space-y-2.5">
-              {[
-                { label: 'FAQs', href: '/faqs' },
-                { label: 'Track Order', href: '/track-order' },
-                { label: 'Returns & Exchange', href: '/faqs#returns' },
-                { label: 'Contact Us', href: '/contact' },
-                { label: 'Privacy Policy', href: '/privacy' },
-                { label: 'Terms of Service', href: '/terms' },
-              ].map((link) => (
+              {serviceLinks.map((link) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}
                     className="text-sm transition-colors hover:opacity-100"
                     style={{ color: 'rgba(255,255,255,0.55)' }}
                   >
-                    {link.label}
+                    {t(link.labelKey)}
                   </Link>
                 </li>
               ))}
@@ -108,7 +117,7 @@ export function Footer() {
           {/* Col 4: Contact */}
           <div>
             <h4 className="text-sm font-semibold uppercase tracking-wider mb-4" style={{ color: 'var(--color-amoria-accent)' }}>
-              Contact Us
+              {t('footerContactUs')}
             </h4>
             <ul className="space-y-3 mb-6">
               <li>
@@ -133,7 +142,7 @@ export function Footer() {
 
             {/* Payment badges */}
             <div>
-              <p className="text-xs mb-2" style={{ color: 'rgba(255,255,255,0.35)' }}>We Accept</p>
+              <p className="text-xs mb-2" style={{ color: 'rgba(255,255,255,0.35)' }}>{t('footerWeAccept')}</p>
               <div className="flex gap-2 flex-wrap">
                 {['VISA', 'MC', 'APPAY', 'COD'].map((badge) => (
                   <span
@@ -155,11 +164,15 @@ export function Footer() {
         {/* Bottom bar */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
           <p className="text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>
-            © 2025 Amoria. All rights reserved. Made with ❤ in UAE.
+            {t('footerCopyright')}
           </p>
           <div className="flex gap-4">
-            <Link href="/privacy" className="text-xs hover:opacity-80 transition-opacity" style={{ color: 'rgba(255,255,255,0.35)' }}>Privacy Policy</Link>
-            <Link href="/terms" className="text-xs hover:opacity-80 transition-opacity" style={{ color: 'rgba(255,255,255,0.35)' }}>Terms of Service</Link>
+            <Link href="/privacy" className="text-xs hover:opacity-80 transition-opacity" style={{ color: 'rgba(255,255,255,0.35)' }}>
+              {t('footerLinkPrivacy')}
+            </Link>
+            <Link href="/terms" className="text-xs hover:opacity-80 transition-opacity" style={{ color: 'rgba(255,255,255,0.35)' }}>
+              {t('footerLinkTerms')}
+            </Link>
           </div>
         </div>
       </div>

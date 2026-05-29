@@ -5,6 +5,7 @@ import useEmblaCarousel from 'embla-carousel-react';
 import Autoplay from 'embla-carousel-autoplay';
 import { Star } from 'lucide-react';
 import { useTestimonials } from '@/lib/hooks/usePublicCms';
+import { useLanguage } from '@/lib/context/LanguageContext';
 
 const FALLBACK_TESTIMONIALS = [
   {
@@ -57,15 +58,16 @@ const FALLBACK_TESTIMONIALS = [
   },
 ];
 
-const stats = [
-  { num: '4.9', label: 'Average Rating', sub: '12,400+ reviews' },
-  { num: '100%', label: 'Authentic', sub: 'Certified original' },
-  { num: '50K+', label: 'Customers', sub: 'Across the UAE' },
-  { num: '1 Day', label: 'Delivery', sub: 'Same-day Dubai' },
-];
-
 export function TestimonialsSection() {
+  const { t } = useLanguage();
   const apiItems = useTestimonials();
+
+  const stats = [
+    { num: '4.9',  label: t('statRating'),    sub: t('statRatingSub') },
+    { num: '100%', label: t('statAuthentic'),  sub: t('statAuthenticSub') },
+    { num: '50K+', label: t('statCustomers'),  sub: t('statCustomersSub') },
+    { num: '1 Day',label: t('statDelivery'),   sub: t('statDeliverySub') },
+  ];
   const testimonials =
     apiItems.length > 0
       ? apiItems.map((t, i) => ({
@@ -160,15 +162,15 @@ export function TestimonialsSection() {
         >
           <div>
             <p className="text-[10px] tracking-[0.38em] uppercase font-semibold mb-3" style={{ color: 'rgba(201,168,76,0.6)' }}>
-              Customer Stories
+              {t('customerStoriesLabel')}
             </p>
             <h2
               className="text-4xl md:text-5xl font-light text-white leading-tight"
               style={{ fontFamily: 'var(--font-heading)', letterSpacing: '0.04em' }}
             >
-              What Our{' '}
+              {t('customerStoriesHeading')}{' '}
               <em style={{ color: '#C9A84C', fontStyle: 'italic' }}>
-                Customers Say
+                {t('customerStoriesHeadingItalic')}
               </em>
             </h2>
           </div>
@@ -186,9 +188,9 @@ export function TestimonialsSection() {
         {/* Embla carousel */}
         <div className="overflow-hidden" ref={emblaRef}>
           <div className="flex gap-5">
-            {testimonials.map((t, i) => (
+            {testimonials.map((item, i) => (
               <motion.div
-                key={t.id}
+                key={item.id}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
@@ -214,15 +216,15 @@ export function TestimonialsSection() {
                     <Star
                       key={si}
                       size={12}
-                      fill={si < t.rating ? '#C9A84C' : 'transparent'}
-                      style={{ color: si < t.rating ? '#C9A84C' : 'rgba(201,168,76,0.3)' }}
+                      fill={si < item.rating ? '#C9A84C' : 'transparent'}
+                      style={{ color: si < item.rating ? '#C9A84C' : 'rgba(201,168,76,0.3)' }}
                     />
                   ))}
                 </div>
 
                 {/* Quote text */}
                 <p className="text-sm leading-relaxed flex-1 mb-6" style={{ color: 'rgba(255,255,255,0.65)' }}>
-                  &ldquo;{t.text}&rdquo;
+                  &ldquo;{item.text}&rdquo;
                 </p>
 
                 {/* Author */}
@@ -235,18 +237,18 @@ export function TestimonialsSection() {
                       border: '1px solid rgba(201,168,76,0.3)',
                     }}
                   >
-                    {t.initials}
+                    {item.initials}
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-white">{t.name}</p>
-                    <p className="text-[11px]" style={{ color: 'rgba(201,168,76,0.45)' }}>{t.location}</p>
+                    <p className="text-sm font-semibold text-white">{item.name}</p>
+                    <p className="text-[11px]" style={{ color: 'rgba(201,168,76,0.45)' }}>{item.location}</p>
                   </div>
                   {/* Verified badge */}
                   <div className="ml-auto flex items-center gap-1">
                     <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                       <polygon points="6,0.5 7.8,4.2 11.9,4.8 8.9,7.7 9.7,11.8 6,9.9 2.3,11.8 3.1,7.7 0.1,4.8 4.2,4.2" fill="rgba(201,168,76,0.6)" />
                     </svg>
-                    <span className="text-[9px] uppercase tracking-wider" style={{ color: 'rgba(201,168,76,0.45)' }}>Verified</span>
+                    <span className="text-[9px] uppercase tracking-wider" style={{ color: 'rgba(201,168,76,0.45)' }}>{t('verifiedBadge')}</span>
                   </div>
                 </div>
               </motion.div>

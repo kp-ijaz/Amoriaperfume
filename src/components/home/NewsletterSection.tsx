@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { useNewsletterConfig } from '@/lib/hooks/usePublicCms';
+import { useLanguage } from '@/lib/context/LanguageContext';
 
 function ArabicRosette() {
   return (
@@ -28,20 +29,16 @@ function ArabicRosette() {
 }
 
 export function NewsletterSection() {
-  const config = useNewsletterConfig();
+  useNewsletterConfig(); // kept for future API use
+  const { t } = useLanguage();
   const [email, setEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
-  const title = config.title || 'Join the Amoria Circle';
-  const subtitle =
-    config.subtitle ||
-    'Be the first to discover new arrivals, exclusive offers, and fragrance stories.';
-  const buttonLabel = config.buttonLabel || 'Subscribe';
 
   function handleSubmit(e: React.SyntheticEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!email) return;
     setSubmitted(true);
-    toast.success('Subscribed! Check your inbox for a welcome offer.');
+    toast.success(t('newsletterSuccess'));
   }
 
   return (
@@ -87,16 +84,16 @@ export function NewsletterSection() {
             className="text-[10px] tracking-[0.38em] uppercase font-semibold mb-4"
             style={{ color: 'rgba(201,168,76,0.65)' }}
           >
-            Join the Community
+            {t('newsletterLabel')}
           </p>
 
           <h2
             className="text-4xl md:text-5xl xl:text-6xl font-light leading-tight mb-2"
             style={{ fontFamily: 'var(--font-heading)', color: '#FFFFFF', letterSpacing: '0.04em' }}
           >
-            Stay in
+            {t('newsletterHeading1')}
             <br />
-            <em style={{ color: '#C9A84C', fontStyle: 'italic' }}>The Scent</em>
+            <em style={{ color: '#C9A84C', fontStyle: 'italic' }}>{t('newsletterHeading2')}</em>
           </h2>
 
           {/* Decorative divider */}
@@ -110,8 +107,7 @@ export function NewsletterSection() {
             className="text-sm mb-10 leading-relaxed"
             style={{ color: 'rgba(255,255,255,0.45)' }}
           >
-            Be first to discover new arrivals, exclusive offers, and the stories
-            behind our finest Arabian fragrances.
+            {t('newsletterBody')}
           </p>
 
           {!submitted ? (
@@ -119,7 +115,7 @@ export function NewsletterSection() {
               <input
                 type="email"
                 required
-                placeholder="Your email address"
+                placeholder={t('newsletterPlaceholder')}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="flex-1 px-5 py-4 text-sm outline-none border border-r-0"
@@ -138,7 +134,7 @@ export function NewsletterSection() {
                   borderColor: '#C9A84C',
                 }}
               >
-                Subscribe
+                {t('newsletterButton')}
               </button>
             </form>
           ) : (
@@ -149,7 +145,7 @@ export function NewsletterSection() {
               style={{ borderColor: 'rgba(201,168,76,0.3)', backgroundColor: 'rgba(201,168,76,0.06)' }}
             >
               <p className="text-sm font-semibold" style={{ color: '#C9A84C' }}>
-                ✓ You&apos;re on the list! Watch your inbox.
+                {t('newsletterSuccess')}
               </p>
             </motion.div>
           )}
@@ -158,7 +154,7 @@ export function NewsletterSection() {
             className="text-[11px] mt-5"
             style={{ color: 'rgba(255,255,255,0.25)' }}
           >
-            No spam. Just exclusive offers and fragrance stories.
+            {t('newsletterPrivacy')}
           </p>
         </motion.div>
       </div>

@@ -2,6 +2,8 @@
 
 import { useHomeSlotProducts, type HomeSlotFallbackParams } from '@/lib/hooks/usePublicCms';
 import { ProductSection } from './ProductSection';
+import { useLanguage } from '@/lib/context/LanguageContext';
+import type { TranslationKey } from '@/lib/i18n/translations';
 
 interface HomeSlotSectionProps {
   slotKey: string;
@@ -15,6 +17,14 @@ interface HomeSlotSectionProps {
   /** Used when the home slot has no curated productIds */
   fallback?: HomeSlotFallbackParams;
 }
+
+// Maps slot keys to translation keys for fallback titles/subtitles (before API integrates)
+const SLOT_TITLE_KEYS: Record<string, { title: TranslationKey; subtitle: TranslationKey }> = {
+  'home-new-arrivals': { title: 'slotNewArrivals', subtitle: 'slotNewArrivalsSubtitle' },
+  'home-best-sellers': { title: 'slotBestSellers', subtitle: 'slotBestSellersSubtitle' },
+  'home-most-viewed':  { title: 'slotTrending',    subtitle: 'slotTrendingSubtitle' },
+  'home-limited-offers': { title: 'slotLimitedOffers', subtitle: 'slotLimitedOffersSubtitle' },
+};
 
 export function HomeSlotSection({
   slotKey,
@@ -31,9 +41,15 @@ export function HomeSlotSection({
     limit,
     ...fallback,
   });
+  const { t } = useLanguage();
 
-  const displayTitle = data?.title?.trim() || title;
-  const displaySubtitle = data?.subtitle?.trim() || subtitle;
+  const keys = SLOT_TITLE_KEYS[slotKey];
+  const translatedTitle = keys ? t(keys.title) : title;
+  const translatedSubtitle = keys ? t(keys.subtitle) : subtitle;
+
+  // API title/subtitle takes priority; fall back to translated strings
+  const displayTitle = data?.title?.trim() || translatedTitle;
+  const displaySubtitle = data?.subtitle?.trim() || translatedSubtitle;
   const products = data?.products ?? [];
 
   if (!isLoading && products.length === 0) return null;

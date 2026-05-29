@@ -3,6 +3,7 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 interface UIState {
   cartDrawerOpen: boolean;
   mobileNavOpen: boolean;
+  finderOpen: boolean;
   searchQuery: string;
   recentlyViewed: string[]; // product ids, max 6
 }
@@ -10,6 +11,7 @@ interface UIState {
 const initialState: UIState = {
   cartDrawerOpen: false,
   mobileNavOpen: false,
+  finderOpen: false,
   searchQuery: '',
   recentlyViewed: [],
 };
@@ -33,6 +35,12 @@ const uiSlice = createSlice({
     closeMobileNav(state) {
       state.mobileNavOpen = false;
     },
+    openFinder(state) {
+      state.finderOpen = true;
+    },
+    closeFinder(state) {
+      state.finderOpen = false;
+    },
     setSearchQuery(state, action: PayloadAction<string>) {
       state.searchQuery = action.payload;
     },
@@ -49,6 +57,8 @@ export const {
   toggleCartDrawer,
   openMobileNav,
   closeMobileNav,
+  openFinder,
+  closeFinder,
   setSearchQuery,
   addToRecentlyViewed,
 } = uiSlice.actions;

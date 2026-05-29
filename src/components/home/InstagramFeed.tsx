@@ -14,6 +14,7 @@ function IGIcon({ size = 20 }: { size?: number }) {
 }
 
 import { usePublicCoverImages } from '@/lib/hooks/usePublicCms';
+import { useLanguage } from '@/lib/context/LanguageContext';
 
 const FALLBACK_INSTAGRAM = [
   { src: 'https://images.unsplash.com/photo-1541643600914-78b084683702?w=600&q=80', alt: 'Amoria oud collection' },
@@ -28,6 +29,7 @@ const hasNonEmptySrc = (value: string | undefined | null): value is string =>
   typeof value === 'string' && value.trim().length > 0;
 
 export function InstagramFeed() {
+  const { t } = useLanguage();
   const { data: reels = [] } = usePublicCoverImages('reels');
   const instagramImages =
     reels.length > 0
@@ -53,14 +55,14 @@ export function InstagramFeed() {
           <div className="flex items-center justify-center gap-2 mb-2">
             <span style={{ color: '#C9A84C' }}><IGIcon size={16} /></span>
             <p className="text-[10px] tracking-[0.3em] uppercase font-semibold" style={{ color: '#C9A84C' }}>
-              @amoriaperfumeofficial
+              {t('igLabel')}
             </p>
           </div>
           <h2
             className="text-3xl md:text-4xl font-light"
             style={{ fontFamily: 'var(--font-heading)', color: '#1A0A2E', letterSpacing: '0.05em' }}
           >
-            Follow Our <em style={{ color: '#C9A84C', fontStyle: 'italic' }}>Journey</em>
+            {t('igHeading1')} <em style={{ color: '#C9A84C', fontStyle: 'italic' }}>{t('igHeading2')}</em>
           </h2>
           {/* Gold divider */}
           <div className="flex items-center justify-center gap-3 mt-4">
@@ -104,7 +106,7 @@ export function InstagramFeed() {
               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/60 transition-colors duration-300 flex flex-col items-center justify-center">
                 <div className="opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-3 group-hover:translate-y-0 text-center text-white">
                   <span className="flex justify-center mb-1.5"><IGIcon size={20} /></span>
-                  <p className="text-[10px] font-semibold tracking-[0.2em] uppercase">View Post</p>
+                  <p className="text-[10px] font-semibold tracking-[0.2em] uppercase">{t('igViewPost')}</p>
                 </div>
               </div>
 
@@ -132,7 +134,7 @@ export function InstagramFeed() {
             style={{ color: '#C9A84C', borderColor: 'rgba(201,168,76,0.4)' }}
           >
             <IGIcon size={14} />
-            Follow on Instagram
+            {t('igFollow')}
           </a>
         </motion.div>
       </div>
