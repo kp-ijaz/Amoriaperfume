@@ -50,6 +50,7 @@ const t = {
   navCollections: { en: 'Collections', ar: 'المجموعات' },
   navBrandInspiration: { en: 'Brand Inspiration', ar: 'إلهام الماركات' },
   navGiftSets: { en: 'Gift Sets', ar: 'طقم الهدايا' },
+  navGiftCards: { en: 'Gift Cards', ar: 'بطاقات الهدايا' },
   navBakhoor: { en: 'Bakhoor', ar: 'البخور' },
   navSale: { en: 'Sale', ar: 'التخفيضات' },
 
@@ -139,6 +140,7 @@ const t = {
   footerLinkFragranceFinder: { en: 'Fragrance Finder', ar: 'اكتشف عطرك' },
   footerLinkFAQs: { en: 'FAQs', ar: 'الأسئلة الشائعة' },
   footerLinkTrackOrder: { en: 'Track Order', ar: 'تتبع الطلب' },
+  footerLinkGiftCards: { en: 'Gift Cards', ar: 'بطاقات الهدايا' },
   footerLinkReturns: { en: 'Returns & Exchange', ar: 'الإرجاع والاستبدال' },
   footerLinkContact: { en: 'Contact Us', ar: 'اتصل بنا' },
   footerLinkPrivacy: { en: 'Privacy Policy', ar: 'سياسة الخصوصية' },

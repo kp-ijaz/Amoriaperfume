@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Store, Calendar, Clock, MessageCircle, Bell, X, Truck } from 'lucide-react';
+import { Store, Calendar, Clock, Bell, X, Truck, Mail } from 'lucide-react';
 
 export default function OrderConfirmationPage() {
   const searchParams  = useSearchParams();
@@ -114,14 +114,14 @@ export default function OrderConfirmationPage() {
               <p>📋 Please bring your order number and a valid Emirates ID</p>
             </div>
 
-            {/* WhatsApp notification note */}
+            {/* Email notification note */}
             <div
               className="mt-3 flex items-start gap-2 px-3 py-2 text-xs"
-              style={{ backgroundColor: 'rgba(37,211,102,0.08)', border: '1px solid rgba(37,211,102,0.25)', borderRadius: '3px' }}
+              style={{ backgroundColor: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.25)', borderRadius: '3px' }}
             >
-              <MessageCircle size={13} className="flex-shrink-0 mt-0.5" style={{ color: '#25D366' }} />
-              <p style={{ color: '#166534' }}>
-                We&apos;ll send a <strong>WhatsApp notification</strong> when your order is ready for pickup.
+              <Mail size={13} className="flex-shrink-0 mt-0.5" style={{ color: '#C9A84C' }} />
+              <p style={{ color: '#6B4A1E' }}>
+                We&apos;ll email you when your order is ready for pickup.
               </p>
             </div>
           </div>
@@ -138,13 +138,13 @@ export default function OrderConfirmationPage() {
           style={{ borderColor: '#E8E3DC', backgroundColor: '#F5F2EE' }}
         >
           <p style={{ color: '#1C1C1C' }}>
-            ✓ You&apos;ll receive a WhatsApp &amp; email confirmation shortly
+            ✓ A confirmation email has been sent to your inbox
           </p>
         </div>
 
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <Link
-            href={isPickup ? '/account/orders' : `/track-order?orderId=${encodeURIComponent(orderNumber)}`}
+            href="/account/orders"
             className="px-6 py-3 text-sm font-semibold border"
             style={{ borderColor: '#1A0A2E', color: '#1A0A2E' }}
           >
@@ -217,17 +217,9 @@ export default function OrderConfirmationPage() {
                   Ground Floor, Perfume Wing — Unit G-47
                 </p>
 
-                {/* WhatsApp CTA */}
-                <a
-                  href="https://wa.me/971500000000"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 mt-2.5 px-3 py-1.5 text-xs font-bold rounded-sm transition-opacity hover:opacity-90"
-                  style={{ backgroundColor: '#25D366', color: 'white' }}
-                >
-                  <MessageCircle size={12} />
-                  Open WhatsApp Chat
-                </a>
+                <p className="text-xs mt-2" style={{ color: 'rgba(255,255,255,0.55)' }}>
+                  Check your email for pickup instructions.
+                </p>
               </div>
 
               {/* Dismiss */}

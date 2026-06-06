@@ -10,21 +10,13 @@ import { X, ArrowRight } from 'lucide-react';
 import { CartItem } from './CartItem';
 import { useCart } from '@/lib/hooks/useCart';
 import { formatCurrency } from '@/lib/utils/formatCurrency';
-import { calculateVAT } from '@/lib/utils/calculateVAT';
 
 export function CartDrawer() {
   const dispatch = useDispatch();
   const isOpen = useSelector((state: RootState) => state.ui.cartDrawerOpen);
   useBodyLock(isOpen);
-  const { items } = useCart();
+  const { items, subtotal, shippingCost, vat, total, taxInclusive, taxPercent } = useCart();
 
-  const subtotal = items.reduce((acc, item) => {
-    const price = item.variant.salePrice ?? item.variant.price;
-    return acc + price * item.quantity;
-  }, 0);
-  const shipping = subtotal >= 200 ? 0 : 25;
-  const vat = calculateVAT(subtotal);
-  const total = subtotal + shipping + vat;
   const totalCount = items.reduce((a, i) => a + i.quantity, 0);
 
   return (
@@ -138,17 +130,17 @@ export function CartDrawer() {
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-xs" style={{ color: '#6B6B6B' }}>
-                        {shipping === 0 ? (
+                        {shippingCost === 0 ? (
                           <span className="text-emerald-600">Free shipping</span>
                         ) : (
                           'Shipping'
                         )}
                       </span>
                       <span className="text-xs tabular-nums" style={{ color: '#1C1C1C' }}>
-                        {shipping === 0 ? (
+                        {shippingCost === 0 ? (
                           <span className="text-emerald-600">Free</span>
                         ) : (
-                          formatCurrency(shipping)
+                          formatCurrency(shippingCost)
                         )}
                       </span>
                     </div>
@@ -158,7 +150,7 @@ export function CartDrawer() {
                         {formatCurrency(vat)}
                       </span>
                     </div>
-                    {shipping > 0 && (
+                    {shippingCost > 0 && (
                       <p className="text-[10px]" style={{ color: '#A89880' }}>
                         Free shipping on orders over AED 200
                       </p>

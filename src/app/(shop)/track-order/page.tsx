@@ -11,6 +11,9 @@ import {
 } from 'lucide-react';
 import { useOrderById, useOrdersByEmail } from '@/lib/hooks/useApiOrders';
 import { ApiOrder } from '@/lib/api/types';
+import { apiTrackGuestOrder } from '@/lib/api/client';
+import { OrderPaymentRetryPanel } from '@/components/account/OrderPaymentRetryPanel';
+import { OrderInvoiceDownloadButton } from '@/components/account/OrderInvoiceDownloadButton';
 import { formatCurrency } from '@/lib/utils/formatCurrency';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -49,15 +52,21 @@ const STATUS_BADGE: Record<string, { bg: string; color: string }> = {
   SHIPPED:    { bg: 'rgba(139,92,246,0.12)',  color: '#8b5cf6' },
   DELIVERED:  { bg: 'rgba(34,197,94,0.12)',   color: '#22c55e' },
   CANCELLED:  { bg: 'rgba(239,68,68,0.12)',   color: '#ef4444' },
+  FAILED:     { bg: 'rgba(239,68,68,0.12)',   color: '#ef4444' },
 };
 
 // ─── Single order timeline ────────────────────────────────────────────────────
 
-function OrderTimeline({ order }: { order: ApiOrder }) {
-  const status     = order.status?.toUpperCase() ?? 'PENDING';
+function OrderTimeline({ order, onOrderUpdated }: { order: ApiOrder; onOrderUpdated?: () => void }) {
+  const paymentFailed =
+    order.payment?.paymentMethod === 'ONLINE' && order.payment?.paymentStatus === 'FAILED';
+  const status = paymentFailed
+    ? 'FAILED'
+    : (order.orderStatus ?? order.status ?? 'PENDING').toUpperCase();
   const activeStep = getActiveStep(status);
   const badge      = STATUS_BADGE[status] ?? STATUS_BADGE.PENDING;
   const isCancelled = status === 'CANCELLED';
+  const statusLabel = paymentFailed ? 'payment failed' : status.toLowerCase();
 
   return (
     <motion.div
@@ -88,7 +97,7 @@ function OrderTimeline({ order }: { order: ApiOrder }) {
               className="text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider"
               style={{ backgroundColor: badge.bg, color: badge.color, border: `1px solid ${badge.color}40` }}
             >
-              {status.toLowerCase()}
+              {statusLabel}
             </span>
             <p className="text-sm font-bold" style={{ color: '#C9A84C', fontFamily: 'var(--font-heading)' }}>
               {formatCurrency(toAed(order.pricing?.totalAmount ?? 0))}
@@ -97,11 +106,24 @@ function OrderTimeline({ order }: { order: ApiOrder }) {
         </div>
       </div>
 
+      <OrderPaymentRetryPanel
+        order={order}
+        guestEmail={order.customerDetails?.email}
+        onSuccess={() => onOrderUpdated?.()}
+      />
+
       {/* Cancelled notice */}
       {isCancelled ? (
         <div className="p-4 flex items-center gap-3" style={{ backgroundColor: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '4px' }}>
           <X size={18} style={{ color: '#ef4444', flexShrink: 0 }} />
           <p className="text-sm" style={{ color: '#ef4444' }}>This order has been cancelled.</p>
+        </div>
+      ) : paymentFailed ? (
+        <div className="p-4 flex items-center gap-3" style={{ backgroundColor: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '4px' }}>
+          <X size={18} style={{ color: '#ef4444', flexShrink: 0 }} />
+          <p className="text-sm" style={{ color: '#6B6B6B' }}>
+            Complete payment above to confirm your order and start processing.
+          </p>
         </div>
       ) : (
         /* Progress timeline */
@@ -160,10 +182,19 @@ function OrderTimeline({ order }: { order: ApiOrder }) {
             <div className="mt-6 pt-4 flex items-center gap-2" style={{ borderTop: '1px solid #E8E3DC' }}>
               <Clock size={13} style={{ color: '#C9A84C' }} />
               <p className="text-xs" style={{ color: '#6B6B6B' }}>
-                Estimated delivery: <span className="font-semibold" style={{ color: '#1A0A2E' }}>3–5 business days</span>
+                Estimated delivery: <span className="font-semibold" style={{ color: '#1A0A2E' }}>1–2 days</span>
               </p>
             </div>
           )}
+          {status === 'DELIVERED' ? (
+            <div className="mt-6 pt-4" style={{ borderTop: '1px solid #E8E3DC' }}>
+              <OrderInvoiceDownloadButton
+                orderId={order._id}
+                invoiceNumber={order.invoiceNumber}
+                guestEmail={order.customerDetails?.email}
+              />
+            </div>
+          ) : null}
         </div>
       )}
 
@@ -303,6 +334,7 @@ type SearchMode = 'orderId' | 'email';
 function TrackOrderContent() {
   const searchParams  = useSearchParams();
   const paramOrderId  = searchParams.get('orderId') ?? '';
+  const paramEmail    = searchParams.get('email') ?? '';
 
   const [mode, setMode]               = useState<SearchMode>('orderId');
   const [inputValue, setInputValue]   = useState(paramOrderId);
@@ -325,7 +357,21 @@ function TrackOrderContent() {
       setOrderIdTerm(paramOrderId);
       setMode('orderId');
     }
-  }, [paramOrderId]);
+    if (paramEmail) {
+      setEmailValue(paramEmail);
+      setEmailTerm(paramEmail);
+    }
+  }, [paramOrderId, paramEmail]);
+
+  async function refreshDisplayedOrder(order: ApiOrder) {
+    const res = await apiTrackGuestOrder({
+      orderId: order.orderId,
+      email: order.customerDetails?.email || paramEmail || emailTerm,
+    });
+    if (res.success && res.data) {
+      setSelectedOrder(res.data);
+    }
+  }
 
   function handleSearch(e: React.SyntheticEvent) {
     e.preventDefault();
@@ -487,7 +533,10 @@ function TrackOrderContent() {
                   ← Back to orders
                 </button>
               )}
-              <OrderTimeline order={selectedOrder ?? singleOrder!} />
+              <OrderTimeline
+                order={selectedOrder ?? singleOrder!}
+                onOrderUpdated={() => refreshDisplayedOrder(selectedOrder ?? singleOrder!)}
+              />
               <div className="mt-8 flex flex-wrap gap-3">
                 <Link href="/products" className="inline-flex items-center gap-2 px-6 py-3 text-sm font-bold transition-opacity hover:opacity-90"
                   style={{ backgroundColor: '#C9A84C', color: '#1A0A2E' }}>

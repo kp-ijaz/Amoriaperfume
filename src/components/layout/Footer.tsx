@@ -19,6 +19,7 @@ export function Footer() {
   const serviceLinks = [
     { labelKey: 'footerLinkFAQs' as const,      href: '/faqs' },
     { labelKey: 'footerLinkTrackOrder' as const, href: '/track-order' },
+    { labelKey: 'footerLinkGiftCards' as const, href: '/gift-cards' },
     { labelKey: 'footerLinkReturns' as const,    href: '/faqs#returns' },
     { labelKey: 'footerLinkContact' as const,    href: '/contact' },
     { labelKey: 'footerLinkPrivacy' as const,    href: '/privacy' },

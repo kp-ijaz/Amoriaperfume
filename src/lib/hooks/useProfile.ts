@@ -3,20 +3,22 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiGetAuthMe, apiUpdateAuthMe } from '@/lib/api/public';
 import { useAuth } from '@/lib/hooks/useAuth';
+import { useAuthToken } from '@/lib/hooks/useAuthToken';
 
 export function useProfile() {
-  const { token, isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuth();
+  const authToken = useAuthToken();
   const qc = useQueryClient();
 
   const query = useQuery({
     queryKey: ['auth', 'me'],
     queryFn: async () => {
-      if (!token) throw new Error('Not signed in');
-      const res = await apiGetAuthMe(token);
+      if (!authToken) throw new Error('Not signed in');
+      const res = await apiGetAuthMe(authToken);
       if (!res.success || !res.data) throw new Error(res.message ?? 'Failed to load profile');
       return res.data;
     },
-    enabled: isAuthenticated && !!token,
+    enabled: isAuthenticated && !!authToken,
   });
 
   const update = useMutation({
@@ -26,8 +28,8 @@ export function useProfile() {
       currentPassword?: string;
       newPassword?: string;
     }) => {
-      if (!token) throw new Error('Not signed in');
-      const res = await apiUpdateAuthMe(token, data);
+      if (!authToken) throw new Error('Not signed in');
+      const res = await apiUpdateAuthMe(authToken, data);
       if (!res.success || !res.data) throw new Error(res.message ?? 'Update failed');
       return res.data;
     },

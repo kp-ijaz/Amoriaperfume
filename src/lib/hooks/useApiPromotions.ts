@@ -11,9 +11,12 @@ export function usePromotions() {
       const res = await apiGetPromotions();
       if (!res.success || !Array.isArray(res.data)) return [];
       const now = new Date();
-      return (res.data as ApiPromotion[]).filter(
-        (p) => p.active && new Date(p.startsAt) <= now && new Date(p.endsAt) >= now
-      );
+      return (res.data as ApiPromotion[]).filter((p) => {
+        if (!p.active) return false;
+        if (p.startsAt && new Date(p.startsAt) > now) return false;
+        if (p.endsAt && new Date(p.endsAt) < now) return false;
+        return true;
+      });
     },
     staleTime: 5 * 60 * 1000,
   });

@@ -8,7 +8,7 @@ import {
   apiUpdateUserAddress,
 } from '@/lib/api/client';
 import { Address } from '@/types/user';
-import { useAuth } from '@/lib/hooks/useAuth';
+import { useAuthToken } from '@/lib/hooks/useAuthToken';
 
 const addressKeys = {
   all: ['user-addresses'] as const,
@@ -26,26 +26,26 @@ const adaptAddress = (raw: Address & { _id?: string }): Address => ({
 });
 
 export function useUserAddresses() {
-  const { token } = useAuth();
+  const authToken = useAuthToken();
   return useQuery({
-    queryKey: [...addressKeys.all, Boolean(token)],
+    queryKey: [...addressKeys.all, Boolean(authToken)],
     queryFn: async (): Promise<Address[]> => {
-      if (!token) return [];
-      const res = await apiListUserAddresses(token);
+      if (!authToken) return [];
+      const res = await apiListUserAddresses(authToken);
       if (!res.success || !Array.isArray(res.data)) return [];
       return (res.data as Array<Address & { _id?: string }>).map(adaptAddress);
     },
-    enabled: !!token,
+    enabled: !!authToken,
     staleTime: 60 * 1000,
   });
 }
 
 export function useCreateUserAddress() {
-  const { token } = useAuth();
+  const authToken = useAuthToken();
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (payload: Omit<Address, 'id'>) => {
-      const res = await apiCreateUserAddress(payload, token);
+      const res = await apiCreateUserAddress(payload, authToken);
       if (!res.success) throw new Error(res.message || 'Failed to create address');
       return res.data;
     },
@@ -56,11 +56,11 @@ export function useCreateUserAddress() {
 }
 
 export function useUpdateUserAddress() {
-  const { token } = useAuth();
+  const authToken = useAuthToken();
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, payload }: { id: string; payload: Partial<Omit<Address, 'id'>> }) => {
-      const res = await apiUpdateUserAddress(id, payload, token);
+      const res = await apiUpdateUserAddress(id, payload, authToken);
       if (!res.success) throw new Error(res.message || 'Failed to update address');
       return res.data;
     },
@@ -71,11 +71,11 @@ export function useUpdateUserAddress() {
 }
 
 export function useDeleteUserAddress() {
-  const { token } = useAuth();
+  const authToken = useAuthToken();
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      const res = await apiDeleteUserAddress(id, token);
+      const res = await apiDeleteUserAddress(id, authToken);
       if (!res.success) throw new Error(res.message || 'Failed to delete address');
       return res.data;
     },

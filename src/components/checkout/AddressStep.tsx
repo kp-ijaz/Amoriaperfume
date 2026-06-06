@@ -220,7 +220,7 @@ export function AddressStep({ isGuest = false, onNext }: AddressStepProps) {
               id: 'delivery' as const,
               Icon: Truck,
               title: 'Home Delivery',
-              sub: 'Arrives in 3–5 days',
+              sub: 'Arrives in 1–2 days',
               subColor: '#A89880',
             },
             {

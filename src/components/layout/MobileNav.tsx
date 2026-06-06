@@ -5,7 +5,7 @@ import { RootState } from '@/lib/store';
 import { closeMobileNav } from '@/lib/store/uiSlice';
 import { useBodyLock } from '@/lib/hooks/useBodyLock';
 import Link from 'next/link';
-import { X, Search, ChevronRight, Package, Truck } from 'lucide-react';
+import { X, Search, ChevronRight, Package, Truck, RotateCcw } from 'lucide-react';
 import Image from 'next/image';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useLanguage } from '@/lib/context/LanguageContext';
@@ -15,6 +15,7 @@ const NAV_LINK_KEYS: { key: string; href: string; isRed?: boolean }[] = [
   { key: 'navCollections',      href: '/collections' },
   { key: 'navBrandInspiration', href: '/brand-inspiration' },
   { key: 'navGiftSets',         href: '/gift-sets' },
+  { key: 'navGiftCards',        href: '/gift-cards' },
   { key: 'navBakhoor',          href: '/bakhoor' },
   { key: 'navSale',             href: '/products?sale=true', isRed: true },
 ];
@@ -117,6 +118,11 @@ export function MobileNav() {
                 <Link href="/account/orders" onClick={() => dispatch(closeMobileNav())} className="flex items-center gap-3 px-4 py-3 text-sm transition-colors hover:bg-white/5 border-b" style={{ color: 'rgba(255,255,255,0.85)', borderColor: 'rgba(255,255,255,0.06)' }}>
                   <Package size={15} style={{ color: 'rgba(201,168,76,0.7)' }} />
                   {t('myOrders')}
+                  <ChevronRight size={14} className="ml-auto opacity-40" />
+                </Link>
+                <Link href="/account/returns" onClick={() => dispatch(closeMobileNav())} className="flex items-center gap-3 px-4 py-3 text-sm transition-colors hover:bg-white/5 border-b" style={{ color: 'rgba(255,255,255,0.85)', borderColor: 'rgba(255,255,255,0.06)' }}>
+                  <RotateCcw size={15} style={{ color: 'rgba(201,168,76,0.7)' }} />
+                  My Returns
                   <ChevronRight size={14} className="ml-auto opacity-40" />
                 </Link>
                 <Link href="/track-order" onClick={() => dispatch(closeMobileNav())} className="flex items-center gap-3 px-4 py-3 text-sm transition-colors hover:bg-white/5 border-b" style={{ color: 'rgba(255,255,255,0.85)', borderColor: 'rgba(255,255,255,0.06)' }}>

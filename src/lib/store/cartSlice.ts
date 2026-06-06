@@ -1,10 +1,11 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { CartItem, CartState, CouponCode } from '@/types/cart';
+import { CartItem, CartState, AppliedCoupon, AppliedGiftCard } from '@/types/cart';
 import { Product, ProductVariant } from '@/types/product';
 
 const initialState: CartState = {
   items: [],
   coupon: null,
+  giftCard: null,
   savedItems: [],
 };
 
@@ -53,12 +54,19 @@ const cartSlice = createSlice({
     clearCart(state) {
       state.items = [];
       state.coupon = null;
+      state.giftCard = null;
     },
-    applyCoupon(state, action: PayloadAction<CouponCode>) {
+    applyCoupon(state, action: PayloadAction<AppliedCoupon>) {
       state.coupon = action.payload;
     },
     removeCoupon(state) {
       state.coupon = null;
+    },
+    applyGiftCard(state, action: PayloadAction<AppliedGiftCard>) {
+      state.giftCard = action.payload;
+    },
+    removeGiftCard(state) {
+      state.giftCard = null;
     },
     saveForLater(state, action: PayloadAction<{ productId: string; variantId: string }>) {
       const { productId, variantId } = action.payload;
@@ -90,6 +98,8 @@ export const {
   clearCart,
   applyCoupon,
   removeCoupon,
+  applyGiftCard,
+  removeGiftCard,
   saveForLater,
   moveToCart,
 } = cartSlice.actions;

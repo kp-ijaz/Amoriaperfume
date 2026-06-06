@@ -291,8 +291,8 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
 
   // Derived spec fields
   const longevity = getLongevity(product.concentration);
-  const season = getSeason(product.fragranceFamily);
-  const occasion = getOccasion(product.fragranceFamily);
+  const season = getSeason(product.category);
+  const occasion = getOccasion(product.category);
   const sillage = getSillage(product.concentration);
 
   const specs = [
@@ -301,7 +301,7 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
     { label: 'Release Year', value: '2023' },
     { label: 'Volume', value: `${variant?.sizeMl ?? uniqueSizes[0]?.sizeMl}ML` },
     { label: 'Concentration', value: product.concentration },
-    { label: 'Fragrance Family', value: product.fragranceFamily },
+    { label: 'Fragrance Family', value: product.category },
     { label: 'Gender', value: product.gender.charAt(0).toUpperCase() + product.gender.slice(1) },
     { label: 'Projection/Longevity', value: longevity },
     { label: 'Occasion', value: occasion },
@@ -794,7 +794,7 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
                   <div className="grid grid-cols-3 gap-4 mt-8 pt-6 border-t" style={{ borderColor: '#E0DBDA' }}>
                     {[
                       { label: 'Concentration', value: product.concentration },
-                      { label: 'Family', value: product.fragranceFamily },
+                      { label: 'Family', value: product.category },
                       { label: 'Gender', value: product.gender },
                     ].map(({ label, value }) => (
                       <div key={label}>

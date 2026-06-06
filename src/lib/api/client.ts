@@ -8,14 +8,17 @@ import {
   ApiReview,
   ApiOrder,
   ApiPromotion,
+  PromotionValidateRequest,
+  PromotionValidateResult,
   ApiLoginResponse,
   CreateOrderRequest,
   ShippingQuoteRequest,
   ShippingQuoteResponse,
 } from './types';
 import { Address } from '@/types/user';
+import { getApiBase } from './resolveApiBase';
 
-export const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? '';
+export { getApiBase } from './resolveApiBase';
 
 const TOKEN_KEY = 'amoria_access_token';
 const GUEST_ORDERS_TOKEN_KEY = 'amoria_guest_orders_token';
@@ -56,9 +59,13 @@ async function apiFetch<T>(
   options: RequestInit = {},
   token?: string | null
 ): Promise<T> {
-  if (!API_BASE) {
-    throw new Error('NEXT_PUBLIC_API_BASE_URL is not set. Add it to your .env.local file.');
+  const apiBase = getApiBase();
+  if (!apiBase && typeof window === 'undefined') {
+    throw new Error(
+      'API base URL is not set. Add NEXT_PUBLIC_API_BASE_URL or API_PROXY_TARGET to .env.local'
+    );
   }
+
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...(options.headers as Record<string, string>),
@@ -67,7 +74,7 @@ async function apiFetch<T>(
   const authToken = token ?? getStoredToken();
   if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
 
-  const res = await fetch(`${API_BASE}${path}`, { ...options, headers });
+  const res = await fetch(`${apiBase}${path}`, { ...options, headers });
   const json = await res.json();
   return json as T;
 }
@@ -109,12 +116,12 @@ export interface ProductsParams {
   brandSlug?: string;
   featured?: boolean;
   bestSeller?: boolean;
+  availability?: 'online' | 'offline' | 'both';
   trending?: boolean;
   newArrival?: boolean;
   limitedOffer?: boolean;
   sort?: 'price_asc' | 'price_desc' | 'newest' | 'rating' | 'most_viewed';
   gender?: string;
-  fragranceFamily?: string;
   concentration?: string;
   collection?: string; // collection slug or _id
 }
@@ -132,12 +139,12 @@ export async function apiGetProducts(
   if (params.brandSlug)       qs.set('brandSlug', params.brandSlug);
   if (params.featured != null) qs.set('featured', String(params.featured));
   if (params.bestSeller != null) qs.set('bestSeller', String(params.bestSeller));
+  if (params.availability) qs.set('availability', params.availability);
   if (params.trending != null) qs.set('trending', String(params.trending));
   if (params.newArrival != null) qs.set('newArrival', String(params.newArrival));
   if (params.limitedOffer != null) qs.set('limitedOffer', String(params.limitedOffer));
   if (params.sort)            qs.set('sort', params.sort);
   if (params.gender)          qs.set('gender', params.gender);
-  if (params.fragranceFamily) qs.set('fragranceFamily', params.fragranceFamily);
   if (params.concentration)   qs.set('concentration', params.concentration);
   if (params.collection)      qs.set('collection', params.collection);
   const query = qs.toString() ? `?${qs.toString()}` : '';
@@ -220,6 +227,97 @@ export async function apiCreateOrder(
   return apiFetch(path, { method: 'POST', body: JSON.stringify(data) }, token);
 }
 
+export async function apiCreateFailedPaymentOrder(
+  data: CreateOrderRequest & { paymentError?: string },
+  token?: string | null
+): Promise<ApiResponse<ApiOrder>> {
+  const path = token ? '/api/orders/payment-failed' : '/api/orders/payment-failed/guest';
+  return apiFetch(
+    path,
+    {
+      method: 'POST',
+      body: JSON.stringify({ ...data, paymentMethod: 'ONLINE' }),
+    },
+    token
+  );
+}
+
+export interface OrderPaymentIntentResult {
+  paymentIntentId: string;
+  clientSecret: string;
+  amountAed: number;
+}
+
+export async function apiCreateOrderPaymentIntent(
+  orderId: string,
+  options?: { token?: string | null; email?: string }
+): Promise<ApiResponse<OrderPaymentIntentResult>> {
+  return apiFetch(
+    `/api/orders/${encodeURIComponent(orderId)}/payment-intent`,
+    {
+      method: 'POST',
+      body: JSON.stringify(options?.email ? { email: options.email } : {}),
+    },
+    options?.token
+  );
+}
+
+export async function apiCompleteOrderPayment(
+  orderId: string,
+  data: { stripePaymentIntentId: string; email?: string },
+  token?: string | null
+): Promise<ApiResponse<ApiOrder>> {
+  return apiFetch(
+    `/api/orders/${encodeURIComponent(orderId)}/complete-payment`,
+    {
+      method: 'POST',
+      body: JSON.stringify(data),
+    },
+    token
+  );
+}
+
+export async function apiDownloadOrderInvoice(
+  orderId: string,
+  options?: { token?: string | null; email?: string; filename?: string }
+): Promise<void> {
+  const apiBase = getApiBase();
+  const params = new URLSearchParams();
+  if (options?.email) params.set('email', options.email.trim().toLowerCase());
+  const query = params.toString();
+  const path = `/api/orders/${encodeURIComponent(orderId)}/invoice${query ? `?${query}` : ''}`;
+
+  const headers: Record<string, string> = {};
+  const authToken = options?.token ?? getStoredToken();
+  if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
+
+  const res = await fetch(`${apiBase}${path}`, { headers });
+  if (!res.ok) {
+    let message = 'Failed to download invoice';
+    try {
+      const json = await res.json();
+      message = json.message || message;
+    } catch {
+      // ignore non-json error bodies
+    }
+    throw new Error(message);
+  }
+
+  const blob = await res.blob();
+  const disposition = res.headers.get('Content-Disposition');
+  const filenameMatch = disposition?.match(/filename="([^"]+)"/);
+  const filename =
+    options?.filename ||
+    filenameMatch?.[1] ||
+    `Invoice-${orderId}.pdf`;
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 export async function apiTrackGuestOrder(data: {
   email: string;
   orderId: string;
@@ -240,7 +338,7 @@ export async function apiGetGuestOrders(data: {
   });
 }
 
-export async function apiSendGuestOrdersOtp(data: { email: string }): Promise<ApiResponse<{ email: string; otpSent: boolean; testOtp: string }>> {
+export async function apiSendGuestOrdersOtp(data: { email: string }): Promise<ApiResponse<{ email: string; otpSent: boolean }>> {
   return apiFetch('/api/orders/guest/send-otp', {
     method: 'POST',
     body: JSON.stringify(data),
@@ -265,6 +363,20 @@ export async function apiGetVerifiedGuestOrders(token: string): Promise<ApiRespo
 
 export async function apiGetPromotions(): Promise<ApiResponse<ApiPromotion[]>> {
   return apiFetch('/api/promotions/public');
+}
+
+export async function apiValidatePromotion(
+  data: PromotionValidateRequest,
+  token?: string | null
+): Promise<ApiResponse<PromotionValidateResult>> {
+  return apiFetch(
+    '/api/promotions/validate',
+    {
+      method: 'POST',
+      body: JSON.stringify(data),
+    },
+    token
+  );
 }
 
 export async function apiGetShippingQuote(

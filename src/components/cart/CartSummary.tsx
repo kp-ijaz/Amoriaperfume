@@ -4,11 +4,12 @@ import Link from 'next/link';
 import { useCart } from '@/lib/hooks/useCart';
 import { useShippingQuote } from '@/lib/hooks/useApiShipping';
 import { CouponInput } from './CouponInput';
+import { GiftCardInput } from './GiftCardInput';
 import { Separator } from '@/components/ui/separator';
 
 interface CartSummaryProps {
   showCheckoutButton?: boolean;
-  paymentMethod?: 'cod' | 'card' | 'applepay';
+  paymentMethod?: 'cod' | 'stripe';
   country?: string;
   shippingChargeOverride?: number;
 }
@@ -33,8 +34,13 @@ export function CartSummary({
     formattedTotal,
     coupon,
     couponDiscount,
+    giftCard,
+    giftCardAppliedAmount,
+    formattedGiftCardAmount,
     freeShipping,
     total,
+    taxInclusive,
+    taxPercent,
     COD_FEE,
   } = useCart({
     shippingChargeOverride: resolvedShippingCharge,
@@ -53,6 +59,8 @@ export function CartSummary({
       </h3>
 
       <CouponInput />
+
+      <GiftCardInput />
 
       <Separator />
 
@@ -85,9 +93,19 @@ export function CartSummary({
           </div>
         )}
         <div className="flex justify-between">
-          <span style={{ color: 'var(--color-amoria-text-muted)' }}>VAT (5%)</span>
-          <span style={{ color: 'var(--color-amoria-text)' }}>{formattedVat}</span>
+          <span style={{ color: 'var(--color-amoria-text-muted)' }}>
+            {taxInclusive ? `Includes VAT (${taxPercent}%)` : `VAT (${taxPercent}%)`}
+          </span>
+          <span style={{ color: 'var(--color-amoria-text)' }}>
+            {taxInclusive ? formattedVat : `+${formattedVat}`}
+          </span>
         </div>
+        {giftCard && giftCardAppliedAmount > 0 && (
+          <div className="flex justify-between">
+            <span style={{ color: 'var(--color-amoria-text-muted)' }}>Gift card ({giftCard.code})</span>
+            <span className="text-green-600">-{formattedGiftCardAmount}</span>
+          </div>
+        )}
       </div>
 
       <Separator />

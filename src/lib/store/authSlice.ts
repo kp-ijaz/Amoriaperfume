@@ -1,4 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { REHYDRATE } from 'redux-persist';
+import { getStoredToken } from '@/lib/api/client';
 
 export interface AuthUser {
   id: string;
@@ -54,6 +56,16 @@ const authSlice = createSlice({
       state.isGuest = false;
       state.guestInfo = null;
     },
+  },
+  extraReducers: (builder) => {
+    builder.addCase(REHYDRATE, (state, action) => {
+      const incoming = (action.payload as { auth?: AuthState } | undefined)?.auth;
+      if (!incoming?.user) return;
+      state.user = incoming.user;
+      state.isGuest = incoming.isGuest ?? false;
+      state.guestInfo = incoming.guestInfo ?? null;
+      state.token = incoming.token || (typeof window !== 'undefined' ? getStoredToken() : null);
+    });
   },
 });
 
