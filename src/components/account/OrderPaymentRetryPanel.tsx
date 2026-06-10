@@ -16,6 +16,7 @@ import { apiGetStripeConfig } from '@/lib/api/payments';
 import { StripePaymentForm } from '@/components/checkout/StripePaymentForm';
 import { amoriaStripeElementsOptions } from '@/lib/stripe/amoriaStripeAppearance';
 import { buildStripeConfirmParams } from '@/lib/stripe/stripeConfirmParams';
+import { resolveCheckoutPhone } from '@/lib/utils/checkoutPayload';
 
 export function orderNeedsPaymentRetry(order: ApiOrder) {
   const orderStatus = (order.orderStatus ?? order.status ?? 'PENDING').toUpperCase();
@@ -76,7 +77,10 @@ function OrderPaymentRetryForm({
         confirmParams: buildStripeConfirmParams(customerEmail, {
           name: order.customerDetails?.name,
           email: customerEmail,
-          phone: order.customerDetails?.phone || order.customerDetails?.mobile,
+          phone: resolveCheckoutPhone(
+            order.customerDetails?.mobile,
+            order.customerDetails?.phone
+          ) || undefined,
         }),
       });
 

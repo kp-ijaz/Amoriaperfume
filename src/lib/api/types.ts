@@ -178,7 +178,10 @@ export interface ApiOrder {
   customerDetails: {
     name: string;
     email: string;
-    phone: string;
+    /** Primary phone field from API */
+    mobile?: string;
+    /** Legacy alias; some orders may only have this */
+    phone?: string;
   };
   shippingAddress?: {
     fullAddress: string;

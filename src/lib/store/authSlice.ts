@@ -59,7 +59,9 @@ const authSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder.addCase(REHYDRATE, (state, action) => {
-      const incoming = (action.payload as { auth?: AuthState } | undefined)?.auth;
+      const incoming = (
+        action as { payload?: { auth?: AuthState } | null }
+      ).payload?.auth;
       if (!incoming?.user) return;
       state.user = incoming.user;
       state.isGuest = incoming.isGuest ?? false;
