@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useState } from 'react';
 import { FileDown } from 'lucide-react';
 import { apiDownloadOrderInvoice } from '@/lib/api/client';
@@ -8,7 +9,6 @@ type Props = {
   orderId: string;
   invoiceNumber?: string;
   authToken?: string | null;
-  guestEmail?: string;
   className?: string;
 };
 
@@ -16,7 +16,6 @@ export function OrderInvoiceDownloadButton({
   orderId,
   invoiceNumber,
   authToken,
-  guestEmail,
   className,
 }: Props) {
   const [loading, setLoading] = useState(false);
@@ -24,12 +23,15 @@ export function OrderInvoiceDownloadButton({
 
   const handleDownload = async (event: React.MouseEvent) => {
     event.stopPropagation();
+    if (!authToken) {
+      setError('Sign in or verify your email on My Orders to download the invoice.');
+      return;
+    }
     setLoading(true);
     setError('');
     try {
       await apiDownloadOrderInvoice(orderId, {
         token: authToken,
-        email: guestEmail,
         filename: invoiceNumber ? `Invoice-${invoiceNumber}.pdf` : undefined,
       });
     } catch (err) {
@@ -38,6 +40,17 @@ export function OrderInvoiceDownloadButton({
       setLoading(false);
     }
   };
+
+  if (!authToken) {
+    return (
+      <p className={`text-xs ${className ?? ''}`} style={{ color: '#6B6B6B' }}>
+        <Link href="/account/orders" className="underline" style={{ color: '#C9A84C' }}>
+          Sign in on My Orders
+        </Link>{' '}
+        to download your invoice.
+      </p>
+    );
+  }
 
   return (
     <div className={className}>

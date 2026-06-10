@@ -53,6 +53,13 @@ export interface ReturnRequest {
     shippedAt?: string;
     deliveredAt?: string;
   };
+  replacementOrder?: {
+    orderId: string;
+    orderStatus?: string;
+    courierName?: string;
+    trackingId?: string;
+  } | null;
+  statusHistory?: Array<{ status: string; updatedAt?: string; note?: string }>;
   createdAt: string;
   updatedAt?: string;
 }

@@ -4,7 +4,11 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { useCountdown } from '@/lib/hooks/useCountdown';
 import { ProductCard } from '@/components/product/ProductCard';
-import { useHomeSlotProducts, usePublicCoverImages } from '@/lib/hooks/usePublicCms';
+import {
+  HOME_PRODUCTS_PER_ROW,
+  useHomeSlotProducts,
+  usePublicCoverImages,
+} from '@/lib/hooks/usePublicCms';
 import { useLanguage } from '@/lib/context/LanguageContext';
 
 function TimeUnit({ value, label }: { value: number; label: string; }) {
@@ -42,10 +46,10 @@ export function LimitedDealsSection() {
   const { hours, minutes, seconds } = useCountdown();
   const { t } = useLanguage();
   const { data, isLoading } = useHomeSlotProducts('home-limited-offers', {
-    limit: 5,
+    limit: HOME_PRODUCTS_PER_ROW,
     limitedOffer: true,
   });
-  const dealProducts = data?.products ?? [];
+  const dealProducts = (data?.products ?? []).slice(0, HOME_PRODUCTS_PER_ROW);
   const sectionTitle = data?.title?.trim() || t('slotLimitedOffers');
   const sectionSubtitle = data?.subtitle?.trim() || t('slotLimitedOffersSubtitle');
   const { data: flashHeaders = [] } = usePublicCoverImages('flash_banner');
@@ -132,7 +136,7 @@ export function LimitedDealsSection() {
         </motion.div>
 
         <motion.div
-          className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4"
+          className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4"
           variants={{
             hidden: {},
             show: { transition: { staggerChildren: 0.08 } },
@@ -142,7 +146,7 @@ export function LimitedDealsSection() {
           viewport={{ once: true, margin: '-40px' }}
         >
           {isLoading
-            ? Array.from({ length: 5 }).map((_, i) => (
+            ? Array.from({ length: HOME_PRODUCTS_PER_ROW }).map((_, i) => (
                 <div
                   key={i}
                   className="aspect-[3/4] animate-pulse rounded-sm"

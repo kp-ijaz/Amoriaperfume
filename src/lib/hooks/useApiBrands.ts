@@ -6,7 +6,7 @@ import { apiGetBrands, apiGetBrand, apiGetBrandBySlug } from '@/lib/api/client';
 import { adaptBrands, adaptBrand, brandDisplayImage } from '@/lib/api/adapters';
 
 /** Max brands in the homepage “Shop by Brands” row (matches desktop grid columns). */
-export const HOME_BRANDS_ROW_LIMIT = 5;
+export const HOME_BRANDS_ROW_LIMIT = 4;
 
 export function useBrands() {
   return useQuery({

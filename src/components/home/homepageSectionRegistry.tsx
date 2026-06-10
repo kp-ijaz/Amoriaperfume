@@ -13,6 +13,7 @@ import { TestimonialsSection } from '@/components/home/TestimonialsSection';
 import { InstagramFeed } from '@/components/home/InstagramFeed';
 import { NewsletterSection } from '@/components/home/NewsletterSection';
 import type { HomepageLayoutKey } from '@/lib/homepage/homepageLayoutDefaults';
+import { HOME_PRODUCTS_PER_ROW } from '@/lib/hooks/usePublicCms';
 
 export const HOMEPAGE_SECTION_RENDERERS: Record<HomepageLayoutKey, () => ReactNode> = {
   announcement: () => <PromoStripBanner />,
@@ -24,8 +25,8 @@ export const HOMEPAGE_SECTION_RENDERERS: Record<HomepageLayoutKey, () => ReactNo
       viewAllHref="/products?newArrival=true"
       theme="light"
       sectionNumber="01"
-      limit={5}
-      columns={5}
+      limit={HOME_PRODUCTS_PER_ROW}
+      columns={HOME_PRODUCTS_PER_ROW}
       fallback={{ newArrival: true }}
     />
   ),
@@ -40,8 +41,8 @@ export const HOMEPAGE_SECTION_RENDERERS: Record<HomepageLayoutKey, () => ReactNo
       viewAllHref="/products?bestSeller=true"
       theme="light"
       sectionNumber="02"
-      limit={5}
-      columns={5}
+      limit={HOME_PRODUCTS_PER_ROW}
+      columns={HOME_PRODUCTS_PER_ROW}
       fallback={{ bestSeller: true }}
     />
   ),

@@ -282,6 +282,7 @@ export interface ApiAuthUser {
   _id: string;
   name: string;
   email: string;
+  phone?: string;
   role: string;
   isBlocked: boolean;
   createdAt: string;

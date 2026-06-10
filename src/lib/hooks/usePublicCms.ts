@@ -116,6 +116,9 @@ export function usePublicHomeSlots() {
   });
 }
 
+/** Max products shown per homepage product row (New Arrivals, Best Sellers, etc.). */
+export const HOME_PRODUCTS_PER_ROW = 4;
+
 export type HomeSlotFallbackParams = {
   limit?: number;
   featured?: boolean;
@@ -130,7 +133,7 @@ export function useHomeSlotProducts(
   slotKey: string,
   fallbackParams: HomeSlotFallbackParams = {}
 ) {
-  const limit = fallbackParams.limit ?? 5;
+  const limit = fallbackParams.limit ?? HOME_PRODUCTS_PER_ROW;
   return useQuery({
     queryKey: [...publicCmsKeys.homeSlot(slotKey), 'products', fallbackParams],
     queryFn: async (): Promise<{ title: string; subtitle?: string; products: Product[] }> => {
@@ -144,7 +147,7 @@ export function useHomeSlotProducts(
           if (ids.length > 0) {
             const { apiGetProduct } = await import('@/lib/api/client');
             const fetched = await Promise.all(
-              ids.slice(0, 12).map(async (id) => {
+              ids.slice(0, limit).map(async (id) => {
                 const pr = await apiGetProduct(id);
                 if (pr.success && pr.data) return adaptProduct(pr.data);
                 return null;
@@ -152,7 +155,11 @@ export function useHomeSlotProducts(
             );
             const valid = fetched.filter((p): p is Product => p != null);
             if (valid.length > 0) {
-              return { title: slot.title, subtitle: slot.subtitle, products: valid };
+              return {
+                title: slot.title,
+                subtitle: slot.subtitle,
+                products: valid.slice(0, limit),
+              };
             }
           }
         }

@@ -1,6 +1,10 @@
 'use client';
 
-import { useHomeSlotProducts, type HomeSlotFallbackParams } from '@/lib/hooks/usePublicCms';
+import {
+  HOME_PRODUCTS_PER_ROW,
+  useHomeSlotProducts,
+  type HomeSlotFallbackParams,
+} from '@/lib/hooks/usePublicCms';
 import { ProductSection } from './ProductSection';
 import { useLanguage } from '@/lib/context/LanguageContext';
 import type { TranslationKey } from '@/lib/i18n/translations';
@@ -33,8 +37,8 @@ export function HomeSlotSection({
   viewAllHref,
   theme = 'light',
   sectionNumber = '01',
-  limit = 5,
-  columns = 5,
+  limit = HOME_PRODUCTS_PER_ROW,
+  columns = HOME_PRODUCTS_PER_ROW,
   fallback,
 }: HomeSlotSectionProps) {
   const { data, isLoading } = useHomeSlotProducts(slotKey, {
@@ -50,7 +54,7 @@ export function HomeSlotSection({
   // API title/subtitle takes priority; fall back to translated strings
   const displayTitle = data?.title?.trim() || translatedTitle;
   const displaySubtitle = data?.subtitle?.trim() || translatedSubtitle;
-  const products = data?.products ?? [];
+  const products = (data?.products ?? []).slice(0, limit);
 
   if (!isLoading && products.length === 0) return null;
 

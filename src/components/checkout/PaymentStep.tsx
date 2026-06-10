@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { Banknote, CreditCard } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { Banknote, CreditCard, Loader2 } from 'lucide-react';
 import { apiCreateStripeIntent, apiGetStripeConfig, OrderStripeIntentPayload } from '@/lib/api/payments';
+import { isPromotionError } from '@/lib/utils/promotionErrors';
 
 export interface StripeCheckoutState {
   publishableKey: string;
@@ -12,6 +13,7 @@ export interface StripeCheckoutState {
 
 interface PaymentStepProps {
   intentPayload: OrderStripeIntentPayload | null;
+  isPickup?: boolean;
   stripeSession: StripeCheckoutState | null;
   onStripeSession: (session: StripeCheckoutState | null) => void;
   onNext: (method: 'stripe' | 'cod') => void;
@@ -22,6 +24,7 @@ interface PaymentStepProps {
 
 export function PaymentStep({
   intentPayload,
+  isPickup = false,
   stripeSession,
   onStripeSession,
   onNext,
@@ -32,16 +35,32 @@ export function PaymentStep({
   const [method, setMethod] = useState<'stripe' | 'cod'>(onlineEnabled ? 'stripe' : 'cod');
   const [loadingIntent, setLoadingIntent] = useState(false);
   const [intentError, setIntentError] = useState('');
-  const [otpSent, setOtpSent] = useState(false);
-  const [otp, setOtp] = useState(['', '', '', '']);
+  const intentPayloadKey = useMemo(
+    () => (intentPayload ? JSON.stringify(intentPayload) : null),
+    [intentPayload]
+  );
 
   useEffect(() => {
-    if (method !== 'stripe' || !intentPayload || !onlineEnabled) {
+    if (method !== 'stripe' || !onlineEnabled) {
       onStripeSession(null);
+      setLoadingIntent(false);
+      setIntentError('');
+      return;
+    }
+
+    if (!intentPayload) {
+      onStripeSession(null);
+      setLoadingIntent(false);
+      setIntentError(
+        isPickup
+          ? 'Add your name and email on the delivery step before paying online.'
+          : 'Add a valid phone number on the delivery step before paying online.'
+      );
       return;
     }
 
     let cancelled = false;
+    onStripeSession(null);
     setLoadingIntent(true);
     setIntentError('');
 
@@ -76,7 +95,11 @@ export function PaymentStep({
     return () => {
       cancelled = true;
     };
-  }, [method, intentPayload, onlineEnabled, onStripeSession]);
+  }, [method, intentPayloadKey, onlineEnabled, onStripeSession, isPickup]);
+
+  const couponBlocksPayment = isPromotionError(intentError);
+  const paymentIntentError = intentError && !couponBlocksPayment ? intentError : '';
+  const canContinueStripe = !!stripeSession || couponBlocksPayment;
 
   function handleContinue() {
     if (method === 'cod') {
@@ -126,8 +149,8 @@ export function PaymentStep({
                     Preparing secure checkout…
                   </p>
                 )}
-                {intentError && <p className="text-xs text-red-500">{intentError}</p>}
-                {stripeSession && !loadingIntent && !intentError && (
+                {paymentIntentError && <p className="text-xs text-red-500">{paymentIntentError}</p>}
+                {stripeSession && !loadingIntent && !paymentIntentError && (
                   <p className="text-xs" style={{ color: 'var(--color-amoria-text-muted)' }}>
                     Enter your card details on the review step.
                   </p>
@@ -155,42 +178,9 @@ export function PaymentStep({
               </div>
             </div>
             {method === 'cod' && (
-              <div className="ml-6">
-                <p className="text-xs mb-3" style={{ color: 'var(--color-amoria-text-muted)' }}>
-                  We&apos;ll send a WhatsApp OTP to confirm your order
-                </p>
-                {!otpSent ? (
-                  <button
-                    type="button"
-                    onClick={(e) => { e.stopPropagation(); setOtpSent(true); }}
-                    className="text-sm font-medium px-4 py-2 border"
-                    style={{ borderColor: 'var(--color-amoria-accent)', color: 'var(--color-amoria-accent)' }}
-                  >
-                    Send OTP via WhatsApp
-                  </button>
-                ) : (
-                  <div>
-                    <p className="text-xs mb-2 text-green-600">OTP sent to your registered number</p>
-                    <div className="flex gap-2">
-                      {otp.map((digit, i) => (
-                        <input
-                          key={i}
-                          type="text"
-                          maxLength={1}
-                          value={digit}
-                          onChange={(e) => {
-                            const newOtp = [...otp];
-                            newOtp[i] = e.target.value;
-                            setOtp(newOtp);
-                          }}
-                          className="w-10 h-10 border text-center text-sm outline-none font-bold"
-                          style={{ borderColor: 'var(--color-amoria-border)' }}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
+              <p className="ml-6 text-xs" style={{ color: 'var(--color-amoria-text-muted)' }}>
+                Pay in cash when your order is delivered. You&apos;ll receive order updates by email.
+              </p>
             )}
           </div>
         )}
@@ -208,10 +198,11 @@ export function PaymentStep({
         <button
           type="button"
           onClick={handleContinue}
-          disabled={method === 'stripe' && (loadingIntent || !stripeSession)}
-          className="flex-1 py-3 text-sm font-semibold disabled:opacity-60"
+          disabled={method === 'stripe' && (loadingIntent || !canContinueStripe)}
+          className="flex-1 py-3 text-sm font-semibold disabled:opacity-60 flex items-center justify-center gap-2"
           style={{ backgroundColor: 'var(--color-amoria-primary)', color: 'white' }}
         >
+          {method === 'stripe' && loadingIntent && <Loader2 size={16} className="animate-spin" />}
           Continue to Review
         </button>
       </div>

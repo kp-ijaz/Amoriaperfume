@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Truck, Store, Calendar, Clock } from 'lucide-react';
 import { useStripe, useElements } from '@stripe/react-stripe-js';
@@ -11,13 +11,16 @@ import { useShippingQuote } from '@/lib/hooks/useApiShipping';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { Address } from '@/types/user';
 import { CartSummary } from '@/components/cart/CartSummary';
-import { FulfillmentMethod, PickupSlot } from '@/components/checkout/AddressStep';
+import { FulfillmentMethod, PickupSlot, PickupStoreOption } from '@/components/checkout/AddressStep';
 import { StripePaymentForm } from '@/components/checkout/StripePaymentForm';
 import { GuestInfo } from '@/lib/store/authSlice';
 import Image from 'next/image';
 import { toast } from 'sonner';
-import { buildShippingAddress } from '@/lib/utils/checkoutPayload';
+import { buildShippingAddress, resolveCheckoutPhone } from '@/lib/utils/checkoutPayload';
 import { buildStripeConfirmParams } from '@/lib/stripe/stripeConfirmParams';
+import { useAppliedPromotionValidation } from '@/lib/hooks/useAppliedPromotionValidation';
+import { isPromotionError } from '@/lib/utils/promotionErrors';
+import { AlertCircle } from 'lucide-react';
 
 interface ReviewStepProps {
   address: Address | null;
@@ -25,6 +28,7 @@ interface ReviewStepProps {
   stripePaymentIntentId?: string | null;
   fulfillmentMethod: FulfillmentMethod;
   pickupSlot?: PickupSlot;
+  selectedPickupStore?: PickupStoreOption | null;
   onBack: () => void;
   guestInfo?: GuestInfo | null;
 }
@@ -37,6 +41,7 @@ export function ReviewStep({
   stripePaymentIntentId,
   fulfillmentMethod,
   pickupSlot,
+  selectedPickupStore,
   onBack,
   guestInfo,
 }: ReviewStepProps) {
@@ -51,17 +56,42 @@ export function ReviewStep({
     shippingChargeOverride: fulfillmentMethod === 'pickup' ? 0 : quotedShippingCharge,
   });
   const { user, token, isLoggedIn } = useAuth();
+  const { promotionError, checkingPromotion } = useAppliedPromotionValidation();
   const createOrder = useCreateOrder();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [paymentFormReady, setPaymentFormReady] = useState(false);
+
+  useEffect(() => {
+    setPaymentFormReady(false);
+  }, [stripePaymentIntentId]);
+
+  useEffect(() => {
+    if (!coupon?.code && error && isPromotionError(error)) {
+      setError(null);
+    }
+  }, [coupon?.code, error]);
 
   const stripePaymentPending =
     paymentMethod === 'stripe' &&
     !!stripePaymentIntentId &&
     (!stripe || !elements || !paymentFormReady);
 
+  const stripePaymentNeedsRefresh =
+    paymentMethod === 'stripe' && !stripePaymentIntentId && !promotionError && !checkingPromotion;
+
+  const displayPromotionError =
+    promotionError || (error && isPromotionError(error) ? error : '');
+
+  const cannotPlaceOrder =
+    loading ||
+    checkingPromotion ||
+    !!displayPromotionError ||
+    stripePaymentPending ||
+    stripePaymentNeedsRefresh;
+
   async function handlePlaceOrder() {
+    if (displayPromotionError) return;
     setLoading(true);
     setError(null);
 
@@ -69,7 +99,7 @@ export function ReviewStep({
       ? `${user.firstName} ${user.lastName}`.trim()
       : guestInfo?.name ?? address?.fullName ?? 'Guest';
     const customerEmail = user?.email ?? guestInfo?.email ?? address?.email ?? '';
-    const customerPhone = user?.phone ?? guestInfo?.phone ?? address?.phone ?? '';
+    const customerPhone = resolveCheckoutPhone(address?.phone, user?.phone, guestInfo?.phone);
 
     const shippingAddr = address
       ? buildShippingAddress(address)
@@ -99,10 +129,10 @@ export function ReviewStep({
       },
       shippingAddress: fulfillmentMethod === 'delivery' ? shippingAddr : undefined,
       pickupDetails:
-        fulfillmentMethod === 'pickup'
+        fulfillmentMethod === 'pickup' && selectedPickupStore
           ? {
-              storeName: 'Dubai Mall',
-              storeAddress: 'Dubai Mall, Ground Floor',
+              storeName: selectedPickupStore.name,
+              storeAddress: selectedPickupStore.address,
               pickupSlot: pickupSlot ? `${pickupSlot.date} ${pickupSlot.time}` : undefined,
             }
           : undefined,
@@ -175,12 +205,19 @@ export function ReviewStep({
           params.set('date', pickupSlot.date);
           params.set('time', pickupSlot.time);
         }
+        if (selectedPickupStore) {
+          params.set('storeName', selectedPickupStore.name);
+          params.set('storeAddress', selectedPickupStore.address);
+          if (selectedPickupStore.hours) params.set('storeHours', selectedPickupStore.hours);
+        }
       }
       router.push(`/order-confirmation?${params.toString()}`);
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Something went wrong placing your order.';
       setError(msg);
-      toast.error(msg);
+      if (!isPromotionError(msg)) {
+        toast.error(msg);
+      }
       setLoading(false);
     }
   }
@@ -197,7 +234,14 @@ export function ReviewStep({
         <h3 className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: '#A89880' }}>Fulfillment</h3>
         <div className="flex items-center gap-2 text-sm font-semibold mb-2" style={{ color: '#1A0A2E' }}>
           {fulfillmentMethod === 'pickup'
-            ? <><Store size={15} style={{ color: '#C9A84C' }} /> Store Pickup — Dubai Mall</>
+            ? (
+              <>
+                <Store size={15} style={{ color: '#C9A84C' }} />
+                {' '}
+                Store Pickup
+                {selectedPickupStore ? ` — ${selectedPickupStore.name}` : ''}
+              </>
+            )
             : <><Truck size={15} style={{ color: '#C9A84C' }} /> Home Delivery</>}
         </div>
         {fulfillmentMethod === 'pickup' && pickupSlot && (
@@ -211,7 +255,9 @@ export function ReviewStep({
             <span className="flex items-center gap-1.5 font-semibold" style={{ color: '#6B4A1E' }}>
               <Clock size={12} style={{ color: '#C9A84C' }} />{pickupSlot.time}
             </span>
-            <span style={{ color: '#A89880' }}>· Dubai Mall, Ground Floor</span>
+            {selectedPickupStore ? (
+              <span style={{ color: '#A89880' }}>· {selectedPickupStore.address}</span>
+            ) : null}
           </div>
         )}
       </div>
@@ -245,7 +291,11 @@ export function ReviewStep({
                       Loading secure payment form…
                     </p>
                   )}
-                  <StripePaymentForm disabled={loading} onReady={() => setPaymentFormReady(true)} />
+                  <StripePaymentForm
+                    key={stripePaymentIntentId ?? 'stripe-form'}
+                    disabled={loading}
+                    onReady={() => setPaymentFormReady(true)}
+                  />
                 </>
               )}
             </div>
@@ -280,6 +330,37 @@ export function ReviewStep({
         </div>
       </div>
 
+      {(checkingPromotion || displayPromotionError || stripePaymentNeedsRefresh) && (
+        <div
+          className="mb-4 p-4 rounded-sm"
+          style={{ border: '1px solid #fecaca', backgroundColor: '#fef2f2' }}
+        >
+          <div className="flex items-start gap-2.5">
+            <AlertCircle size={16} className="flex-shrink-0 mt-0.5 text-red-600" />
+            <div className="space-y-1.5 text-sm">
+              {checkingPromotion ? (
+                <p className="text-red-700">Checking your coupon…</p>
+              ) : displayPromotionError ? (
+                <>
+                  <p className="font-semibold text-red-800">Coupon could not be applied</p>
+                  <p className="text-red-700">{displayPromotionError}</p>
+                  <p className="text-xs text-red-600">
+                    Remove the coupon below or enter a different code, then try again.
+                  </p>
+                </>
+              ) : stripePaymentNeedsRefresh ? (
+                <>
+                  <p className="font-semibold text-red-800">Payment needs to be refreshed</p>
+                  <p className="text-red-700">
+                    Go back to Payment to set up card payment after changing your coupon.
+                  </p>
+                </>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      )}
+
       <CartSummary
         showCheckoutButton={false}
         paymentMethod={paymentMethod ?? undefined}
@@ -287,7 +368,7 @@ export function ReviewStep({
         shippingChargeOverride={fulfillmentMethod === 'pickup' ? 0 : quotedShippingCharge}
       />
 
-      {error && (
+      {error && !isPromotionError(error) && (
         <div className="mt-4 p-3 text-sm text-red-700 bg-red-50 border border-red-200 rounded-sm">
           {error}
         </div>
@@ -306,17 +387,23 @@ export function ReviewStep({
         <button
           type="button"
           onClick={handlePlaceOrder}
-          disabled={loading || stripePaymentPending}
+          disabled={cannotPlaceOrder}
           className="flex-1 py-3.5 text-sm font-bold tracking-wider uppercase transition-all disabled:opacity-70"
           style={{ backgroundColor: '#C9A84C', color: '#1A0A2E' }}
         >
           {loading
             ? 'Placing Order…'
-            : stripePaymentPending
-              ? 'Loading payment…'
-              : paymentMethod === 'stripe'
-                ? 'Pay & Place Order →'
-                : 'Place Order →'}
+            : checkingPromotion
+              ? 'Checking coupon…'
+              : displayPromotionError
+                ? 'Fix coupon to continue'
+                : stripePaymentPending
+                  ? 'Loading payment…'
+                  : stripePaymentNeedsRefresh
+                    ? 'Update payment first'
+                    : paymentMethod === 'stripe'
+                      ? 'Pay & Place Order →'
+                      : 'Place Order →'}
         </button>
       </div>
     </div>

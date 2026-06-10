@@ -73,12 +73,22 @@ export interface PublicHomepageLayoutRow {
   enabled?: boolean;
 }
 
+export interface PublicPickupStore {
+  id: string;
+  name: string;
+  address: string;
+  mapLink?: string;
+  hours?: string;
+  sortOrder?: number;
+}
+
 export interface PublicBootstrap {
   storefront: { id: string; slug: string; name: string };
   homepageSections: PublicHomepageSection[];
   homepageLayout?: PublicHomepageLayoutRow[];
   devMode: { enabled: boolean; title?: string; message?: string };
   platform: PublicPlatformSnippet;
+  pickupStores?: PublicPickupStore[];
 }
 
 export interface PublicContentPage {

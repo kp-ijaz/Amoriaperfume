@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState, Suspense, useCallback } from 'react';
+import { useMemo, useState, Suspense, useCallback, useEffect } from 'react';
 import Link from 'next/link';
 import { User, UserCheck, LogIn, ShoppingBag, Shield, Store, Truck, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -8,23 +8,26 @@ import { Elements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { useCart } from '@/lib/hooks/useCart';
+import { useUserAddresses } from '@/lib/hooks/useApiAddresses';
 import { usePublicBootstrap } from '@/lib/hooks/usePublicCms';
 import { CheckoutStepper } from '@/components/checkout/CheckoutStepper';
-import { AddressStep, FulfillmentMethod, PickupSlot } from '@/components/checkout/AddressStep';
+import { AddressStep, FulfillmentMethod, PickupSlot, PickupStoreOption } from '@/components/checkout/AddressStep';
 import { PaymentStep, StripeCheckoutState } from '@/components/checkout/PaymentStep';
 import { ReviewStep } from '@/components/checkout/ReviewStep';
 import { amoriaStripeElementsOptions } from '@/lib/stripe/amoriaStripeAppearance';
 import { OrderStripeIntentPayload } from '@/lib/api/payments';
 import { Address } from '@/types/user';
-import { normalizeCheckoutMobile, pickObjectId, buildShippingAddress } from '@/lib/utils/checkoutPayload';
+import { pickObjectId, buildShippingAddress, resolveCheckoutPhone } from '@/lib/utils/checkoutPayload';
 
 type CheckoutFlow = 'gate' | 1 | 2 | 3;
 
 function CheckoutPageInner() {
   const { isLoggedIn, isGuest, user, guestInfo, continueAsGuest } = useAuth();
   const { items, coupon, giftCard } = useCart();
+  const { data: savedAddresses = [] } = useUserAddresses();
   const { data: bootstrap } = usePublicBootstrap();
   const platform = bootstrap?.platform;
+  const pickupStores = bootstrap?.pickupStores ?? [];
 
   function getInitialFlow(): CheckoutFlow {
     if (isLoggedIn || isGuest) return 1;
@@ -36,10 +39,34 @@ function CheckoutPageInner() {
   const [address, setAddress] = useState<Address | null>(null);
   const [fulfillment, setFulfillment] = useState<FulfillmentMethod>('delivery');
   const [pickupSlot, setPickupSlot] = useState<PickupSlot | undefined>(undefined);
+  const [selectedPickupStore, setSelectedPickupStore] = useState<PickupStoreOption | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<'stripe' | 'cod' | null>(null);
   const [stripeSession, setStripeSession] = useState<StripeCheckoutState | null>(null);
+  const [paymentAttempt, setPaymentAttempt] = useState(0);
 
   const effectiveIsGuest = isGuest || isGuestMode;
+
+  const resetStripeCheckout = useCallback(() => {
+    setStripeSession(null);
+    setPaymentMethod(null);
+    setPaymentAttempt((n) => n + 1);
+  }, []);
+
+  const cartFingerprint = useMemo(
+    () =>
+      items
+        .map(
+          (item) =>
+            `${item.product.id}:${item.variant.id}:${item.quantity}:${coupon?.code ?? ''}:${giftCard?.code ?? ''}`
+        )
+        .join('|'),
+    [items, coupon?.code, giftCard?.code]
+  );
+
+  useEffect(() => {
+    resetStripeCheckout();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cartFingerprint]);
 
   const stripePromise = useMemo(
     () => (stripeSession ? loadStripe(stripeSession.publishableKey) : null),
@@ -58,10 +85,18 @@ function CheckoutPageInner() {
       ? `${user.firstName} ${user.lastName}`.trim()
       : guestInfo?.name ?? address?.fullName ?? 'Guest';
     const customerEmail = user?.email ?? guestInfo?.email ?? address?.email ?? '';
-    const customerPhone = normalizeCheckoutMobile(
-      user?.phone ?? guestInfo?.phone ?? address?.phone ?? ''
+    const savedPhone =
+      savedAddresses.find((a) => a.isDefault)?.phone ?? savedAddresses[0]?.phone ?? '';
+    const customerPhone = resolveCheckoutPhone(
+      address?.phone,
+      user?.phone,
+      guestInfo?.phone,
+      savedPhone
     );
-    if (!customerEmail || customerPhone.length < 10) return null;
+    const isPickup = fulfillment === 'pickup';
+    if (!customerEmail) return null;
+    if (!isPickup && customerPhone.length < 10) return null;
+    if (isPickup && !selectedPickupStore) return null;
 
     const shippingAddr = address
       ? buildShippingAddress(address)
@@ -76,13 +111,17 @@ function CheckoutPageInner() {
     return {
       kind: 'order',
       fulfillmentType: fulfillment === 'pickup' ? 'PICKUP' : 'DELIVERY',
-      customerDetails: { name: customerName, email: customerEmail, mobile: customerPhone },
+      customerDetails: {
+        name: customerName,
+        email: customerEmail,
+        mobile: customerPhone || '',
+      },
       shippingAddress: fulfillment === 'delivery' ? shippingAddr : undefined,
       pickupDetails:
-        fulfillment === 'pickup'
+        fulfillment === 'pickup' && selectedPickupStore
           ? {
-              storeName: 'Dubai Mall',
-              storeAddress: 'Dubai Mall, Ground Floor',
+              storeName: selectedPickupStore.name,
+              storeAddress: selectedPickupStore.address,
               pickupSlot: pickupSlot ? `${pickupSlot.date} ${pickupSlot.time}` : undefined,
             }
           : undefined,
@@ -100,7 +139,7 @@ function CheckoutPageInner() {
         return row;
       }),
     };
-  }, [flow, items, user, guestInfo, address, fulfillment, pickupSlot, coupon, giftCard]);
+  }, [flow, items, user, guestInfo, address, fulfillment, pickupSlot, selectedPickupStore, coupon, giftCard, savedAddresses]);
 
   if (items.length === 0) {
     return (
@@ -132,14 +171,17 @@ function CheckoutPageInner() {
     addr: Address | null,
     method: FulfillmentMethod,
     slot?: PickupSlot,
-    guestContact?: { name: string; email: string }
+    guestContact?: { name: string; email: string },
+    pickupStore?: PickupStoreOption
   ) {
     setAddress(addr);
     setFulfillment(method);
     setPickupSlot(slot);
+    setSelectedPickupStore(method === 'pickup' ? pickupStore ?? null : null);
     if (guestContact && effectiveIsGuest) {
       continueAsGuest({ name: guestContact.name, email: guestContact.email, phone: addr?.phone ?? '' });
     }
+    resetStripeCheckout();
     setFlow(2);
   }
 
@@ -301,7 +343,14 @@ function CheckoutPageInner() {
                   style={{ backgroundColor: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.2)' }}
                 >
                   {fulfillment === 'pickup'
-                    ? <><Store size={13} style={{ color: '#C9A84C' }} /> Store Pickup — Dubai Mall</>
+                    ? (
+                      <>
+                        <Store size={13} style={{ color: '#C9A84C' }} />
+                        {' '}
+                        Store Pickup
+                        {selectedPickupStore ? ` — ${selectedPickupStore.name}` : ''}
+                      </>
+                    )
                     : <><Truck size={13} style={{ color: '#C9A84C' }} /> Home Delivery</>}
                 </div>
               )}
@@ -311,12 +360,15 @@ function CheckoutPageInner() {
               {flow === 1 && (
                 <AddressStep
                   isGuest={effectiveIsGuest}
+                  pickupStores={pickupStores}
                   onNext={handleAddressNext}
                 />
               )}
               {flow === 2 && (
                 <PaymentStep
+                  key={paymentAttempt}
                   intentPayload={intentPayload}
+                  isPickup={fulfillment === 'pickup'}
                   stripeSession={stripeSession}
                   onStripeSession={handleStripeSession}
                   onlineEnabled={platform?.isOnlinePaymentEnabled !== false}
@@ -326,18 +378,30 @@ function CheckoutPageInner() {
                     if (method === 'cod') setStripeSession(null);
                     setFlow(3);
                   }}
-                  onBack={() => setFlow(1)}
+                  onBack={() => {
+                    resetStripeCheckout();
+                    setFlow(1);
+                  }}
                 />
               )}
               {flow === 3 && paymentMethod === 'stripe' && stripeSession && stripePromise ? (
-                <Elements stripe={stripePromise} options={amoriaStripeElementsOptions(stripeSession.clientSecret)}>
+                <Elements
+                  key={stripeSession.clientSecret}
+                  stripe={stripePromise}
+                  options={amoriaStripeElementsOptions(stripeSession.clientSecret)}
+                >
                   <ReviewStep
+                    key={stripeSession.paymentIntentId}
                     address={address}
                     paymentMethod={paymentMethod}
                     stripePaymentIntentId={stripeSession.paymentIntentId}
                     fulfillmentMethod={fulfillment}
                     pickupSlot={pickupSlot}
-                    onBack={() => setFlow(2)}
+                    selectedPickupStore={selectedPickupStore}
+                    onBack={() => {
+                      resetStripeCheckout();
+                      setFlow(2);
+                    }}
                     guestInfo={guestInfo}
                   />
                 </Elements>
@@ -347,6 +411,7 @@ function CheckoutPageInner() {
                   paymentMethod={paymentMethod}
                   fulfillmentMethod={fulfillment}
                   pickupSlot={pickupSlot}
+                  selectedPickupStore={selectedPickupStore}
                   onBack={() => setFlow(2)}
                   guestInfo={guestInfo}
                 />

@@ -20,7 +20,7 @@ export interface StripeIntentResult {
 export interface OrderStripeIntentPayload {
   kind: 'order';
   fulfillmentType: 'DELIVERY' | 'PICKUP';
-  customerDetails: { name: string; email: string; mobile: string };
+  customerDetails: { name: string; email: string; mobile?: string };
   shippingAddress?: {
     fullAddress: string;
     city: string;

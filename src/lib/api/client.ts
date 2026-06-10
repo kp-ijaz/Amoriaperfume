@@ -250,21 +250,21 @@ export interface OrderPaymentIntentResult {
 
 export async function apiCreateOrderPaymentIntent(
   orderId: string,
-  options?: { token?: string | null; email?: string }
+  token?: string | null
 ): Promise<ApiResponse<OrderPaymentIntentResult>> {
   return apiFetch(
     `/api/orders/${encodeURIComponent(orderId)}/payment-intent`,
     {
       method: 'POST',
-      body: JSON.stringify(options?.email ? { email: options.email } : {}),
+      body: JSON.stringify({}),
     },
-    options?.token
+    token
   );
 }
 
 export async function apiCompleteOrderPayment(
   orderId: string,
-  data: { stripePaymentIntentId: string; email?: string },
+  data: { stripePaymentIntentId: string },
   token?: string | null
 ): Promise<ApiResponse<ApiOrder>> {
   return apiFetch(
@@ -279,17 +279,19 @@ export async function apiCompleteOrderPayment(
 
 export async function apiDownloadOrderInvoice(
   orderId: string,
-  options?: { token?: string | null; email?: string; filename?: string }
+  options?: { token?: string | null; filename?: string }
 ): Promise<void> {
   const apiBase = getApiBase();
-  const params = new URLSearchParams();
-  if (options?.email) params.set('email', options.email.trim().toLowerCase());
-  const query = params.toString();
-  const path = `/api/orders/${encodeURIComponent(orderId)}/invoice${query ? `?${query}` : ''}`;
+  const path = `/api/orders/${encodeURIComponent(orderId)}/invoice`;
 
-  const headers: Record<string, string> = {};
   const authToken = options?.token ?? getStoredToken();
-  if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
+  if (!authToken) {
+    throw new Error('Sign in or verify your email on My Orders to download the invoice.');
+  }
+
+  const headers: Record<string, string> = {
+    Authorization: `Bearer ${authToken}`,
+  };
 
   const res = await fetch(`${apiBase}${path}`, { headers });
   if (!res.ok) {

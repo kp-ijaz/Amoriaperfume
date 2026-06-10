@@ -41,12 +41,12 @@ export default function ContactPage() {
               Get in Touch
             </h2>
             <div className="space-y-5">
-              <a href="https://wa.me/971501234567" className="flex items-center gap-3 group">
+              <a href="tel:+971501234567" className="flex items-center gap-3 group">
                 <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: 'rgba(26,10,46,0.08)' }}>
                   <MessageCircle size={18} style={{ color: 'var(--color-amoria-accent)' }} />
                 </div>
                 <div>
-                  <p className="text-xs uppercase tracking-wider" style={{ color: 'var(--color-amoria-text-muted)' }}>WhatsApp</p>
+                  <p className="text-xs uppercase tracking-wider" style={{ color: 'var(--color-amoria-text-muted)' }}>Phone</p>
                   <p className="text-sm font-medium group-hover:opacity-80" style={{ color: 'var(--color-amoria-text)' }}>+971 50 123 4567</p>
                 </div>
               </a>

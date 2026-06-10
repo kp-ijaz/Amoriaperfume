@@ -11,7 +11,8 @@ import {
 } from 'lucide-react';
 import { useOrderById, useOrdersByEmail } from '@/lib/hooks/useApiOrders';
 import { ApiOrder } from '@/lib/api/types';
-import { apiTrackGuestOrder } from '@/lib/api/client';
+import { apiTrackGuestOrder, getGuestOrdersToken } from '@/lib/api/client';
+import { useAuthToken } from '@/lib/hooks/useAuthToken';
 import { OrderPaymentRetryPanel } from '@/components/account/OrderPaymentRetryPanel';
 import { OrderInvoiceDownloadButton } from '@/components/account/OrderInvoiceDownloadButton';
 import { formatCurrency } from '@/lib/utils/formatCurrency';
@@ -57,7 +58,15 @@ const STATUS_BADGE: Record<string, { bg: string; color: string }> = {
 
 // ─── Single order timeline ────────────────────────────────────────────────────
 
-function OrderTimeline({ order, onOrderUpdated }: { order: ApiOrder; onOrderUpdated?: () => void }) {
+function OrderTimeline({
+  order,
+  authToken,
+  onOrderUpdated,
+}: {
+  order: ApiOrder;
+  authToken?: string | null;
+  onOrderUpdated?: () => void;
+}) {
   const paymentFailed =
     order.payment?.paymentMethod === 'ONLINE' && order.payment?.paymentStatus === 'FAILED';
   const status = paymentFailed
@@ -108,7 +117,7 @@ function OrderTimeline({ order, onOrderUpdated }: { order: ApiOrder; onOrderUpda
 
       <OrderPaymentRetryPanel
         order={order}
-        guestEmail={order.customerDetails?.email}
+        authToken={authToken}
         onSuccess={() => onOrderUpdated?.()}
       />
 
@@ -191,7 +200,7 @@ function OrderTimeline({ order, onOrderUpdated }: { order: ApiOrder; onOrderUpda
               <OrderInvoiceDownloadButton
                 orderId={order._id}
                 invoiceNumber={order.invoiceNumber}
-                guestEmail={order.customerDetails?.email}
+                authToken={authToken}
               />
             </div>
           ) : null}
@@ -332,6 +341,14 @@ function OrderRow({ order, onSelect }: { order: ApiOrder; onSelect: (o: ApiOrder
 type SearchMode = 'orderId' | 'email';
 
 function TrackOrderContent() {
+  const authToken = useAuthToken();
+  const [guestToken, setGuestToken] = useState<string | null>(null);
+  const effectiveAuthToken = authToken || guestToken;
+
+  useEffect(() => {
+    setGuestToken(getGuestOrdersToken());
+  }, []);
+
   const searchParams  = useSearchParams();
   const paramOrderId  = searchParams.get('orderId') ?? '';
   const paramEmail    = searchParams.get('email') ?? '';
@@ -535,6 +552,7 @@ function TrackOrderContent() {
               )}
               <OrderTimeline
                 order={selectedOrder ?? singleOrder!}
+                authToken={effectiveAuthToken}
                 onOrderUpdated={() => refreshDisplayedOrder(selectedOrder ?? singleOrder!)}
               />
               <div className="mt-8 flex flex-wrap gap-3">

@@ -220,7 +220,6 @@ function OrderCard({
           <OrderPaymentRetryPanel
             order={order}
             authToken={authToken || guestToken}
-            guestEmail={!authToken && !guestToken ? order.customerDetails?.email : undefined}
             onSuccess={onRefresh}
           />
 
@@ -232,7 +231,6 @@ function OrderCard({
                 orderId={order._id}
                 invoiceNumber={order.invoiceNumber}
                 authToken={authToken || guestToken}
-                guestEmail={!authToken && !guestToken ? order.customerDetails?.email : undefined}
               />
             ) : null}
             <Link

@@ -7,6 +7,16 @@ export function normalizeCheckoutMobile(phone: string): string {
   return raw.replace(/\s+/g, '');
 }
 
+/** Pick the first candidate with at least 10 digits (ignores empty profile phones). */
+export function resolveCheckoutPhone(...candidates: (string | null | undefined)[]): string {
+  for (const candidate of candidates) {
+    const normalized = normalizeCheckoutMobile(candidate ?? '');
+    const digits = normalized.replace(/\D/g, '');
+    if (digits.length >= 10) return normalized;
+  }
+  return '';
+}
+
 export function shippingPincode(postcode?: string | null): string {
   return String(postcode ?? '').trim();
 }

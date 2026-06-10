@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, useElements, useStripe } from '@stripe/react-stripe-js';
@@ -25,12 +26,16 @@ export function orderNeedsPaymentRetry(order: ApiOrder) {
   );
 }
 
+function authRequiredMessage(message: string) {
+  const lower = message.toLowerCase();
+  return lower.includes('authorization') || lower.includes('not authorized');
+}
+
 type RetryFormProps = {
   order: ApiOrder;
   clientSecret: string;
   paymentIntentId: string;
   authToken?: string | null;
-  guestEmail?: string;
   onSuccess: () => void;
 };
 
@@ -39,7 +44,6 @@ function OrderPaymentRetryForm({
   clientSecret,
   paymentIntentId,
   authToken,
-  guestEmail,
   onSuccess,
 }: RetryFormProps) {
   const stripe = useStripe();
@@ -52,6 +56,10 @@ function OrderPaymentRetryForm({
       toast.error('Payment system is not ready. Please try again.');
       return;
     }
+    if (!authToken) {
+      toast.error('Sign in or verify your email on My Orders to complete payment.');
+      return;
+    }
 
     setLoading(true);
     try {
@@ -60,7 +68,7 @@ function OrderPaymentRetryForm({
         throw new Error(submitResult.error.message ?? 'Payment validation failed');
       }
 
-      const customerEmail = order.customerDetails?.email || guestEmail || '';
+      const customerEmail = order.customerDetails?.email || '';
       const confirmResult = await stripe.confirmPayment({
         elements,
         clientSecret,
@@ -78,10 +86,7 @@ function OrderPaymentRetryForm({
 
       const res = await apiCompleteOrderPayment(
         order._id,
-        {
-          stripePaymentIntentId: paymentIntentId,
-          email: guestEmail,
-        },
+        { stripePaymentIntentId: paymentIntentId },
         authToken
       );
 
@@ -104,7 +109,7 @@ function OrderPaymentRetryForm({
       <button
         type="button"
         onClick={handlePayNow}
-        disabled={loading || !formReady || !stripe || !elements}
+        disabled={loading || !formReady || !stripe || !elements || !authToken}
         className="w-full py-3 text-sm font-bold tracking-wider uppercase transition-all disabled:opacity-60"
         style={{ backgroundColor: '#C9A84C', color: '#1A0A2E' }}
       >
@@ -117,11 +122,10 @@ function OrderPaymentRetryForm({
 type PanelProps = {
   order: ApiOrder;
   authToken?: string | null;
-  guestEmail?: string;
   onSuccess: () => void;
 };
 
-export function OrderPaymentRetryPanel({ order, authToken, guestEmail, onSuccess }: PanelProps) {
+export function OrderPaymentRetryPanel({ order, authToken, onSuccess }: PanelProps) {
   const [storedGuestToken, setStoredGuestToken] = useState<string | null>(null);
   const [publishableKey, setPublishableKey] = useState<string | null>(null);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
@@ -143,6 +147,15 @@ export function OrderPaymentRetryPanel({ order, authToken, guestEmail, onSuccess
   useEffect(() => {
     if (!orderNeedsPaymentRetry(order)) return;
 
+    if (!effectiveToken) {
+      setIntentError('');
+      setPublishableKey(null);
+      setClientSecret(null);
+      setPaymentIntentId(null);
+      setLoadingIntent(false);
+      return;
+    }
+
     let cancelled = false;
     setLoadingIntent(true);
     setIntentError('');
@@ -151,7 +164,7 @@ export function OrderPaymentRetryPanel({ order, authToken, guestEmail, onSuccess
       try {
         const [configRes, intentRes] = await Promise.all([
           apiGetStripeConfig(),
-          apiCreateOrderPaymentIntent(order._id, { token: effectiveToken, email: guestEmail }),
+          apiCreateOrderPaymentIntent(order._id, effectiveToken),
         ]);
         if (cancelled) return;
         if (!configRes.success || !configRes.data?.publishableKey) {
@@ -165,7 +178,12 @@ export function OrderPaymentRetryPanel({ order, authToken, guestEmail, onSuccess
         setPaymentIntentId(intentRes.data.paymentIntentId);
       } catch (err) {
         if (!cancelled) {
-          setIntentError(err instanceof Error ? err.message : 'Could not load payment form');
+          const message = err instanceof Error ? err.message : 'Could not load payment form';
+          setIntentError(
+            authRequiredMessage(message)
+              ? 'Sign in or verify your email on My Orders to complete payment.'
+              : message
+          );
         }
       } finally {
         if (!cancelled) setLoadingIntent(false);
@@ -175,7 +193,7 @@ export function OrderPaymentRetryPanel({ order, authToken, guestEmail, onSuccess
     return () => {
       cancelled = true;
     };
-  }, [order._id, effectiveToken, guestEmail, order.payment?.paymentStatus, order.orderStatus]);
+  }, [order._id, effectiveToken, order.payment?.paymentStatus, order.orderStatus]);
 
   if (!orderNeedsPaymentRetry(order)) return null;
 
@@ -196,12 +214,26 @@ export function OrderPaymentRetryPanel({ order, authToken, guestEmail, onSuccess
         </div>
       </div>
 
-      {loadingIntent ? (
+      {!effectiveToken ? (
+        <p className="text-xs" style={{ color: '#6B6B6B' }}>
+          <Link href="/account/orders" className="underline" style={{ color: '#C9A84C' }}>
+            Sign in or verify your email on My Orders
+          </Link>{' '}
+          to complete payment securely.
+        </p>
+      ) : loadingIntent ? (
         <p className="text-xs" style={{ color: '#A89880' }}>
           Loading secure payment form…
         </p>
       ) : intentError ? (
-        <p className="text-xs text-red-600">{intentError}</p>
+        <div className="space-y-2">
+          <p className="text-xs text-red-600">{intentError}</p>
+          {authRequiredMessage(intentError) ? (
+            <Link href="/account/orders" className="text-xs underline" style={{ color: '#C9A84C' }}>
+              Go to My Orders
+            </Link>
+          ) : null}
+        </div>
       ) : stripePromise && clientSecret && paymentIntentId ? (
         <Elements stripe={stripePromise} options={amoriaStripeElementsOptions(clientSecret)}>
           <OrderPaymentRetryForm
@@ -209,7 +241,6 @@ export function OrderPaymentRetryPanel({ order, authToken, guestEmail, onSuccess
             clientSecret={clientSecret}
             paymentIntentId={paymentIntentId}
             authToken={effectiveToken}
-            guestEmail={guestEmail}
             onSuccess={onSuccess}
           />
         </Elements>

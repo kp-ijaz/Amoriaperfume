@@ -11,6 +11,9 @@ export default function OrderConfirmationPage() {
   const isPickup      = searchParams.get('type') === 'pickup';
   const pickupDate    = searchParams.get('date') ?? '';
   const pickupTime    = searchParams.get('time') ?? '';
+  const storeName     = searchParams.get('storeName') ?? '';
+  const storeAddress  = searchParams.get('storeAddress') ?? '';
+  const storeHours    = searchParams.get('storeHours') ?? '';
 
   // Read real orderId from ReviewStep redirect; fall back to a placeholder
   const rawOrderId  = searchParams.get('orderId') ?? '';
@@ -88,7 +91,9 @@ export default function OrderConfirmationPage() {
           >
             <div className="flex items-center gap-2 mb-3">
               <Store size={16} style={{ color: '#C9A84C' }} />
-              <p className="text-sm font-bold" style={{ color: '#1A0A2E' }}>Store Pickup — Dubai Mall</p>
+              <p className="text-sm font-bold" style={{ color: '#1A0A2E' }}>
+                Store Pickup{storeName ? ` — ${storeName}` : ''}
+              </p>
             </div>
 
             {(pickupDate || pickupTime) && (
@@ -109,8 +114,8 @@ export default function OrderConfirmationPage() {
             )}
 
             <div className="space-y-1.5 text-xs" style={{ color: '#6B6B6B' }}>
-              <p>📍 Dubai Mall, Ground Floor, Perfume Wing — Unit G-47</p>
-              <p>🕐 Hours: 10:00 AM – 10:00 PM daily</p>
+              {storeAddress ? <p>📍 {storeAddress}</p> : null}
+              {storeHours ? <p>🕐 Hours: {storeHours}</p> : null}
               <p>📋 Please bring your order number and a valid Emirates ID</p>
             </div>
 
@@ -211,11 +216,13 @@ export default function OrderConfirmationPage() {
                   Order Ready for Pickup!
                 </p>
                 <p className="text-sm font-medium text-white leading-snug">
-                  Your order #{orderNumber} is ready at Dubai Mall.
+                  Your order #{orderNumber} is ready{storeName ? ` at ${storeName}` : ' for pickup'}.
                 </p>
-                <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.5)' }}>
-                  Ground Floor, Perfume Wing — Unit G-47
-                </p>
+                {storeAddress ? (
+                  <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.5)' }}>
+                    {storeAddress}
+                  </p>
+                ) : null}
 
                 <p className="text-xs mt-2" style={{ color: 'rgba(255,255,255,0.55)' }}>
                   Check your email for pickup instructions.

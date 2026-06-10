@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { getReturnDetail, RETURN_STATUS_LABELS } from '@/lib/api/returns';
+import { getReturnDetail, RETURN_STATUS_LABELS, type ReturnRequest } from '@/lib/api/returns';
 import { useReturnAuthToken } from '@/lib/hooks/useReturns';
 
 const statusColors: Record<string, string> = {
@@ -17,15 +17,39 @@ const statusColors: Record<string, string> = {
   CLOSED: '#6b7280',
 };
 
-function formatDate(iso?: string) {
-  if (!iso) return '—';
-  return new Date(iso).toLocaleDateString('en-AE', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+function hasPickupTracking(pickup?: ReturnRequest['pickup']) {
+  return Boolean(
+    pickup?.courierName?.trim() ||
+      pickup?.trackingId?.trim() ||
+      pickup?.scheduledAt ||
+      pickup?.address?.trim()
+  );
+}
+
+function hasReplacementTracking(
+  shipment?: ReturnRequest['replacementShipment'],
+  replacementOrder?: ReturnRequest['replacementOrder']
+) {
+  return Boolean(
+    shipment?.courierName?.trim() ||
+      shipment?.trackingId?.trim() ||
+      shipment?.shippedAt ||
+      shipment?.deliveredAt ||
+      replacementOrder?.courierName?.trim() ||
+      replacementOrder?.trackingId?.trim()
+  );
+}
+
+function TrackingRow({ label, value }: { label: string; value?: string | null }) {
+  if (!value?.trim()) return null;
+  return (
+    <div className="flex flex-wrap gap-x-2 text-sm" style={{ color: 'var(--color-amoria-text)' }}>
+      <span className="font-medium" style={{ color: 'var(--color-amoria-text-muted)' }}>
+        {label}:
+      </span>
+      <span>{value}</span>
+    </div>
+  );
 }
 
 export default function ReturnDetailPage() {
@@ -79,6 +103,17 @@ export default function ReturnDetailPage() {
   }
 
   const color = statusColors[data.status] ?? '#6b7280';
+  const pickup = data.pickup;
+  const replacementShipment = data.replacementShipment;
+  const replacementOrder = data.replacementOrder;
+  const replacementCourier =
+    replacementShipment?.courierName?.trim() ||
+    replacementOrder?.courierName?.trim() ||
+    '';
+  const replacementTracking =
+    replacementShipment?.trackingId?.trim() ||
+    replacementOrder?.trackingId?.trim() ||
+    '';
 
   return (
     <div className="max-w-3xl mx-auto px-4 pb-10">
@@ -182,41 +217,96 @@ export default function ReturnDetailPage() {
           </div>
         </section>
 
-        {data.replacementShipment?.trackingId ? (
+        {hasPickupTracking(pickup) || hasReplacementTracking(replacementShipment, replacementOrder) ? (
           <section className="border bg-white p-4" style={{ borderColor: 'var(--color-amoria-border)' }}>
-            <h2 className="text-sm font-semibold mb-2 uppercase tracking-wide" style={{ color: 'var(--color-amoria-primary)' }}>
-              Replacement shipment
+            <h2 className="text-sm font-semibold mb-3 uppercase tracking-wide" style={{ color: 'var(--color-amoria-primary)' }}>
+              Tracking
             </h2>
-            <p className="text-sm" style={{ color: 'var(--color-amoria-text)' }}>
-              {data.replacementShipment.courierName || 'Courier'} · Tracking: {data.replacementShipment.trackingId}
-            </p>
-            {data.replacementShipment.shippedAt ? (
-              <p className="text-xs mt-1" style={{ color: 'var(--color-amoria-text-muted)' }}>
-                Shipped {formatDate(data.replacementShipment.shippedAt)}
-              </p>
-            ) : null}
+            <div className="space-y-4">
+              {hasPickupTracking(pickup) ? (
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-wide mb-2" style={{ color: 'var(--color-amoria-text-muted)' }}>
+                    Return pickup
+                  </p>
+                  <div className="space-y-1">
+                    <TrackingRow label="Courier" value={pickup?.courierName} />
+                    <TrackingRow label="Tracking ID" value={pickup?.trackingId} />
+                    {pickup?.scheduledAt ? (
+                      <TrackingRow label="Scheduled" value={formatDate(pickup.scheduledAt)} />
+                    ) : null}
+                    <TrackingRow label="Pickup address" value={pickup?.address} />
+                    <TrackingRow label="Instructions" value={pickup?.instructions} />
+                  </div>
+                </div>
+              ) : null}
+
+              {hasReplacementTracking(replacementShipment, replacementOrder) ? (
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-wide mb-2" style={{ color: 'var(--color-amoria-text-muted)' }}>
+                    Replacement delivery
+                  </p>
+                  <div className="space-y-1">
+                    {replacementOrder?.orderId ? (
+                      <TrackingRow label="Replacement order" value={replacementOrder.orderId} />
+                    ) : null}
+                    <TrackingRow label="Courier" value={replacementCourier} />
+                    <TrackingRow label="Tracking ID" value={replacementTracking} />
+                    {replacementShipment?.shippedAt ? (
+                      <TrackingRow label="Shipped" value={formatDate(replacementShipment.shippedAt)} />
+                    ) : null}
+                    {replacementShipment?.deliveredAt ? (
+                      <TrackingRow label="Delivered" value={formatDate(replacementShipment.deliveredAt)} />
+                    ) : null}
+                    {replacementOrder?.orderStatus ? (
+                      <TrackingRow label="Status" value={RETURN_STATUS_LABELS[replacementOrder.orderStatus] ?? replacementOrder.orderStatus} />
+                    ) : null}
+                  </div>
+                </div>
+              ) : null}
+            </div>
           </section>
         ) : null}
 
-        {data.pickup?.scheduledAt || data.pickup?.trackingId ? (
+        {data.statusHistory?.length ? (
           <section className="border bg-white p-4" style={{ borderColor: 'var(--color-amoria-border)' }}>
-            <h2 className="text-sm font-semibold mb-2 uppercase tracking-wide" style={{ color: 'var(--color-amoria-primary)' }}>
-              Pickup
+            <h2 className="text-sm font-semibold mb-3 uppercase tracking-wide" style={{ color: 'var(--color-amoria-primary)' }}>
+              Status updates
             </h2>
-            {data.pickup.courierName ? (
-              <p className="text-sm" style={{ color: 'var(--color-amoria-text)' }}>
-                {data.pickup.courierName}
-                {data.pickup.trackingId ? ` · ${data.pickup.trackingId}` : ''}
-              </p>
-            ) : null}
-            {data.pickup.scheduledAt ? (
-              <p className="text-xs mt-1" style={{ color: 'var(--color-amoria-text-muted)' }}>
-                Scheduled {formatDate(data.pickup.scheduledAt)}
-              </p>
-            ) : null}
+            <ul className="space-y-3">
+              {[...(data.statusHistory || [])].reverse().map((entry, index) => (
+                <li
+                  key={`${entry.status}-${entry.updatedAt}-${index}`}
+                  className="border-l-2 pl-3"
+                  style={{ borderColor: 'var(--color-amoria-border)' }}
+                >
+                  <p className="text-sm font-medium" style={{ color: 'var(--color-amoria-text)' }}>
+                    {RETURN_STATUS_LABELS[entry.status] ?? entry.status}
+                  </p>
+                  <p className="text-xs" style={{ color: 'var(--color-amoria-text-muted)' }}>
+                    {formatDate(entry.updatedAt)}
+                  </p>
+                  {entry.note?.trim() ? (
+                    <p className="text-xs mt-1" style={{ color: 'var(--color-amoria-text-muted)' }}>
+                      {entry.note}
+                    </p>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
           </section>
         ) : null}
       </div>
     </div>
   );
+}
+
+function formatDate(iso?: string) {
+  if (!iso) return '—';
+  return new Date(iso).toLocaleDateString('en-AE', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
 }
