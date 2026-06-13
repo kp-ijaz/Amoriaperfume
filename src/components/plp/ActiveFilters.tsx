@@ -24,9 +24,6 @@ export function ActiveFilters({ filters, onRemove, onClearAll }: ActiveFiltersPr
   if (filters.concentrations?.length) {
     filters.concentrations.forEach((v) => chips.push({ key: 'concentrations', value: v, label: v }));
   }
-  if (filters.fragranceFamilies?.length) {
-    filters.fragranceFamilies.forEach((v) => chips.push({ key: 'fragranceFamilies', value: v, label: v }));
-  }
   if (filters.discountOnly) {
     chips.push({ key: 'discountOnly', value: 'true', label: 'On Sale' });
   }
@@ -38,6 +35,9 @@ export function ActiveFilters({ filters, onRemove, onClearAll }: ActiveFiltersPr
   }
   if (filters.bestSeller) {
     chips.push({ key: 'bestSeller', value: 'true', label: 'Best sellers' });
+  }
+  if (filters.availability === 'online') {
+    chips.push({ key: 'availability', value: 'online', label: 'Online only deals' });
   }
   if (filters.trending) {
     chips.push({ key: 'trending', value: 'true', label: 'Trending' });

@@ -22,9 +22,9 @@ export interface Product {
   brand: string;
   brandSlug?: string;
   category: string;
+  categoryId?: string;
   categorySlug?: string;
   gender: 'men' | 'women' | 'unisex';
-  fragranceFamily: string;
   concentration: string;
   topNotes: string[];
   heartNotes: string[];

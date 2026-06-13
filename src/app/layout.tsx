@@ -27,6 +27,11 @@ export const metadata: Metadata = {
   description:
     'Discover authentic Arabian perfumes, attars, and oud fragrances. Shop Swiss Arabian, Ajmal, Rasasi, Lattafa, and Armaf. Free delivery on orders over AED 200.',
   keywords: 'perfume UAE, oud, attar, Arabian fragrance, Dubai perfume, Swiss Arabian, Ajmal',
+  icons: {
+    icon: '/brand-icon.png',
+    shortcut: '/brand-icon.png',
+    apple: '/brand-icon.png',
+  },
   openGraph: {
     title: 'Amoria — Premium Arabian Fragrances',
     description: 'Authentic Arabian perfumes, attars, and oud fragrances delivered across UAE.',

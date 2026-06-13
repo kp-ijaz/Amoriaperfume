@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@/lib/store';
 import { openCartDrawer, openMobileNav } from '@/lib/store/uiSlice';
-import { Heart, ShoppingBag, User, Search, Menu, ChevronDown, X, LogOut, Package, Settings, Truck, Pencil, Check, MapPin } from 'lucide-react';
+import { Heart, ShoppingBag, User, Search, Menu, ChevronDown, X, LogOut, Package, Settings, Truck, Pencil, Check, MapPin, RotateCcw } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { formatCurrency } from '@/lib/utils/formatCurrency';
 import { useSearchProducts } from '@/lib/hooks/useApiProducts';
@@ -122,6 +122,7 @@ const NAV_LINK_KEYS: { key: string; href: string; isRed?: boolean }[] = [
   { key: 'navCollections',       href: '/collections' },
   { key: 'navBrandInspiration',  href: '/brand-inspiration' },
   { key: 'navGiftSets',          href: '/gift-sets' },
+  { key: 'navGiftCards',         href: '/gift-cards' },
   { key: 'navBakhoor',           href: '/bakhoor' },
   { key: 'navSale',              href: '/products?sale=true', isRed: true },
 ];
@@ -523,6 +524,9 @@ export function Header() {
                       </div>
                       <Link href="/account/orders" className="flex items-center gap-2.5 px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors" style={{ color: 'var(--color-amoria-text)' }}>
                         <Package size={14} style={{ color: '#A89880' }} /> {t('myOrders')}
+                      </Link>
+                      <Link href="/account/returns" className="flex items-center gap-2.5 px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors" style={{ color: 'var(--color-amoria-text)' }}>
+                        <RotateCcw size={14} style={{ color: '#A89880' }} /> My Returns
                       </Link>
                       <Link href="/track-order" className="flex items-center gap-2.5 px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors" style={{ color: 'var(--color-amoria-text)' }}>
                         <Truck size={14} style={{ color: '#A89880' }} /> {t('trackOrder')}

@@ -19,6 +19,12 @@ export default function ProductsPage() {
       brandSlug: searchParams.get('brand') ?? undefined,
       newArrival: searchParams.get('newArrival') === 'true' ? true : undefined,
       bestSeller: searchParams.get('bestSeller') === 'true' ? true : undefined,
+      availability: (() => {
+        const v = searchParams.get('availability');
+        return v === 'online' || v === 'offline' || v === 'both'
+          ? (v as 'online' | 'offline' | 'both')
+          : undefined;
+      })(),
       trending: searchParams.get('trending') === 'true' ? true : undefined,
       featured: searchParams.get('featured') === 'true' ? true : undefined,
       limitedOffer: searchParams.get('limitedOffer') === 'true' ? true : undefined,

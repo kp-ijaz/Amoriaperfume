@@ -3,11 +3,12 @@
 import { useQuery } from '@tanstack/react-query';
 import { apiGetProducts } from '@/lib/api/client';
 import { adaptProducts } from '@/lib/api/adapters';
+import { HOME_PRODUCTS_PER_ROW } from '@/lib/hooks/usePublicCms';
 import { ProductSection } from './ProductSection';
 
 export function MostViewedSection() {
   const { data: products = [], isLoading } = useQuery({
-    queryKey: ['products', 'most-viewed', 5],
+    queryKey: ['products', 'most-viewed', HOME_PRODUCTS_PER_ROW],
     queryFn: async () => {
       const viewed = await apiGetProducts({ sort: 'most_viewed', limit: 20 });
       const raw =
@@ -23,7 +24,7 @@ export function MostViewedSection() {
         }
       }
 
-      return items.slice(0, 5);
+      return items.slice(0, HOME_PRODUCTS_PER_ROW);
     },
     staleTime: 2 * 60 * 1000,
   });
@@ -39,7 +40,7 @@ export function MostViewedSection() {
       showSkeleton={isLoading}
       theme="light"
       sectionNumber="03"
-      columns={5}
+      columns={HOME_PRODUCTS_PER_ROW}
     />
   );
 }

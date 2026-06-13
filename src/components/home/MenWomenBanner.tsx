@@ -208,9 +208,8 @@ function GenderPanel({
 }
 
 export function MenWomenBanner() {
-  const { data: pool = [] } = useProductsByLimit(24);
-  const menProducts = pool.filter((p) => p.gender === 'men').slice(0, 4);
-  const womenProducts = pool.filter((p) => p.gender === 'women').slice(0, 4);
+  const { data: menProducts = [] } = useProductsByLimit(4, { featured: true, gender: 'men' });
+  const { data: womenProducts = [] } = useProductsByLimit(4, { featured: true, gender: 'women' });
   const { data: panels = [] } = usePublicCoverImages('men_women_banner');
   const menPanel = panels[0];
   const womenPanel = panels[1];

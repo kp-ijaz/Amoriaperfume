@@ -90,6 +90,9 @@ export function LimitedOfferPopup() {
               top: '50%',
               left: '50%',
               width: 'min(580px, calc(100vw - 24px))',
+              maxHeight: 'calc(100vh - 48px)',
+              display: 'flex',
+              flexDirection: 'column',
               borderRadius: '4px',
               overflow: 'hidden',
               boxShadow: '0 40px 100px rgba(0,0,0,0.85), 0 0 0 1px rgba(201,168,76,0.2)',
@@ -99,11 +102,11 @@ export function LimitedOfferPopup() {
             exit={{   opacity: 0, scale: 0.9, x: '-50%', y: 'calc(-50% + 24px)' }}
             transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
           >
-            <div className="flex flex-col sm:flex-row" style={{ minHeight: 0 }}>
+            <div className="flex flex-col sm:flex-row min-h-0 flex-1 overflow-hidden">
 
               {/* LEFT — dark offer panel */}
               <div
-                className="relative flex flex-col items-center justify-center text-center px-8 py-10 sm:w-[220px] sm:flex-shrink-0"
+                className="relative flex flex-col items-center justify-center text-center px-8 py-10 sm:w-[220px] sm:flex-shrink-0 sm:self-stretch"
                 style={{
                   background: 'linear-gradient(175deg, #1A0A2E 0%, #0D0A08 100%)',
                   borderRight: '1px solid rgba(201,168,76,0.15)',
@@ -148,8 +151,8 @@ export function LimitedOfferPopup() {
               </div>
 
               {/* RIGHT — products + CTA */}
-              <div className="flex flex-col flex-1" style={{ backgroundColor: '#FAF6EE' }}>
-                <div className="flex items-center justify-between px-5 py-3.5" style={{ borderBottom: '1px solid rgba(26,10,46,0.08)' }}>
+              <div className="flex flex-col flex-1 min-h-0 min-w-0" style={{ backgroundColor: '#FAF6EE' }}>
+                <div className="flex-shrink-0 flex items-center justify-between px-5 py-3.5" style={{ borderBottom: '1px solid rgba(26,10,46,0.08)' }}>
                   <div>
                     <p className="text-base font-semibold leading-none" style={{ fontFamily: 'var(--font-heading)', color: '#1A0A2E', letterSpacing: '0.06em' }}>AMORIA</p>
                     <p className="text-[9px] tracking-[0.2em] uppercase mt-0.5" style={{ color: '#A89880' }}>Flash Sale Picks</p>
@@ -164,7 +167,7 @@ export function LimitedOfferPopup() {
                   </button>
                 </div>
 
-                <div className="flex-1">
+                <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain">
                   {deals.map((product, i) => {
                     const imageUrl = product.images.find((img) => img.isPrimary)?.url ?? product.images[0]?.url;
                     const variant  = product.variants[0];
@@ -215,7 +218,7 @@ export function LimitedOfferPopup() {
                   })}
                 </div>
 
-                <div className="px-5 py-4 flex flex-col gap-2.5" style={{ borderTop: '1px solid rgba(26,10,46,0.08)' }}>
+                <div className="flex-shrink-0 px-5 py-4 flex flex-col gap-2.5" style={{ borderTop: '1px solid rgba(26,10,46,0.08)' }}>
                   <Link
                     href="/products?limitedOffer=true"
                     onClick={dismiss}

@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Camera, MessageCircle, Phone, Mail, MapPin } from 'lucide-react';
+import { Camera, Phone, Mail, MapPin } from 'lucide-react';
 import { useLanguage } from '@/lib/context/LanguageContext';
 
 export function Footer() {
@@ -19,6 +19,7 @@ export function Footer() {
   const serviceLinks = [
     { labelKey: 'footerLinkFAQs' as const,      href: '/faqs' },
     { labelKey: 'footerLinkTrackOrder' as const, href: '/track-order' },
+    { labelKey: 'footerLinkGiftCards' as const, href: '/gift-cards' },
     { labelKey: 'footerLinkReturns' as const,    href: '/faqs#returns' },
     { labelKey: 'footerLinkContact' as const,    href: '/contact' },
     { labelKey: 'footerLinkPrivacy' as const,    href: '/privacy' },
@@ -52,15 +53,6 @@ export function Footer() {
                 style={{ backgroundColor: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.7)' }}
               >
                 <Camera size={16} />
-              </a>
-              <a
-                href="https://wa.me/971501234567"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-9 h-9 rounded-full flex items-center justify-center transition-colors"
-                style={{ backgroundColor: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.7)' }}
-              >
-                <MessageCircle size={16} />
               </a>
               <a
                 href="https://tiktok.com/@amoria.ae"
@@ -121,7 +113,7 @@ export function Footer() {
             </h4>
             <ul className="space-y-3 mb-6">
               <li>
-                <a href="https://wa.me/971501234567" className="flex items-start gap-2.5 text-sm" style={{ color: 'rgba(255,255,255,0.55)' }}>
+                <a href="tel:+971501234567" className="flex items-start gap-2.5 text-sm" style={{ color: 'rgba(255,255,255,0.55)' }}>
                   <Phone size={14} className="mt-0.5 flex-shrink-0" />
                   +971 50 123 4567
                 </a>

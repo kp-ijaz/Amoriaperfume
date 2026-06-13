@@ -32,7 +32,7 @@ export function useAuth() {
       firstName: apiUser.name.split(' ')[0] ?? apiUser.name,
       lastName: apiUser.name.split(' ').slice(1).join(' ') ?? '',
       email: apiUser.email,
-      phone: '',
+      phone: apiUser.phone ?? '',
     };
     setStoredToken(accessToken);
     dispatch(login({ user: authUser, token: accessToken }));

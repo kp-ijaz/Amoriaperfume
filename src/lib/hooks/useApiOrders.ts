@@ -12,19 +12,24 @@ import {
 } from '@/lib/api/client';
 import { ApiOrder, CreateOrderRequest } from '@/lib/api/types';
 import { useAuth } from '@/lib/hooks/useAuth';
+import { useAuthToken } from '@/lib/hooks/useAuthToken';
 
 export function useOrders() {
-  const { token } = useAuth();
+  const { isLoggedIn, user } = useAuth();
+  const authToken = useAuthToken();
   return useQuery({
-    queryKey: ['orders', 'me', !!token],
+    queryKey: ['orders', 'me', user?.id, !!authToken],
     queryFn: async (): Promise<ApiOrder[]> => {
-      if (!token) return [];
-      const res = await apiGetOrders(token);
-      if (!res.success) return [];
+      if (!authToken) return [];
+      const res = await apiGetOrders(authToken);
+      if (!res.success) {
+        throw new Error(res.message ?? 'Failed to load orders');
+      }
       return Array.isArray(res.data) ? res.data : [];
     },
-    enabled: !!token,
-    staleTime: 2 * 60 * 1000,
+    enabled: isLoggedIn && !!authToken,
+    staleTime: 30_000,
+    refetchOnMount: 'always',
   });
 }
 

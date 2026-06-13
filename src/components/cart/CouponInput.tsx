@@ -2,59 +2,91 @@
 
 import { useState } from 'react';
 import { useCart } from '@/lib/hooks/useCart';
-import { useValidatePromotion } from '@/lib/hooks/useApiPromotions';
+import { useAuth } from '@/lib/hooks/useAuth';
+import { apiValidatePromotion } from '@/lib/api/client';
 import { formatCurrency } from '@/lib/utils/formatCurrency';
 import { Tag, X } from 'lucide-react';
 import { toast } from 'sonner';
 
+function couponDisplayLabel(coupon: {
+  label?: string;
+  kind: 'percent_off' | 'fixed_off' | 'free_shipping';
+  code: string;
+}) {
+  if (coupon.label) return coupon.label;
+  if (coupon.kind === 'free_shipping') return 'Free shipping';
+  if (coupon.kind === 'fixed_off') return 'Fixed discount';
+  return coupon.code;
+}
+
 export function CouponInput() {
   const [code, setCode] = useState('');
   const [error, setError] = useState('');
-  const { coupon, applyCoupon, removeCoupon, subtotal } = useCart();
-  const validateCode = useValidatePromotion();
+  const [applying, setApplying] = useState(false);
+  const { items, coupon, applyCoupon, removeCoupon, subtotal } = useCart();
+  const { token, user, guestInfo } = useAuth();
 
-  function handleApply() {
+  async function handleApply() {
     setError('');
-    const result = validateCode(code.trim(), subtotal);
-
-    if (!result.valid) {
-      setError(result.message);
+    const trimmed = code.trim();
+    if (!trimmed) {
+      setError('Enter a coupon code.');
+      return;
+    }
+    if (!items.length) {
+      setError('Add items to your cart before applying a coupon.');
       return;
     }
 
-    const { promo } = result;
+    const lineItems = items.map((item) => {
+      const price = item.variant.salePrice ?? item.variant.price;
+      return {
+        productId: item.product.id,
+        categoryId: item.product.categoryId ?? null,
+        quantity: item.quantity,
+        lineTotal: price * item.quantity,
+      };
+    });
 
-    // Map API promo kind → internal CouponCode type
-    let discount = 0;
-    let type: 'percentage' | 'freeshipping' = 'percentage';
+    setApplying(true);
+    try {
+      const res = await apiValidatePromotion(
+        {
+          code: trimmed,
+          subtotal,
+          lineItems,
+          customerEmail: user?.email || guestInfo?.email,
+        },
+        token
+      );
 
-    if (promo.kind === 'free_shipping') {
-      type = 'freeshipping';
-      discount = 0;
-    } else if (promo.kind === 'percent_off') {
-      type = 'percentage';
-      discount = promo.value / 100; // e.g. 10% → 0.10
-    } else if (promo.kind === 'fixed_off') {
-      // Treat fixed as percentage based on current subtotal
-      type = 'percentage';
-      discount = subtotal > 0 ? (promo.value / subtotal) : 0;
+      if (!res.success || !res.data) {
+        setError(res.message || 'Invalid coupon code.');
+        return;
+      }
+
+      const data = res.data;
+      applyCoupon({
+        code: data.code,
+        kind: data.kind,
+        discountAmount: data.discountAmount,
+        freeShipping: data.freeShipping,
+        label: data.label,
+      });
+
+      toast.success(
+        data.freeShipping
+          ? 'Free shipping applied!'
+          : data.discountAmount > 0
+            ? `Coupon applied! You saved ${formatCurrency(data.discountAmount)}`
+            : 'Coupon applied!'
+      );
+      setCode('');
+    } catch {
+      setError('Unable to validate coupon. Please try again.');
+    } finally {
+      setApplying(false);
     }
-
-    applyCoupon({ code: promo.code, discount, type });
-
-    const savings =
-      type === 'freeshipping'
-        ? 0
-        : promo.kind === 'fixed_off'
-        ? promo.value
-        : subtotal * discount;
-
-    toast.success(
-      type === 'freeshipping'
-        ? 'Free shipping applied!'
-        : `Coupon applied! You saved ${formatCurrency(savings)}`
-    );
-    setCode('');
   }
 
   if (coupon) {
@@ -69,13 +101,14 @@ export function CouponInput() {
             {coupon.code}
           </span>
           <span className="text-xs" style={{ color: 'var(--color-amoria-text-muted)' }}>
-            {coupon.type === 'freeshipping'
-              ? 'Free Shipping'
-              : `${(coupon.discount * 100).toFixed(0)}% off`}
+            {couponDisplayLabel(coupon)}
           </span>
         </div>
         <button
-          onClick={() => { removeCoupon(); toast.success('Coupon removed'); }}
+          onClick={() => {
+            removeCoupon();
+            toast.success('Coupon removed');
+          }}
           className="hover:opacity-70"
         >
           <X size={14} style={{ color: 'var(--color-amoria-text-muted)' }} />
@@ -91,17 +124,21 @@ export function CouponInput() {
           type="text"
           placeholder="Enter coupon code"
           value={code}
-          onChange={(e) => { setCode(e.target.value); setError(''); }}
-          onKeyDown={(e) => e.key === 'Enter' && handleApply()}
+          onChange={(e) => {
+            setCode(e.target.value);
+            setError('');
+          }}
+          onKeyDown={(e) => e.key === 'Enter' && !applying && handleApply()}
           className="flex-1 px-3 py-2.5 text-sm border outline-none"
           style={{ borderColor: error ? '#ef4444' : 'var(--color-amoria-border)' }}
         />
         <button
           onClick={handleApply}
-          className="px-4 py-2.5 text-sm font-semibold whitespace-nowrap"
+          disabled={applying}
+          className="px-4 py-2.5 text-sm font-semibold whitespace-nowrap disabled:opacity-60"
           style={{ backgroundColor: 'var(--color-amoria-primary)', color: 'white' }}
         >
-          Apply
+          {applying ? 'Applying...' : 'Apply'}
         </button>
       </div>
       {error && <p className="text-xs mt-1 text-red-500">{error}</p>}

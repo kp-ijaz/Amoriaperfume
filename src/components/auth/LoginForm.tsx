@@ -48,11 +48,6 @@ export function LoginForm() {
         Sign in to your Amoria account
       </p>
 
-      {/* Demo hint */}
-      <div className="mb-5 p-3 text-xs rounded-sm" style={{ backgroundColor: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.25)', color: '#6B4A1E' }}>
-        <strong>Demo:</strong> ahmed@demo.com / password123
-      </div>
-
       {serverError && (
         <div className="mb-4 p-3 flex items-start gap-2 text-sm rounded-sm" style={{ backgroundColor: '#fef2f2', border: '1px solid #fecaca', color: '#dc2626' }}>
           <AlertCircle size={15} className="mt-0.5 flex-shrink-0" />
@@ -103,7 +98,7 @@ export function LoginForm() {
       </div>
 
       <Link
-        href={`/checkout${redirectTo === '/checkout' ? '' : ''}`}
+        href="/"
         className="w-full py-3 text-sm font-medium border flex items-center justify-center gap-2 hover:bg-gray-50 transition-colors"
         style={{ borderColor: 'var(--color-amoria-border)', color: 'var(--color-amoria-text)' }}
       >

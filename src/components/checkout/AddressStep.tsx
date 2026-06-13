@@ -9,6 +9,7 @@ import {
   Info, Mail, User, Phone, Building2, ChevronRight,
 } from 'lucide-react';
 import { Address } from '@/types/user';
+import { PublicPickupStore } from '@/lib/api/public';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { useCreateUserAddress, useUserAddresses } from '@/lib/hooks/useApiAddresses';
 
@@ -36,13 +37,6 @@ type PickupGuestData = z.infer<typeof pickupGuestSchema>;
 
 const EMIRATES = ['Dubai', 'Abu Dhabi', 'Sharjah', 'Ajman', 'Ras Al Khaimah', 'Fujairah', 'Umm Al Quwain'];
 
-const STORE = {
-  name:    'Amoria Flagship Store',
-  address: 'Shop 14, Level 1, Dubai Mall, Downtown Dubai',
-  hours:   'Daily 10:00 AM – 10:00 PM',
-  mapLink: 'https://maps.google.com/?q=Dubai+Mall+Downtown+Dubai',
-};
-
 const ALL_SLOTS = [
   '10:00 AM – 11:00 AM', '11:00 AM – 12:00 PM',
   '12:00 PM – 1:00 PM',  '1:00 PM – 2:00 PM',
@@ -57,14 +51,17 @@ const ALL_SLOTS = [
 export type FulfillmentMethod = 'delivery' | 'pickup';
 export interface PickupSlot { date: string; time: string; }
 export interface GuestPickupContact { name: string; email: string; }
+export type PickupStoreOption = PublicPickupStore;
 
 interface AddressStepProps {
   isGuest?: boolean;
+  pickupStores?: PickupStoreOption[];
   onNext: (
     address: Address | null,
     method: FulfillmentMethod,
     pickupSlot?: PickupSlot,
     guestContact?: GuestPickupContact,
+    pickupStore?: PickupStoreOption,
   ) => void;
 }
 
@@ -99,7 +96,7 @@ function SectionDivider({ label }: { label: string }) {
 
 /* ─── Main Component ──────────────────────────────────────── */
 
-export function AddressStep({ isGuest = false, onNext }: AddressStepProps) {
+export function AddressStep({ isGuest = false, pickupStores = [], onNext }: AddressStepProps) {
   const { isLoggedIn, user }            = useAuth();
   const { data: savedAddresses = [] }   = useUserAddresses();
   const createAddress                   = useCreateUserAddress();
@@ -110,7 +107,16 @@ export function AddressStep({ isGuest = false, onNext }: AddressStepProps) {
   /* Pickup slot state */
   const [selectedDate, setSelectedDate] = useState<'today' | 'tomorrow'>('today');
   const [selectedSlot, setSelectedSlot] = useState<string>('');
-  const [slotError, setSlotError]       = useState(false);
+  const [slotError, setSlotError] = useState(false);
+  const [selectedStoreId, setSelectedStoreId] = useState<string>('');
+
+  useEffect(() => {
+    if (pickupStores.length === 1) {
+      setSelectedStoreId(pickupStores[0].id);
+    } else if (!pickupStores.some((s) => s.id === selectedStoreId)) {
+      setSelectedStoreId('');
+    }
+  }, [pickupStores, selectedStoreId]);
 
   /* Forms */
   const deliveryForm = useForm<DeliveryFormData>({
@@ -184,6 +190,9 @@ export function AddressStep({ isGuest = false, onNext }: AddressStepProps) {
   }
 
   async function handlePickupSubmit() {
+    if (!selectedStoreId) return;
+    const selectedStore = pickupStores.find((s) => s.id === selectedStoreId);
+    if (!selectedStore) return;
     if (!selectedSlot) { setSlotError(true); return; }
     const slot: PickupSlot = {
       date: selectedDate === 'today' ? `Today, ${fmtDate(today)}` : `Tomorrow, ${fmtDate(tomorrow)}`,
@@ -193,9 +202,9 @@ export function AddressStep({ isGuest = false, onNext }: AddressStepProps) {
       const valid = await pickupGuestForm.trigger();
       if (!valid) return;
       const g = pickupGuestForm.getValues();
-      onNext(null, 'pickup', slot, { name: g.name, email: g.email });
+      onNext(null, 'pickup', slot, { name: g.name, email: g.email }, selectedStore);
     } else {
-      onNext(null, 'pickup', slot);
+      onNext(null, 'pickup', slot, undefined, selectedStore);
     }
   }
 
@@ -220,7 +229,7 @@ export function AddressStep({ isGuest = false, onNext }: AddressStepProps) {
               id: 'delivery' as const,
               Icon: Truck,
               title: 'Home Delivery',
-              sub: 'Arrives in 3–5 days',
+              sub: 'Arrives in 1–2 days',
               subColor: '#A89880',
             },
             {
@@ -488,41 +497,88 @@ export function AddressStep({ isGuest = false, onNext }: AddressStepProps) {
       {method === 'pickup' && (
         <div className="space-y-6">
 
-          {/* Store info card */}
-          <div className="p-5" style={{ backgroundColor: '#FAF8F5', border: '1px solid #E8E3DC' }}>
-            <div className="flex items-start gap-3.5 mb-4">
-              <div
-                className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0"
-                style={{ backgroundColor: 'rgba(201,168,76,0.12)', border: '1px solid rgba(201,168,76,0.3)' }}
-              >
-                <Store size={20} style={{ color: '#C9A84C' }} />
-              </div>
-              <div>
-                <p className="font-bold text-sm" style={{ color: '#1A0A2E' }}>{STORE.name}</p>
-                <p className="text-xs mt-0.5" style={{ color: '#6B6B6B' }}>
-                  Show your Order ID at the counter to collect
-                </p>
-              </div>
-            </div>
+          {pickupStores.length === 0 ? (
             <div
-              className="space-y-2.5 text-sm pt-4"
-              style={{ borderTop: '1px solid #E8E3DC' }}
+              className="p-5 text-sm"
+              style={{ backgroundColor: '#FAF8F5', border: '1px solid #E8E3DC', color: '#6B6B6B' }}
             >
-              <div className="flex items-start gap-2.5">
-                <MapPin size={14} className="mt-0.5 flex-shrink-0" style={{ color: '#C9A84C' }} />
-                <div>
-                  <p style={{ color: '#1C1C1C' }}>{STORE.address}</p>
-                  <a href={STORE.mapLink} target="_blank" rel="noreferrer" className="text-[11px] underline underline-offset-2 mt-0.5 block" style={{ color: '#C9A84C' }}>
-                    View on Google Maps →
-                  </a>
+              Store pickup is temporarily unavailable. Please choose home delivery or try again later.
+            </div>
+          ) : (
+            <>
+              <div>
+                <SectionDivider label="Pickup Location" />
+                <div className="space-y-3">
+                  {pickupStores.map((store) => {
+                    const selected = selectedStoreId === store.id;
+                    return (
+                      <label
+                        key={store.id}
+                        className="block p-5 cursor-pointer transition-all duration-150"
+                        style={{
+                          backgroundColor: selected ? 'rgba(26,10,46,0.03)' : '#FAF8F5',
+                          border: selected ? '2px solid #1A0A2E' : '1px solid #E8E3DC',
+                        }}
+                      >
+                        <input
+                          type="radio"
+                          name="pickup-store"
+                          value={store.id}
+                          checked={selected}
+                          onChange={() => setSelectedStoreId(store.id)}
+                          className="sr-only"
+                        />
+                        <div className="flex items-start gap-3.5 mb-4">
+                          <div
+                            className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0"
+                            style={{ backgroundColor: 'rgba(201,168,76,0.12)', border: '1px solid rgba(201,168,76,0.3)' }}
+                          >
+                            <Store size={20} style={{ color: '#C9A84C' }} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between gap-2">
+                              <p className="font-bold text-sm" style={{ color: '#1A0A2E' }}>{store.name}</p>
+                              {selected && <CheckCircle2 size={14} style={{ color: '#C9A84C' }} />}
+                            </div>
+                            <p className="text-xs mt-0.5" style={{ color: '#6B6B6B' }}>
+                              Show your Order ID at the counter to collect
+                            </p>
+                          </div>
+                        </div>
+                        <div
+                          className="space-y-2.5 text-sm pt-4"
+                          style={{ borderTop: '1px solid #E8E3DC' }}
+                        >
+                          <div className="flex items-start gap-2.5">
+                            <MapPin size={14} className="mt-0.5 flex-shrink-0" style={{ color: '#C9A84C' }} />
+                            <div>
+                              <p style={{ color: '#1C1C1C' }}>{store.address}</p>
+                              {store.mapLink ? (
+                                <a
+                                  href={store.mapLink}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="text-[11px] underline underline-offset-2 mt-0.5 block"
+                                  style={{ color: '#C9A84C' }}
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  View on Google Maps →
+                                </a>
+                              ) : null}
+                            </div>
+                          </div>
+                          {store.hours ? (
+                            <div className="flex items-center gap-2.5">
+                              <Clock size={14} className="flex-shrink-0" style={{ color: '#C9A84C' }} />
+                              <p style={{ color: '#1C1C1C' }}>{store.hours}</p>
+                            </div>
+                          ) : null}
+                        </div>
+                      </label>
+                    );
+                  })}
                 </div>
               </div>
-              <div className="flex items-center gap-2.5">
-                <Clock size={14} className="flex-shrink-0" style={{ color: '#C9A84C' }} />
-                <p style={{ color: '#1C1C1C' }}>{STORE.hours}</p>
-              </div>
-            </div>
-          </div>
 
           {/* Guest contact details (ONLY for guest users) */}
           {isGuest && (
@@ -671,7 +727,7 @@ export function AddressStep({ isGuest = false, onNext }: AddressStepProps) {
                   {selectedDate === 'today' ? `Today, ${fmtDate(today)}` : `Tomorrow, ${fmtDate(tomorrow)}`} · {selectedSlot}
                 </p>
                 <p className="text-xs mt-0.5" style={{ color: '#6B6B6B' }}>
-                  You&apos;ll receive a WhatsApp notification when your order is ready.
+                  You&apos;ll receive an email when your order is ready for pickup.
                 </p>
               </div>
             </div>
@@ -688,11 +744,14 @@ export function AddressStep({ isGuest = false, onNext }: AddressStepProps) {
 
           <button
             onClick={handlePickupSubmit}
-            className="w-full py-3.5 text-sm font-bold tracking-wide flex items-center justify-center gap-2"
+            disabled={pickupStores.length === 0 || !selectedStoreId}
+            className="w-full py-3.5 text-sm font-bold tracking-wide flex items-center justify-center gap-2 disabled:opacity-50"
             style={{ backgroundColor: '#1A0A2E', color: '#C9A84C' }}
           >
             Continue to Payment <ChevronRight size={15} />
           </button>
+            </>
+          )}
         </div>
       )}
     </div>

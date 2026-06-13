@@ -81,7 +81,7 @@ export function FilterSidebar({ filters, availableFilters, onFilterChange, onCle
 
       <Accordion multiple defaultValue={['category', 'brand', 'gender']}>
         <AccordionItem value="category">
-          <AccordionTrigger className="text-sm py-3">Category</AccordionTrigger>
+          <AccordionTrigger className="text-sm py-3">Fragrance Family</AccordionTrigger>
           <AccordionContent>
             <CheckboxGroup
               options={availableFilters.categories}
@@ -109,17 +109,6 @@ export function FilterSidebar({ filters, availableFilters, onFilterChange, onCle
               options={availableFilters.genders}
               selected={filters.genders as string[]}
               onChange={(v) => onFilterChange('genders', v as ('men' | 'women' | 'unisex')[])}
-            />
-          </AccordionContent>
-        </AccordionItem>
-
-        <AccordionItem value="fragrance">
-          <AccordionTrigger className="text-sm py-3">Fragrance Family</AccordionTrigger>
-          <AccordionContent>
-            <CheckboxGroup
-              options={availableFilters.fragranceFamilies}
-              selected={filters.fragranceFamilies as string[]}
-              onChange={(v) => onFilterChange('fragranceFamilies', v)}
             />
           </AccordionContent>
         </AccordionItem>

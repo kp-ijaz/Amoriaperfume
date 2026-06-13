@@ -5,9 +5,10 @@ import { toast } from 'sonner';
 import { useProfile } from '@/lib/hooks/useProfile';
 import { useAuth } from '@/lib/hooks/useAuth';
 import Link from 'next/link';
+import { ProfileAddressSection } from '@/components/account/ProfileAddressSection';
 
 export default function ProfilePage() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoggedIn } = useAuth();
   const { data: user, isLoading, updateProfile } = useProfile();
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
@@ -112,6 +113,8 @@ export default function ProfilePage() {
           {updateProfile.isPending ? 'Saving...' : 'Save Changes'}
         </button>
       </form>
+
+      {isLoggedIn && <ProfileAddressSection />}
 
       <form onSubmit={handlePassword} className="border p-6 bg-white" style={{ borderColor: 'var(--color-amoria-border)' }}>
         <h2 className="font-semibold mb-4" style={{ color: 'var(--color-amoria-primary)' }}>Change Password</h2>

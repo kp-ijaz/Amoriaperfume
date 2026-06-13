@@ -42,7 +42,6 @@ export interface ApiProductFilters {
   brandSlug?: string;
   genders?: string[];
   priceRange?: [number, number];
-  fragranceFamilies?: string[];
   discountOnly?: boolean;
   minRating?: number;
   concentrations?: string[];
@@ -50,6 +49,7 @@ export interface ApiProductFilters {
   collection?: string;
   featured?: boolean;
   bestSeller?: boolean;
+  availability?: 'online' | 'offline' | 'both';
   trending?: boolean;
   newArrival?: boolean;
   limitedOffer?: boolean;
@@ -67,7 +67,6 @@ export interface AvailableProductFilters {
   categories: FilterOption[];
   brands: FilterOption[];
   genders: FilterOption[];
-  fragranceFamilies: FilterOption[];
   concentrations: FilterOption[];
 }
 
@@ -115,11 +114,6 @@ function applyClientFilters(products: Product[], filters: ApiProductFilters): Pr
       const price = p.variants[0]?.salePrice ?? p.variants[0]?.price ?? 0;
       return price >= min && price <= max;
     });
-  }
-  if (filters.fragranceFamilies?.length) {
-    result = result.filter((p) =>
-      filters.fragranceFamilies!.some((f) => p.fragranceFamily.toLowerCase().includes(f.toLowerCase()))
-    );
   }
   if (filters.discountOnly) result = result.filter((p) => p.isOnSale);
   if (filters.minRating) result = result.filter((p) => p.rating >= filters.minRating!);
@@ -192,6 +186,7 @@ export function useApiProducts(initialFilters: ApiProductFilters = {}) {
     collection: filters.collection || undefined,
     featured: filters.featured,
     bestSeller: filters.bestSeller,
+    availability: filters.availability,
     trending: filters.trending,
     newArrival: filters.newArrival,
     limitedOffer: filters.limitedOffer,
@@ -203,6 +198,7 @@ export function useApiProducts(initialFilters: ApiProductFilters = {}) {
     filters.collection,
     filters.featured,
     filters.bestSeller,
+    filters.availability,
     filters.trending,
     filters.newArrival,
     filters.limitedOffer,
@@ -225,7 +221,6 @@ export function useApiProducts(initialFilters: ApiProductFilters = {}) {
     categories: buildFacetOptions(allProducts, applyClientFilters(allProducts, { ...filters, categories: undefined }), (p) => p.category),
     brands:     buildFacetOptions(allProducts, applyClientFilters(allProducts, { ...filters, brands: undefined }),     (p) => p.brand),
     genders:    buildFacetOptions(allProducts, applyClientFilters(allProducts, { ...filters, genders: undefined }),    (p) => p.gender, (v) => GENDER_LABELS[v] ?? v),
-    fragranceFamilies: buildFacetOptions(allProducts, applyClientFilters(allProducts, { ...filters, fragranceFamilies: undefined }), (p) => p.fragranceFamily),
     concentrations:    buildFacetOptions(allProducts, applyClientFilters(allProducts, { ...filters, concentrations: undefined }),    (p) => p.concentration),
   }), [allProducts, filters]);
 

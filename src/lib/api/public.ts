@@ -1,5 +1,5 @@
 import { ApiResponse } from './types';
-import { API_BASE } from './client';
+import { getApiBase } from './resolveApiBase';
 
 const STOREFRONT_SLUG = 'default';
 
@@ -8,9 +8,11 @@ function publicQuery(extra?: Record<string, string>) {
   return `?${q.toString()}`;
 }
 
-async function publicFetch<T>(path: string, options?: RequestInit): Promise<T> {
-  if (!API_BASE) throw new Error('NEXT_PUBLIC_API_BASE_URL is not set.');
-  const res = await fetch(`${API_BASE}${path}`, options);
+async function publicFetch<T>(path: string, options?: RequestInit): Promise<T> {  const apiBase = getApiBase();
+  if (!apiBase && typeof window === 'undefined') {
+    throw new Error('NEXT_PUBLIC_API_BASE_URL is not set.');
+  }
+  const res = await fetch(`${apiBase}${path}`, options);
   return res.json() as Promise<T>;
 }
 
@@ -25,6 +27,7 @@ export interface PublicCoverImage {
   redirectUrl?: string;
   order?: number;
   enabled?: boolean;
+  fixedKind?: 'best_seller' | 'online_deals';
   collection?: {
     _id: string;
     name: string;
@@ -60,13 +63,32 @@ export interface PublicPlatformSnippet {
   isOnlinePaymentEnabled?: boolean;
   deliveryCharge?: number;
   deliveryThreshold?: number;
+  defaultReturnPeriodDays?: number;
+  taxInclusive?: boolean;
+  taxPercent?: number;
+}
+
+export interface PublicHomepageLayoutRow {
+  key: string;
+  enabled?: boolean;
+}
+
+export interface PublicPickupStore {
+  id: string;
+  name: string;
+  address: string;
+  mapLink?: string;
+  hours?: string;
+  sortOrder?: number;
 }
 
 export interface PublicBootstrap {
   storefront: { id: string; slug: string; name: string };
   homepageSections: PublicHomepageSection[];
+  homepageLayout?: PublicHomepageLayoutRow[];
   devMode: { enabled: boolean; title?: string; message?: string };
   platform: PublicPlatformSnippet;
+  pickupStores?: PublicPickupStore[];
 }
 
 export interface PublicContentPage {
@@ -136,7 +158,7 @@ export async function apiSubmitContact(data: {
 }
 
 export async function apiGetAuthMe(token: string): Promise<ApiResponse<{ _id: string; name: string; email: string; phone?: string }>> {
-  const res = await fetch(`${API_BASE}/api/auth/me`, {
+  const res = await fetch(`${getApiBase()}/api/auth/me`, {
     headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
   });
   return res.json();
@@ -146,8 +168,7 @@ export async function apiUpdateAuthMe(
   token: string,
   data: { name?: string; phone?: string; currentPassword?: string; newPassword?: string }
 ): Promise<ApiResponse<{ _id: string; name: string; email: string; phone?: string }>> {
-  const res = await fetch(`${API_BASE}/api/auth/me`, {
-    method: 'PUT',
+  const res = await fetch(`${getApiBase()}/api/auth/me`, {    method: 'PUT',
     headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
   });
@@ -159,5 +180,16 @@ export async function apiRequestPasswordReset(email: string): Promise<ApiRespons
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email }),
+  });
+}
+
+export async function apiResetPassword(
+  token: string,
+  newPassword: string
+): Promise<ApiResponse<{ message: string }>> {
+  return publicFetch('/api/auth/reset-password', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token, newPassword }),
   });
 }

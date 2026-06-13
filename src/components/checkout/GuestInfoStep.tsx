@@ -101,7 +101,7 @@ export function GuestInfoStep({ onNext, defaultValues, isEditing = false }: Gues
             />
           </div>
           {errors.phone && <p className="text-xs text-red-500 mt-1">{errors.phone.message}</p>}
-          <p className="text-[10px] mt-1" style={{ color: '#A89880' }}>For delivery updates via WhatsApp</p>
+          <p className="text-[10px] mt-1" style={{ color: '#A89880' }}>For delivery updates</p>
         </div>
 
         <button

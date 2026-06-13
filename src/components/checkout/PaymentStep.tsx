@@ -1,17 +1,118 @@
 'use client';
 
-import { useState } from 'react';
-import { CreditCard, Smartphone, Banknote } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { Banknote, CreditCard, Loader2 } from 'lucide-react';
+import { apiCreateStripeIntent, apiGetStripeConfig, OrderStripeIntentPayload } from '@/lib/api/payments';
+import { isPromotionError } from '@/lib/utils/promotionErrors';
 
-interface PaymentStepProps {
-  onNext: (method: 'card' | 'applepay' | 'cod') => void;
-  onBack: () => void;
+export interface StripeCheckoutState {
+  publishableKey: string;
+  clientSecret: string;
+  paymentIntentId: string;
 }
 
-export function PaymentStep({ onNext, onBack }: PaymentStepProps) {
-  const [method, setMethod] = useState<'card' | 'applepay' | 'cod'>('card');
-  const [otpSent, setOtpSent] = useState(false);
-  const [otp, setOtp] = useState(['', '', '', '']);
+interface PaymentStepProps {
+  intentPayload: OrderStripeIntentPayload | null;
+  isPickup?: boolean;
+  stripeSession: StripeCheckoutState | null;
+  onStripeSession: (session: StripeCheckoutState | null) => void;
+  onNext: (method: 'stripe' | 'cod') => void;
+  onBack: () => void;
+  onlineEnabled: boolean;
+  codEnabled: boolean;
+}
+
+export function PaymentStep({
+  intentPayload,
+  isPickup = false,
+  stripeSession,
+  onStripeSession,
+  onNext,
+  onBack,
+  onlineEnabled,
+  codEnabled,
+}: PaymentStepProps) {
+  const [method, setMethod] = useState<'stripe' | 'cod'>(onlineEnabled ? 'stripe' : 'cod');
+  const [loadingIntent, setLoadingIntent] = useState(false);
+  const [intentError, setIntentError] = useState('');
+  const intentPayloadKey = useMemo(
+    () => (intentPayload ? JSON.stringify(intentPayload) : null),
+    [intentPayload]
+  );
+
+  useEffect(() => {
+    if (method !== 'stripe' || !onlineEnabled) {
+      onStripeSession(null);
+      setLoadingIntent(false);
+      setIntentError('');
+      return;
+    }
+
+    if (!intentPayload) {
+      onStripeSession(null);
+      setLoadingIntent(false);
+      setIntentError(
+        isPickup
+          ? 'Add your name and email on the delivery step before paying online.'
+          : 'Add a valid phone number on the delivery step before paying online.'
+      );
+      return;
+    }
+
+    let cancelled = false;
+    onStripeSession(null);
+    setLoadingIntent(true);
+    setIntentError('');
+
+    (async () => {
+      try {
+        const [configRes, intentRes] = await Promise.all([
+          apiGetStripeConfig(),
+          apiCreateStripeIntent(intentPayload),
+        ]);
+        if (cancelled) return;
+        if (!configRes.success || !configRes.data?.publishableKey) {
+          throw new Error(configRes.message ?? 'Stripe is not configured');
+        }
+        if (!intentRes.success || !intentRes.data?.clientSecret) {
+          throw new Error(intentRes.message ?? 'Could not start payment');
+        }
+        onStripeSession({
+          publishableKey: configRes.data.publishableKey,
+          clientSecret: intentRes.data.clientSecret,
+          paymentIntentId: intentRes.data.paymentIntentId,
+        });
+      } catch (err) {
+        if (!cancelled) {
+          onStripeSession(null);
+          setIntentError(err instanceof Error ? err.message : 'Could not load payment form');
+        }
+      } finally {
+        if (!cancelled) setLoadingIntent(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [method, intentPayloadKey, onlineEnabled, onStripeSession, isPickup]);
+
+  const couponBlocksPayment = isPromotionError(intentError);
+  const paymentIntentError = intentError && !couponBlocksPayment ? intentError : '';
+  const canContinueStripe = !!stripeSession || couponBlocksPayment;
+
+  function handleContinue() {
+    if (method === 'cod') {
+      onStripeSession(null);
+      onNext('cod');
+      return;
+    }
+    if (!stripeSession) {
+      setIntentError('Payment form is not ready yet');
+      return;
+    }
+    onNext('stripe');
+  }
 
   return (
     <div>
@@ -20,131 +121,74 @@ export function PaymentStep({ onNext, onBack }: PaymentStepProps) {
       </h2>
 
       <div className="space-y-3 mb-6">
-        {/* Card */}
-        <div
-          className="border p-4 cursor-pointer transition-colors"
-          style={{
-            borderColor: method === 'card' ? 'var(--color-amoria-primary)' : 'var(--color-amoria-border)',
-            backgroundColor: method === 'card' ? 'rgba(26,10,46,0.03)' : 'white',
-          }}
-          onClick={() => setMethod('card')}
-        >
-          <div className="flex items-center gap-3 mb-3">
-            <input type="radio" checked={method === 'card'} onChange={() => setMethod('card')} />
-            <CreditCard size={20} style={{ color: 'var(--color-amoria-primary)' }} />
-            <span className="font-medium text-sm" style={{ color: 'var(--color-amoria-text)' }}>Credit / Debit Card</span>
-          </div>
-          {method === 'card' && (
-            <div className="space-y-3 ml-6">
-              <input
-                type="text"
-                placeholder="Card Number"
-                maxLength={19}
-                className="w-full border px-3 py-2.5 text-sm outline-none"
-                style={{ borderColor: 'var(--color-amoria-border)' }}
-              />
-              <div className="grid grid-cols-2 gap-3">
-                <input
-                  type="text"
-                  placeholder="MM/YY"
-                  maxLength={5}
-                  className="w-full border px-3 py-2.5 text-sm outline-none"
-                  style={{ borderColor: 'var(--color-amoria-border)' }}
-                />
-                <input
-                  type="text"
-                  placeholder="CVV"
-                  maxLength={3}
-                  className="w-full border px-3 py-2.5 text-sm outline-none"
-                  style={{ borderColor: 'var(--color-amoria-border)' }}
-                />
+        {onlineEnabled && (
+          <div
+            className="border p-4 cursor-pointer transition-colors"
+            style={{
+              borderColor: method === 'stripe' ? 'var(--color-amoria-primary)' : 'var(--color-amoria-border)',
+              backgroundColor: method === 'stripe' ? 'rgba(26,10,46,0.03)' : 'white',
+            }}
+            onClick={() => setMethod('stripe')}
+          >
+            <div className="flex items-center gap-3 mb-3">
+              <input type="radio" checked={method === 'stripe'} onChange={() => setMethod('stripe')} />
+              <CreditCard size={20} style={{ color: 'var(--color-amoria-primary)' }} />
+              <div>
+                <span className="font-medium text-sm" style={{ color: 'var(--color-amoria-text)' }}>
+                  Pay online
+                </span>
+                <p className="text-xs" style={{ color: 'var(--color-amoria-text-muted)' }}>
+                  Card, Apple Pay, or Google Pay
+                </p>
               </div>
-              <input
-                type="text"
-                placeholder="Name on Card"
-                className="w-full border px-3 py-2.5 text-sm outline-none"
-                style={{ borderColor: 'var(--color-amoria-border)' }}
-              />
             </div>
-          )}
-        </div>
-
-        {/* Apple Pay */}
-        <div
-          className="border p-4 cursor-pointer transition-colors flex items-center gap-3"
-          style={{
-            borderColor: method === 'applepay' ? 'var(--color-amoria-primary)' : 'var(--color-amoria-border)',
-            backgroundColor: method === 'applepay' ? 'rgba(26,10,46,0.03)' : 'white',
-          }}
-          onClick={() => setMethod('applepay')}
-        >
-          <input type="radio" checked={method === 'applepay'} onChange={() => setMethod('applepay')} />
-          <Smartphone size={20} style={{ color: 'var(--color-amoria-primary)' }} />
-          <div>
-            <span className="font-medium text-sm" style={{ color: 'var(--color-amoria-text)' }}>Apple Pay</span>
-            <p className="text-xs" style={{ color: 'var(--color-amoria-text-muted)' }}>Touch ID / Face ID required at checkout</p>
+            {method === 'stripe' && (
+              <div className="ml-6 space-y-2">
+                {loadingIntent && (
+                  <p className="text-xs" style={{ color: 'var(--color-amoria-text-muted)' }}>
+                    Preparing secure checkout…
+                  </p>
+                )}
+                {paymentIntentError && <p className="text-xs text-red-500">{paymentIntentError}</p>}
+                {stripeSession && !loadingIntent && !paymentIntentError && (
+                  <p className="text-xs" style={{ color: 'var(--color-amoria-text-muted)' }}>
+                    Enter your card details on the review step.
+                  </p>
+                )}
+              </div>
+            )}
           </div>
-        </div>
+        )}
 
-        {/* COD */}
-        <div
-          className="border p-4 cursor-pointer transition-colors"
-          style={{
-            borderColor: method === 'cod' ? 'var(--color-amoria-primary)' : 'var(--color-amoria-border)',
-            backgroundColor: method === 'cod' ? 'rgba(26,10,46,0.03)' : 'white',
-          }}
-          onClick={() => setMethod('cod')}
-        >
-          <div className="flex items-center gap-3 mb-2">
-            <input type="radio" checked={method === 'cod'} onChange={() => setMethod('cod')} />
-            <Banknote size={20} style={{ color: 'var(--color-amoria-primary)' }} />
-            <div>
-              <span className="font-medium text-sm" style={{ color: 'var(--color-amoria-text)' }}>Cash on Delivery</span>
-              <span className="ml-2 text-xs text-orange-600">+AED 10 fee</span>
+        {codEnabled && (
+          <div
+            className="border p-4 cursor-pointer transition-colors"
+            style={{
+              borderColor: method === 'cod' ? 'var(--color-amoria-primary)' : 'var(--color-amoria-border)',
+              backgroundColor: method === 'cod' ? 'rgba(26,10,46,0.03)' : 'white',
+            }}
+            onClick={() => setMethod('cod')}
+          >
+            <div className="flex items-center gap-3 mb-2">
+              <input type="radio" checked={method === 'cod'} onChange={() => setMethod('cod')} />
+              <Banknote size={20} style={{ color: 'var(--color-amoria-primary)' }} />
+              <div>
+                <span className="font-medium text-sm" style={{ color: 'var(--color-amoria-text)' }}>Cash on Delivery</span>
+                <span className="ml-2 text-xs text-orange-600">+AED 10 fee</span>
+              </div>
             </div>
-          </div>
-          {method === 'cod' && (
-            <div className="ml-6">
-              <p className="text-xs mb-3" style={{ color: 'var(--color-amoria-text-muted)' }}>
-                We&apos;ll send a WhatsApp OTP to confirm your order
+            {method === 'cod' && (
+              <p className="ml-6 text-xs" style={{ color: 'var(--color-amoria-text-muted)' }}>
+                Pay in cash when your order is delivered. You&apos;ll receive order updates by email.
               </p>
-              {!otpSent ? (
-                <button
-                  onClick={(e) => { e.stopPropagation(); setOtpSent(true); }}
-                  className="text-sm font-medium px-4 py-2 border"
-                  style={{ borderColor: 'var(--color-amoria-accent)', color: 'var(--color-amoria-accent)' }}
-                >
-                  Send OTP via WhatsApp
-                </button>
-              ) : (
-                <div>
-                  <p className="text-xs mb-2 text-green-600">OTP sent to your registered number</p>
-                  <div className="flex gap-2">
-                    {otp.map((digit, i) => (
-                      <input
-                        key={i}
-                        type="text"
-                        maxLength={1}
-                        value={digit}
-                        onChange={(e) => {
-                          const newOtp = [...otp];
-                          newOtp[i] = e.target.value;
-                          setOtp(newOtp);
-                        }}
-                        className="w-10 h-10 border text-center text-sm outline-none font-bold"
-                        style={{ borderColor: 'var(--color-amoria-border)' }}
-                      />
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="flex gap-3">
         <button
+          type="button"
           onClick={onBack}
           className="flex-1 py-3 text-sm border font-medium"
           style={{ borderColor: 'var(--color-amoria-border)', color: 'var(--color-amoria-text)' }}
@@ -152,10 +196,13 @@ export function PaymentStep({ onNext, onBack }: PaymentStepProps) {
           Back
         </button>
         <button
-          onClick={() => onNext(method)}
-          className="flex-1 py-3 text-sm font-semibold"
+          type="button"
+          onClick={handleContinue}
+          disabled={method === 'stripe' && (loadingIntent || !canContinueStripe)}
+          className="flex-1 py-3 text-sm font-semibold disabled:opacity-60 flex items-center justify-center gap-2"
           style={{ backgroundColor: 'var(--color-amoria-primary)', color: 'white' }}
         >
+          {method === 'stripe' && loadingIntent && <Loader2 size={16} className="animate-spin" />}
           Continue to Review
         </button>
       </div>

@@ -7,9 +7,9 @@ import wishlistReducer from './wishlistSlice';
 import uiReducer from './uiSlice';
 import authReducer from './authSlice';
 
-const cartPersistConfig     = { key: 'amoria_cart',     storage, whitelist: ['items', 'coupon', 'savedItems'] };
+const cartPersistConfig     = { key: 'amoria_cart',     storage, whitelist: ['items', 'coupon', 'giftCard', 'savedItems'] };
 const wishlistPersistConfig = { key: 'amoria_wishlist', storage, whitelist: ['items'] };
-const authPersistConfig     = { key: 'amoria_auth',     storage, whitelist: ['user', 'isGuest', 'guestInfo'] };
+const authPersistConfig     = { key: 'amoria_auth',     storage, whitelist: ['user', 'token', 'isGuest', 'guestInfo'] };
 
 const rootReducer = combineReducers({
   cart:     persistReducer(cartPersistConfig,     cartReducer),

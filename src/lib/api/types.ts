@@ -72,7 +72,6 @@ export interface ApiProduct {
   limitedOffer?: boolean;
   viewCount?: number;
   published: boolean;
-  fragranceFamily: string;
   gender: 'men' | 'women' | 'unisex';
   concentration: string;
   variants: ApiProductVariant[];
@@ -179,7 +178,10 @@ export interface ApiOrder {
   customerDetails: {
     name: string;
     email: string;
-    phone: string;
+    /** Primary phone field from API */
+    mobile?: string;
+    /** Legacy alias; some orders may only have this */
+    phone?: string;
   };
   shippingAddress?: {
     fullAddress: string;
@@ -201,11 +203,15 @@ export interface ApiOrder {
     paymentStatus: 'PENDING' | 'PAID' | 'FAILED';
     transactionId: string;
   };
-  logistics: {
+  logistics?: {
     trackingId: string;
     courierName: string;
   };
   status?: string;
+  orderStatus?: string;
+  fulfillmentType?: 'DELIVERY' | 'PICKUP';
+  statusHistory?: { status: string; updatedAt?: string }[];
+  invoiceNumber?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -216,14 +222,44 @@ export interface ApiPromotion {
   _id: string;
   name: string;
   code: string;
+  description?: string;
   kind: 'percent_off' | 'fixed_off' | 'free_shipping';
   value: number;
-  minSubtotal: number; // in AED
+  maxDiscountAmount?: number | null;
+  minSubtotal: number;
+  firstOrderOnly?: boolean;
+  applicableCategoryIds?: string[];
+  applicableProductIds?: string[];
+  maxUses?: number | null;
+  usedCount?: number;
   active: boolean;
-  startsAt: string;
-  endsAt: string;
-  createdAt: string;
-  updatedAt: string;
+  startsAt?: string | null;
+  endsAt?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface PromotionValidateLineItem {
+  productId: string;
+  categoryId?: string | null;
+  quantity: number;
+  lineTotal: number;
+}
+
+export interface PromotionValidateRequest {
+  code: string;
+  subtotal: number;
+  lineItems: PromotionValidateLineItem[];
+  customerEmail?: string;
+}
+
+export interface PromotionValidateResult {
+  code: string;
+  kind: 'percent_off' | 'fixed_off' | 'free_shipping';
+  discountAmount: number;
+  freeShipping: boolean;
+  eligibleSubtotal: number;
+  label?: string;
 }
 
 export interface ShippingQuoteRequest {
@@ -249,6 +285,7 @@ export interface ApiAuthUser {
   _id: string;
   name: string;
   email: string;
+  phone?: string;
   role: string;
   isBlocked: boolean;
   createdAt: string;
@@ -266,6 +303,7 @@ export interface ApiLoginResponse {
 export interface CreateOrderRequest {
   fulfillmentType?: 'DELIVERY' | 'PICKUP';
   couponCode?: string;
+  giftCardCode?: string;
   customerDetails: {
     name: string;
     email: string;
@@ -286,6 +324,8 @@ export interface CreateOrderRequest {
     quantity: number;
   }[];
   paymentMethod?: 'COD' | 'ONLINE';
+  stripePaymentIntentId?: string;
+  paymentError?: string;
   pricing?: {
     discount?: number;
     shippingCharge?: number;

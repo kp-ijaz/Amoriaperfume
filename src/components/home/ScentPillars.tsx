@@ -6,7 +6,7 @@ import { motion } from 'framer-motion';
 import { Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatCurrency } from '@/lib/utils/formatCurrency';
-import { useHomeSlotProducts } from '@/lib/hooks/usePublicCms';
+import { HOME_PRODUCTS_PER_ROW, useHomeSlotProducts } from '@/lib/hooks/usePublicCms';
 import { ProductCard } from '@/components/product/ProductCard';
 
 const FALLBACK_INSPIRED = [
@@ -154,8 +154,10 @@ function InspirationCard({
 }
 
 export function BrandInspirations() {
-  const { data: slotData, isLoading } = useHomeSlotProducts('home-scent-pillars', { limit: 5 });
-  const apiProducts = slotData?.products ?? [];
+  const { data: slotData, isLoading } = useHomeSlotProducts('home-scent-pillars', {
+    limit: HOME_PRODUCTS_PER_ROW,
+  });
+  const apiProducts = (slotData?.products ?? []).slice(0, HOME_PRODUCTS_PER_ROW);
 
   return (
     <section
@@ -222,11 +224,11 @@ export function BrandInspirations() {
         </motion.div>
 
         {/* ── Product grid ── */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-5">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-5">
           {apiProducts.length > 0
             ? apiProducts.map((product) => <ProductCard key={product.id} product={product} />)
             : !isLoading &&
-              FALLBACK_INSPIRED.map((product, i) => (
+              FALLBACK_INSPIRED.slice(0, HOME_PRODUCTS_PER_ROW).map((product, i) => (
                 <InspirationCard key={product.id} product={product} index={i} />
               ))}
         </div>
