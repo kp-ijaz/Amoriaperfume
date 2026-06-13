@@ -6,10 +6,11 @@ import { useShippingQuote } from '@/lib/hooks/useApiShipping';
 import { CouponInput } from './CouponInput';
 import { GiftCardInput } from './GiftCardInput';
 import { Separator } from '@/components/ui/separator';
+import type { CheckoutPaymentMethod } from '@/components/checkout/PaymentStep';
 
 interface CartSummaryProps {
   showCheckoutButton?: boolean;
-  paymentMethod?: 'cod' | 'stripe';
+  paymentMethod?: CheckoutPaymentMethod;
   country?: string;
   shippingChargeOverride?: number;
 }
