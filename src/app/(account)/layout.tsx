@@ -2,6 +2,7 @@ import { AnnouncementBar } from '@/components/layout/AnnouncementBar';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { AccountSubNav } from '@/components/account/AccountSubNav';
+import { BottomTabBar } from '@/components/layout/BottomTabBar';
 
 export default function AccountLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -14,7 +15,10 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
         </div>
         {children}
       </main>
-      <Footer />
+      <div className="hidden md:block">
+        <Footer />
+      </div>
+      <BottomTabBar />
     </>
   );
 }

@@ -11,9 +11,46 @@ import Link from 'next/link';
 import { Heart, Plus, Check, Trash2, ArrowRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useLanguage } from '@/lib/context/LanguageContext';
 
 import { Product } from '@/types/product';
+
+const OFFER_COLORS = ['#dc2626', '#16a34a', 'var(--color-amoria-accent)', '#7c3aed', '#ea580c'];
+
+function LiveOffersTicker() {
+  const [activeIdx, setActiveIdx] = useState(0);
+  const { tArr } = useLanguage();
+  const offers = tArr('liveOffers');
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setActiveIdx((i) => (i + 1) % offers.length);
+    }, 3200);
+    return () => clearInterval(timer);
+  }, [offers.length]);
+
+  const text = offers[activeIdx] ?? '';
+  const color = OFFER_COLORS[activeIdx % OFFER_COLORS.length];
+
+  return (
+    <div className="flex items-center justify-center overflow-hidden w-full">
+      <AnimatePresence mode="wait">
+        <motion.span
+          key={activeIdx}
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -6 }}
+          transition={{ duration: 0.35, ease: 'easeInOut' }}
+          className="text-[13px] font-medium truncate text-center"
+          style={{ color }}
+        >
+          {text}
+        </motion.span>
+      </AnimatePresence>
+    </div>
+  );
+}
 
 // Per-card stateful add button — same circular style as ProductCard
 function WishlistAddButton({ product, inCart }: { product: Product; inCart: boolean }) {
@@ -77,6 +114,30 @@ export default function WishlistPage() {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#FAF8F5' }}>
+      {/* Offer ticker */}
+      <div
+        className="border-b"
+        style={{ borderColor: 'var(--color-amoria-border)', backgroundColor: '#FAF8F5' }}
+      >
+        <div className="max-w-7xl mx-auto px-4 lg:px-8 h-8 grid items-center" style={{ gridTemplateColumns: '1fr auto 1fr' }}>
+          <div />
+          <div className="hidden sm:flex w-full">
+            <LiveOffersTicker />
+          </div>
+          <div className="flex sm:hidden w-full justify-center">
+            <div className="overflow-hidden flex-1">
+              <motion.span
+                className="text-[11px] font-medium text-center block truncate"
+                style={{ color: 'var(--color-amoria-accent)' }}
+              >
+                🎁 Special Offers Available
+              </motion.span>
+            </div>
+          </div>
+          <div />
+        </div>
+      </div>
+
       {/* Page header */}
       <div
         className="py-12 px-5"

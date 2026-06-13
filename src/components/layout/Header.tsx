@@ -229,16 +229,14 @@ export function Header() {
             <div className="flex items-center justify-end gap-3">
               <a
                 href="/contact"
-                className="hidden sm:flex items-center gap-1.5 flex-shrink-0 hover:opacity-70 transition-opacity"
+                className="flex items-center gap-1.5 flex-shrink-0 hover:opacity-70 transition-opacity text-[13px] sm:text-sm"
                 style={{ color: 'var(--color-amoria-text-muted)' }}
               >
                 <MapPin size={13} />
-                <span className="text-[13px] font-medium">{t('storeLocator')}</span>
+                <span className="hidden sm:inline font-medium">{t('storeLocator')}</span>
               </a>
               <span className="hidden sm:block w-px h-3 opacity-25" style={{ backgroundColor: 'var(--color-amoria-text-muted)' }} />
-              <div className="hidden sm:block">
-                <LanguageDropdown />
-              </div>
+              <LanguageDropdown />
             </div>
 
           </div>
