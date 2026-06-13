@@ -35,12 +35,19 @@ export interface OrderStripeIntentPayload {
   };
   couponCode?: string;
   giftCardCode?: string;
-  items: {
-    productId: string;
-    variantId?: string;
-    sizeVariantId?: string;
-    quantity: number;
-  }[];
+  items: (
+    | {
+        productId: string;
+        variantId?: string;
+        sizeVariantId?: string;
+        quantity: number;
+      }
+    | {
+        packageType: 'bundle' | 'gift_set';
+        packageId: string;
+        quantity: number;
+      }
+  )[];
 }
 
 export interface GiftCardStripeIntentPayload {
@@ -60,4 +67,48 @@ export async function apiCreateStripeIntent(
     method: 'POST',
     body: JSON.stringify(payload),
   });
+}
+
+export interface TamaraConfig {
+  enabled: boolean;
+  configured: boolean;
+}
+
+export interface TamaraCheckoutResult {
+  checkoutUrl: string;
+  orderId: string;
+  tamaraOrderId?: string;
+}
+
+export async function apiGetTamaraConfig(): Promise<ApiResponse<TamaraConfig>> {
+  return paymentFetch('/api/payments/tamara/config');
+}
+
+export async function apiCreateTamaraCheckout(
+  payload: { orderId: string; email?: string; locale?: 'en_US' | 'ar_AE' },
+  token?: string | null
+): Promise<ApiResponse<TamaraCheckoutResult>> {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (token) headers.Authorization = `Bearer ${token}`;
+  return paymentFetch('/api/payments/tamara/create-checkout', {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(payload),
+  });
+}
+
+export interface TamaraOrderStatus {
+  orderId: string;
+  paymentStatus: string;
+  orderStatus: string;
+  tamaraStatus?: string;
+}
+
+export async function apiGetTamaraOrderStatus(params: {
+  orderId: string;
+  email?: string;
+}): Promise<ApiResponse<TamaraOrderStatus>> {
+  const q = new URLSearchParams({ orderId: params.orderId });
+  if (params.email) q.set('email', params.email);
+  return paymentFetch(`/api/orders/tamara/status?${q.toString()}`);
 }

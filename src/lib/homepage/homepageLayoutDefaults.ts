@@ -9,15 +9,15 @@ export type HomepageLayoutKey =
   | 'men_women'
   | 'brand_inspirations'
   | 'testimonials'
-  | 'instagram'
-  | 'newsletter';
+  | 'instagram';
 
 export type HomepageLayoutRow = {
   key: HomepageLayoutKey;
   enabled?: boolean;
 };
 
-export const DEFAULT_HOMEPAGE_LAYOUT: HomepageLayoutKey[] = [
+/** Canonical section order — kept in sync with backend REORDERABLE_SECTION_KEYS. */
+export const REORDERABLE_HOMEPAGE_LAYOUT_KEYS: HomepageLayoutKey[] = [
   'announcement',
   'new_arrivals',
   'promo_banners',
@@ -29,11 +29,34 @@ export const DEFAULT_HOMEPAGE_LAYOUT: HomepageLayoutKey[] = [
   'brand_inspirations',
   'testimonials',
   'instagram',
-  'newsletter',
 ];
 
+export const DEFAULT_HOMEPAGE_LAYOUT: HomepageLayoutKey[] = [...REORDERABLE_HOMEPAGE_LAYOUT_KEYS];
+
+function insertMissingLayoutKeys(keys: HomepageLayoutKey[]): HomepageLayoutKey[] {
+  const result = [...keys];
+  const seen = new Set(keys);
+
+  for (const key of REORDERABLE_HOMEPAGE_LAYOUT_KEYS) {
+    if (seen.has(key)) continue;
+    const insertAt = REORDERABLE_HOMEPAGE_LAYOUT_KEYS.indexOf(key);
+    let pos = result.length;
+    for (let i = 0; i < result.length; i++) {
+      const idx = REORDERABLE_HOMEPAGE_LAYOUT_KEYS.indexOf(result[i]);
+      if (idx > insertAt) {
+        pos = i;
+        break;
+      }
+    }
+    result.splice(pos, 0, key);
+    seen.add(key);
+  }
+
+  return result;
+}
+
 export function normalizeHomepageLayout(rows: { key: string; enabled?: boolean }[] | undefined | null): HomepageLayoutKey[] {
-  const allowed = new Set<string>(DEFAULT_HOMEPAGE_LAYOUT);
+  const allowed = new Set<string>(REORDERABLE_HOMEPAGE_LAYOUT_KEYS);
   const seen = new Set<HomepageLayoutKey>();
   const ordered: HomepageLayoutKey[] = [];
 
@@ -44,9 +67,5 @@ export function normalizeHomepageLayout(rows: { key: string; enabled?: boolean }
     ordered.push(key as HomepageLayoutKey);
   }
 
-  for (const key of DEFAULT_HOMEPAGE_LAYOUT) {
-    if (!seen.has(key)) ordered.push(key);
-  }
-
-  return ordered;
+  return insertMissingLayoutKeys(ordered);
 }

@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Banknote, CreditCard, Loader2 } from 'lucide-react';
-import { apiCreateStripeIntent, apiGetStripeConfig, OrderStripeIntentPayload } from '@/lib/api/payments';
+import { Banknote, CreditCard, Loader2, Sparkles } from 'lucide-react';
+import { apiCreateStripeIntent, apiGetStripeConfig, apiGetTamaraConfig, OrderStripeIntentPayload } from '@/lib/api/payments';
 import { isPromotionError } from '@/lib/utils/promotionErrors';
 
 export interface StripeCheckoutState {
@@ -11,15 +11,19 @@ export interface StripeCheckoutState {
   paymentIntentId: string;
 }
 
+export type CheckoutPaymentMethod = 'stripe' | 'cod' | 'tamara';
+
 interface PaymentStepProps {
   intentPayload: OrderStripeIntentPayload | null;
   isPickup?: boolean;
   stripeSession: StripeCheckoutState | null;
   onStripeSession: (session: StripeCheckoutState | null) => void;
-  onNext: (method: 'stripe' | 'cod') => void;
+  onNext: (method: CheckoutPaymentMethod) => void;
   onBack: () => void;
   onlineEnabled: boolean;
   codEnabled: boolean;
+  tamaraEnabled: boolean;
+  tamaraConfigured: boolean;
 }
 
 export function PaymentStep({
@@ -31,8 +35,12 @@ export function PaymentStep({
   onBack,
   onlineEnabled,
   codEnabled,
+  tamaraEnabled,
+  tamaraConfigured,
 }: PaymentStepProps) {
-  const [method, setMethod] = useState<'stripe' | 'cod'>(onlineEnabled ? 'stripe' : 'cod');
+  const showTamara = tamaraEnabled && tamaraConfigured;
+  const defaultMethod: CheckoutPaymentMethod = onlineEnabled ? 'stripe' : showTamara ? 'tamara' : 'cod';
+  const [method, setMethod] = useState<CheckoutPaymentMethod>(defaultMethod);
   const [loadingIntent, setLoadingIntent] = useState(false);
   const [intentError, setIntentError] = useState('');
   const intentPayloadKey = useMemo(
@@ -102,9 +110,9 @@ export function PaymentStep({
   const canContinueStripe = !!stripeSession || couponBlocksPayment;
 
   function handleContinue() {
-    if (method === 'cod') {
+    if (method === 'cod' || method === 'tamara') {
       onStripeSession(null);
-      onNext('cod');
+      onNext(method);
       return;
     }
     if (!stripeSession) {
@@ -156,6 +164,35 @@ export function PaymentStep({
                   </p>
                 )}
               </div>
+            )}
+          </div>
+        )}
+
+        {showTamara && (
+          <div
+            className="border p-4 cursor-pointer transition-colors"
+            style={{
+              borderColor: method === 'tamara' ? 'var(--color-amoria-primary)' : 'var(--color-amoria-border)',
+              backgroundColor: method === 'tamara' ? 'rgba(26,10,46,0.03)' : 'white',
+            }}
+            onClick={() => setMethod('tamara')}
+          >
+            <div className="flex items-center gap-3 mb-2">
+              <input type="radio" checked={method === 'tamara'} onChange={() => setMethod('tamara')} />
+              <Sparkles size={20} style={{ color: '#8B7138' }} />
+              <div>
+                <span className="font-medium text-sm" style={{ color: 'var(--color-amoria-text)' }}>
+                  Pay with Tamara
+                </span>
+                <p className="text-xs" style={{ color: 'var(--color-amoria-text-muted)' }}>
+                  Split your payment — subject to approval
+                </p>
+              </div>
+            </div>
+            {method === 'tamara' && (
+              <p className="ml-6 text-xs" style={{ color: 'var(--color-amoria-text-muted)' }}>
+                You&apos;ll be redirected to Tamara to complete payment after reviewing your order.
+              </p>
             )}
           </div>
         )}

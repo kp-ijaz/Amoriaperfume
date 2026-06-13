@@ -24,30 +24,49 @@ import { useApiProductBySlug, useProductReviews } from '@/lib/hooks/useApiProduc
 import { recordProductView } from '@/lib/utils/recordProductView';
 import { usePromotions } from '@/lib/hooks/useApiPromotions';
 import { ApiPromotion } from '@/lib/api/types';
+import { useOfferPopup } from '@/lib/context/OfferPopupContext';
+import { getEffectiveVariantPricing } from '@/lib/pricing/offerPopupPricing';
+import { PdpSkeleton } from '@/components/loading';
+import { Product } from '@/types/product';
 
-/* ── helpers ── */
-function getLongevity(c: string) {
-  if (c === 'Parfum') return '7+ Hrs*';
-  if (c === 'EDP') return '6+ Hrs*';
-  if (c === 'Attar') return '10+ Hrs*';
-  return '4+ Hrs*';
+function formatDayNight(value: Product['dayNight']) {
+  if (value === 'day') return 'Day';
+  if (value === 'night') return 'Night';
+  return 'Day and Night';
 }
-function getSeason(f: string) {
-  const s = f.toLowerCase();
-  if (s.includes('oud') || s.includes('wood') || s.includes('leather') || s.includes('amber')) return 'Autumn and Winter';
-  if (s.includes('floral') || s.includes('citrus') || s.includes('fresh')) return 'Spring and Summer';
-  return 'All Seasons';
+
+function formatSeasons(seasons: Product['seasons']) {
+  return seasons.map((s) => s.charAt(0).toUpperCase() + s.slice(1)).join(', ');
 }
-function getOccasion(f: string) {
-  const s = f.toLowerCase();
-  if (s.includes('oud') || s.includes('leather')) return 'Evening Wear';
-  if (s.includes('fresh') || s.includes('citrus')) return 'Daily Wear';
-  return 'Evening and Special Occasions';
-}
-function getSillage(c: string) {
-  if (c === 'Parfum') return 'Heavy';
-  if (c === 'EDP') return 'Moderate';
-  return 'Moderate';
+
+function buildProductSpecs(
+  product: Product,
+  variant: ProductVariant | undefined,
+  uniqueSizes: ProductVariant[],
+) {
+  const specs: { label: string; value: string }[] = [];
+
+  if (product.brand) specs.push({ label: 'Design House', value: product.brand });
+  if (product.isBrandInspiration && product.inspiredBrand) {
+    specs.push({ label: 'Inspired by', value: product.inspiredBrand });
+  }
+
+  const volume = variant?.sizeMl ?? uniqueSizes[0]?.sizeMl;
+  if (volume) specs.push({ label: 'Volume', value: `${volume}ML` });
+  if (product.concentration) specs.push({ label: 'Concentration', value: product.concentration });
+  if (product.category) specs.push({ label: 'Fragrance Family', value: product.category });
+  if (product.gender) {
+    specs.push({
+      label: 'Gender',
+      value: product.gender.charAt(0).toUpperCase() + product.gender.slice(1),
+    });
+  }
+  if (product.longevity?.trim()) specs.push({ label: 'Longevity', value: product.longevity.trim() });
+  if (product.sillage?.trim()) specs.push({ label: 'Sillage', value: product.sillage.trim() });
+  if (product.dayNight) specs.push({ label: 'Day / Night', value: formatDayNight(product.dayNight) });
+  if (product.seasons.length > 0) specs.push({ label: 'Seasons', value: formatSeasons(product.seasons) });
+
+  return specs;
 }
 
 /* ══════════════════════════════════════
@@ -88,14 +107,16 @@ function Gallery({ images, name }: { images: { url: string; alt: string }[]; nam
               exit={{ opacity: 0 }}
               transition={{ duration: 0.18 }}
             >
-              <Image
-                src={images[active]?.url ?? ''}
-                alt={name}
-                fill
-                className="object-contain p-10"
-                priority
-                unoptimized
-              />
+              <div className="relative w-full h-full">
+                <Image
+                  src={images[active]?.url ?? ''}
+                  alt={name}
+                  fill
+                  className="object-contain p-10"
+                  priority
+                  unoptimized
+                />
+              </div>
             </motion.div>
           </AnimatePresence>
 
@@ -139,8 +160,12 @@ function Gallery({ images, name }: { images: { url: string; alt: string }[]; nam
 /* ══════════════════════════════════════
    COUPON CARD  (2-column grid style)
 ══════════════════════════════════════ */
-function CouponCard({ code, discount, type, description, accent }: {
-  code: string; discount: number; type: string; description: string; accent?: boolean;
+function CouponCard({ code, label, subtitle, kind, accent }: {
+  code: string;
+  label: string;
+  subtitle: string;
+  kind: ApiPromotion['kind'];
+  accent?: boolean;
 }) {
   const [copied, setCopied] = useState(false);
   function copy() {
@@ -149,9 +174,6 @@ function CouponCard({ code, discount, type, description, accent }: {
     setTimeout(() => setCopied(false), 2000);
     toast.success(`Code "${code}" copied!`);
   }
-
-  const label = type === 'freeshipping' ? 'Free Shipping' : `Flat Discount AED ${Math.round(discount * 500)}`;
-  const subLabel = type === 'freeshipping' ? 'On all orders' : description;
 
   return (
     <div
@@ -168,11 +190,11 @@ function CouponCard({ code, discount, type, description, accent }: {
           className="w-7 h-7 rounded flex items-center justify-center flex-shrink-0 text-white text-[10px] font-bold"
           style={{ backgroundColor: accent ? '#D97706' : '#1A0A2E' }}
         >
-          {type === 'freeshipping' ? <Truck size={12} /> : '%'}
+          {kind === 'free_shipping' ? <Truck size={12} /> : '%'}
         </div>
         <div className="min-w-0">
           <p className="text-[11px] font-bold leading-tight" style={{ color: '#1A0A2E' }}>{label}</p>
-          <p className="text-[10px] leading-tight mt-0.5" style={{ color: '#78716C' }}>{subLabel}</p>
+          <p className="text-[10px] leading-tight mt-0.5" style={{ color: '#78716C' }}>{subtitle}</p>
         </div>
       </div>
       <div className="flex items-center justify-between">
@@ -217,10 +239,21 @@ function RatingBars({ reviews }: { reviews: { rating: number }[] }) {
    PAGE
 ══════════════════════════════════════ */
 function promotionToCoupon(p: ApiPromotion) {
-  const type =
-    p.kind === 'free_shipping' ? 'freeshipping' : p.kind === 'percent_off' ? 'percentage' : 'fixed';
-  const discount = p.kind === 'percent_off' ? p.value / 100 : p.value;
-  return { code: p.code, discount, type, description: p.name };
+  let label: string;
+  if (p.kind === 'free_shipping') {
+    label = 'Free shipping';
+  } else if (p.kind === 'percent_off') {
+    label = `${p.value}% off`;
+  } else {
+    label = `AED ${p.value} off`;
+  }
+
+  const subtitle =
+    p.minSubtotal > 0
+      ? `Orders above AED ${p.minSubtotal}`
+      : p.description?.trim() || p.name;
+
+  return { code: p.code, label, subtitle, kind: p.kind };
 }
 
 export default function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -232,6 +265,7 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
 
   const { addItem } = useCart();
   const { isInWishlist, toggleWishlist } = useWishlist();
+  const { config: offerConfig } = useOfferPopup();
   const dispatch = useDispatch();
 
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
@@ -239,9 +273,7 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
   const [addedState, setAddedState] = useState<'idle' | 'loading' | 'success'>('idle');
   const addToCartRef = useRef<HTMLButtonElement>(null);
   const [showStickyBar, setShowStickyBar] = useState(false);
-  const [deliveryOpen, setDeliveryOpen] = useState(true);
   const [couponOpen, setCouponOpen] = useState(true);
-  const [deliveryTab, setDeliveryTab] = useState<'standard' | 'express'>('standard');
   const [activeTab, setActiveTab] = useState<'specs' | 'notes' | 'about' | 'howtouse' | 'reviews' | 'faqs'>('specs');
   const [visibleReviews, setVisibleReviews] = useState(4);
 
@@ -266,11 +298,7 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
   }, []);
 
   if (isLoading) {
-    return (
-      <motion.div className="min-h-screen flex items-center justify-center bg-white">
-        <span className="w-10 h-10 border-2 border-[#1A0A2E]/20 border-t-[#1A0A2E] rounded-full animate-spin" />
-      </motion.div>
-    );
+    return <PdpSkeleton />;
   }
 
   if (isError || !product) return notFound();
@@ -279,37 +307,37 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
   const couponList = promotions.slice(0, 4).map(promotionToCoupon);
   const brandHref = product.brandSlug
     ? `/brands/${product.brandSlug}`
-    : `/products?search=${encodeURIComponent(product.brand)}`;
+    : `/products?q=${encodeURIComponent(product.brand)}`;
 
   const variant = selectedVariant ?? product.variants[0];
-  const price = variant?.salePrice ?? variant?.price ?? 0;
-  const originalPrice = variant?.salePrice && variant.salePrice < variant.price ? variant.price : null;
-  const discountPct = originalPrice ? Math.round(((originalPrice - price) / originalPrice) * 100) : null;
+  const variantPricing = variant ? getEffectiveVariantPricing(variant, product.id, offerConfig) : null;
+  const price = variantPricing?.salePrice ?? variantPricing?.price ?? 0;
+  const originalPrice =
+    variantPricing?.salePrice != null && variantPricing.price > variantPricing.salePrice
+      ? variantPricing.price
+      : null;
+  const discountPct = variantPricing?.discountPercent ?? null;
   const wishlisted = isInWishlist(product.id);
   const uniqueSizes = Array.from(new Map(product.variants.map((v) => [v.sizeMl, v])).values());
   const inStock = (variant?.stock ?? 0) > 0;
+  const summaryText = product.shortDescription?.trim() || product.description;
+  const specs = buildProductSpecs(product, variant, uniqueSizes);
+  const categoryHref = product.categorySlug
+    ? `/categories/${product.categorySlug}`
+    : '/products';
 
-  // Derived spec fields
-  const longevity = getLongevity(product.concentration);
-  const season = getSeason(product.category);
-  const occasion = getOccasion(product.category);
-  const sillage = getSillage(product.concentration);
-
-  const specs = [
-    { label: 'Design House', value: product.brand },
-    { label: 'Perfumer', value: 'In-house Perfumer' },
-    { label: 'Release Year', value: '2023' },
-    { label: 'Volume', value: `${variant?.sizeMl ?? uniqueSizes[0]?.sizeMl}ML` },
-    { label: 'Concentration', value: product.concentration },
-    { label: 'Fragrance Family', value: product.category },
-    { label: 'Gender', value: product.gender.charAt(0).toUpperCase() + product.gender.slice(1) },
-    { label: 'Projection/Longevity', value: longevity },
-    { label: 'Occasion', value: occasion },
-    { label: 'Best Before', value: 'Recommended use within 36 months of opening for optimal quality and freshness.*' },
-    { label: 'Age Group', value: '25+' },
-    { label: 'Season', value: season },
-    { label: 'Scent Sillage', value: sillage },
-  ];
+  const trustBadges = [
+    product.freeShipping
+      ? { icon: '🚚', label: 'Free Shipping', sub: 'On this product' }
+      : null,
+    product.cashOnDelivery
+      ? { icon: '💵', label: 'Cash On Delivery', sub: 'Available' }
+      : null,
+    product.returnable
+      ? { icon: '🔄', label: '7-Day Returns', sub: 'Money back' }
+      : null,
+    { icon: '🎧', label: '24/7 Support', sub: 'Always here' },
+  ].filter((badge): badge is { icon: string; label: string; sub: string } => badge !== null);
 
   const TABS = [
     { id: 'specs' as const, label: 'KEY SPECIFICATIONS' },
@@ -336,13 +364,6 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
     router.push('/checkout');
   }
 
-  /* ── Delivery date helper ── */
-  const today = new Date();
-  const d1 = new Date(today); d1.setDate(today.getDate() + 2);
-  const d2 = new Date(today); d2.setDate(today.getDate() + 5);
-  const fmt = (d: Date) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  const deliveryRange = `${fmt(d1)} - ${fmt(d2)}`;
-
   /* ══════════════════════════════════════
      RIGHT PANEL (reused desktop+mobile)
   ══════════════════════════════════════ */
@@ -357,6 +378,11 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
       >
         {product.brand}
       </Link>
+      {product.isBrandInspiration && product.inspiredBrand ? (
+        <p className="text-[12px] mb-1" style={{ color: '#78716C' }}>
+          Inspired by {product.inspiredBrand}
+        </p>
+      ) : null}
 
       {/* Name + in-stock dot */}
       <div className="flex items-start gap-2 mb-1">
@@ -370,7 +396,7 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
 
       {/* Short description */}
       <p className="text-[13px] mb-2 leading-relaxed" style={{ color: '#78716C' }}>
-        {product.description.split('.')[0]}.
+        {summaryText}
       </p>
 
       {/* Rating */}
@@ -399,7 +425,7 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
         )}
       </div>
       {product.isBestseller && (
-        <p className="text-[11px] mb-3" style={{ color: '#D97706' }}>🏆 Bestseller · {product.reviewCount}+ sold</p>
+        <p className="text-[11px] mb-3" style={{ color: '#D97706' }}>Bestseller</p>
       )}
 
       {/* Divider */}
@@ -431,83 +457,8 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
         </div>
       )}
 
-      {/* Divider */}
-      <div className="h-px mb-3" style={{ backgroundColor: '#EEEBE6' }} />
-
-      {/* Deliver to row */}
-      <div className="flex flex-wrap items-center gap-1.5 text-[12px] mb-3" style={{ color: '#44403C' }}>
-        <span className="font-medium">Deliver to:</span>
-        <span className="flex items-center gap-0.5 font-semibold cursor-pointer hover:underline" style={{ color: '#1A0A2E' }}>
-          UAE <ChevronDown size={12} />
-        </span>
-        <span style={{ color: '#D6D3D1' }}>·</span>
-        <span className="flex items-center gap-0.5 cursor-pointer hover:underline" style={{ color: '#1A0A2E' }}>
-          State: Dubai <ChevronDown size={12} />
-        </span>
-        <span style={{ color: '#D6D3D1' }}>·</span>
-        <span className="flex items-center gap-0.5 cursor-pointer hover:underline" style={{ color: '#1A0A2E' }}>
-          City: Dubai City <ChevronDown size={12} />
-        </span>
-      </div>
-
-      {/* Delivery Type collapsible */}
-      <div className="mb-3 rounded overflow-hidden" style={{ border: '1px solid #EEEBE6' }}>
-        <button
-          onClick={() => setDeliveryOpen((v) => !v)}
-          className="w-full flex items-center justify-between px-3 py-2.5 bg-white hover:bg-gray-50 transition-colors"
-        >
-          <span className="text-[13px] font-semibold" style={{ color: '#1A0A2E' }}>Delivery Type</span>
-          {deliveryOpen ? <ChevronUp size={14} style={{ color: '#78716C' }} /> : <ChevronDown size={14} style={{ color: '#78716C' }} />}
-        </button>
-        <AnimatePresence>
-          {deliveryOpen && (
-            <motion.div
-              initial={{ height: 0 }}
-              animate={{ height: 'auto' }}
-              exit={{ height: 0 }}
-              className="overflow-hidden"
-              transition={{ duration: 0.2 }}
-            >
-              <div className="px-3 pb-3 bg-white">
-                {/* Tabs */}
-                <div className="flex gap-0 mb-2 border-b" style={{ borderColor: '#EEEBE6' }}>
-                  {(['standard', 'express'] as const).map((t) => (
-                    <button
-                      key={t}
-                      onClick={() => setDeliveryTab(t)}
-                      className="px-4 py-2 text-[12px] font-semibold capitalize transition-colors relative"
-                      style={{ color: deliveryTab === t ? '#1A0A2E' : '#78716C' }}
-                    >
-                      {t.charAt(0).toUpperCase() + t.slice(1)}
-                      {deliveryTab === t && (
-                        <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#1A0A2E]" />
-                      )}
-                    </button>
-                  ))}
-                </div>
-                {deliveryTab === 'standard' ? (
-                  <div className="flex items-center gap-2">
-                    <Truck size={14} style={{ color: '#16a34a' }} />
-                    <span className="text-[12px]" style={{ color: '#16a34a' }}>
-                      {price >= 200 ? 'Free · ' : 'AED 25 · '}
-                      Delivered between {deliveryRange}
-                    </span>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <Truck size={14} style={{ color: '#D97706' }} />
-                    <span className="text-[12px]" style={{ color: '#D97706' }}>
-                      AED 35 · Same day / Next day delivery
-                    </span>
-                  </div>
-                )}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-
       {/* Save Extra with Coupons */}
+      {couponList.length > 0 ? (
       <div className="mb-4 rounded overflow-hidden" style={{ border: '1px solid #EEEBE6' }}>
         <button
           onClick={() => setCouponOpen((v) => !v)}
@@ -534,9 +485,9 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
                     <CouponCard
                       key={data.code}
                       code={data.code}
-                      discount={data.discount}
-                      type={data.type}
-                      description={data.description}
+                      label={data.label}
+                      subtitle={data.subtitle}
+                      kind={data.kind}
                       accent={i % 2 === 1}
                     />
                   ))}
@@ -546,6 +497,7 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
           )}
         </AnimatePresence>
       </div>
+      ) : null}
 
       {/* Add to Cart — outlined */}
       <button
@@ -622,17 +574,19 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
       </div>
 
       {/* Trust badges */}
-      <div className="grid grid-cols-4 gap-0 rounded overflow-hidden" style={{ border: '1px solid #EEEBE6' }}>
-        {[
-          { icon: '🚚', label: 'Free Shipping', sub: 'AED 200+' },
-          { icon: '💵', label: 'Cash On Delivery', sub: 'Available' },
-          { icon: '🔄', label: '7-Day Returns', sub: 'Money back' },
-          { icon: '🎧', label: '24/7 Support', sub: 'Always here' },
-        ].map(({ icon, label, sub }, i) => (
+      {trustBadges.length > 0 ? (
+      <div
+        className="grid gap-0 rounded overflow-hidden"
+        style={{
+          border: '1px solid #EEEBE6',
+          gridTemplateColumns: `repeat(${trustBadges.length}, minmax(0, 1fr))`,
+        }}
+      >
+        {trustBadges.map(({ icon, label, sub }, i) => (
           <div
             key={label}
             className="flex flex-col items-center gap-1 py-3 px-1 text-center"
-            style={{ borderRight: i < 3 ? '1px solid #EEEBE6' : 'none', backgroundColor: '#FAFAF8' }}
+            style={{ borderRight: i < trustBadges.length - 1 ? '1px solid #EEEBE6' : 'none', backgroundColor: '#FAFAF8' }}
           >
             <span className="text-lg">{icon}</span>
             <span className="text-[9.5px] font-bold leading-tight" style={{ color: '#1A0A2E' }}>{label}</span>
@@ -640,6 +594,7 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
           </div>
         ))}
       </div>
+      ) : null}
     </div>
   );
 
@@ -652,7 +607,7 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
           <nav className="flex items-center gap-1.5 text-[12px]" style={{ color: '#78716C' }}>
             <Link href="/" className="hover:underline">Home</Link>
             <ChevronRight size={11} />
-            <Link href="/products" className="hover:underline">Fragrances</Link>
+            <Link href={categoryHref} className="hover:underline">{product.category || 'Products'}</Link>
             <ChevronRight size={11} />
             <span className="font-medium truncate max-w-[220px]" style={{ color: '#1A0A2E' }}>{product.name}</span>
           </nav>
@@ -751,6 +706,7 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
                     <p className="text-[12px] font-semibold mb-1.5" style={{ color: '#44403C' }}>Disclaimer:</p>
                     <p className="text-[11.5px] leading-relaxed" style={{ color: '#78716C' }}>
                       * The lasting power of perfumes can vary based on skin type, environment, and usage.<br />
+                      * Recommended use within 36 months of opening for optimal quality and freshness.<br />
                       * The expiration of perfumes varies depending on storage conditions and usage.
                     </p>
                   </div>
@@ -765,15 +721,12 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
                   </p>
                   <div className="flex flex-col gap-4">
                     {[
-                      { label: 'Top Notes', notes: product.topNotes, sub: 'First impression — fades within 15–30 min', bg: '#FAFAFA' },
-                      { label: 'Heart Notes', notes: product.heartNotes, sub: 'The core — develops after 30 min, lasts 2–4 hrs', bg: '#F5F5F0' },
-                      { label: 'Base Notes', notes: product.baseNotes, sub: 'The foundation — lasts 4–8+ hours on skin', bg: '#F0EFEA' },
-                    ].map(({ label, notes, sub, bg }) => notes.length > 0 && (
+                      { label: 'Top Notes', notes: product.topNotes, bg: '#FAFAFA' },
+                      { label: 'Heart Notes', notes: product.heartNotes, bg: '#F5F5F0' },
+                      { label: 'Base Notes', notes: product.baseNotes, bg: '#F0EFEA' },
+                    ].map(({ label, notes, bg }) => notes.length > 0 && (
                       <div key={label} className="p-4 rounded" style={{ border: '1px solid #E0DBDA', backgroundColor: bg }}>
-                        <div className="flex items-center justify-between mb-3">
-                          <p className="text-[13px] font-bold" style={{ color: '#1A0A2E' }}>{label}</p>
-                          <p className="text-[11px]" style={{ color: '#9A8E80' }}>{sub}</p>
-                        </div>
+                        <p className="text-[13px] font-bold mb-3" style={{ color: '#1A0A2E' }}>{label}</p>
                         <div className="flex flex-wrap gap-1.5">
                           {notes.map((n) => (
                             <span key={n} className="text-[12px] px-3 py-1 rounded-full border bg-white" style={{ borderColor: '#E0DBDA', color: '#44403C' }}>

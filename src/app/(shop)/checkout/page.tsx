@@ -6,18 +6,20 @@ import { User, UserCheck, LogIn, ShoppingBag, Shield, Store, Truck, ChevronRight
 import { motion, AnimatePresence } from 'framer-motion';
 import { Elements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
+import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { useCart } from '@/lib/hooks/useCart';
 import { useUserAddresses } from '@/lib/hooks/useApiAddresses';
 import { usePublicBootstrap } from '@/lib/hooks/usePublicCms';
 import { CheckoutStepper } from '@/components/checkout/CheckoutStepper';
 import { AddressStep, FulfillmentMethod, PickupSlot, PickupStoreOption } from '@/components/checkout/AddressStep';
-import { PaymentStep, StripeCheckoutState } from '@/components/checkout/PaymentStep';
+import { PaymentStep, StripeCheckoutState, CheckoutPaymentMethod } from '@/components/checkout/PaymentStep';
 import { ReviewStep } from '@/components/checkout/ReviewStep';
 import { amoriaStripeElementsOptions } from '@/lib/stripe/amoriaStripeAppearance';
-import { OrderStripeIntentPayload } from '@/lib/api/payments';
+import { OrderStripeIntentPayload, apiGetTamaraConfig } from '@/lib/api/payments';
 import { Address } from '@/types/user';
-import { pickObjectId, buildShippingAddress, resolveCheckoutPhone } from '@/lib/utils/checkoutPayload';
+import { cartItemReactKey, mapCartItemsToOrderPayload } from '@/lib/cart/mapCartItemsToOrder';
+import { buildShippingAddress, resolveCheckoutPhone } from '@/lib/utils/checkoutPayload';
 
 type CheckoutFlow = 'gate' | 1 | 2 | 3;
 
@@ -28,6 +30,16 @@ function CheckoutPageInner() {
   const { data: bootstrap } = usePublicBootstrap();
   const platform = bootstrap?.platform;
   const pickupStores = bootstrap?.pickupStores ?? [];
+
+  const tamaraConfigQ = useQuery({
+    queryKey: ['tamara-config'],
+    queryFn: async () => {
+      const res = await apiGetTamaraConfig();
+      if (!res.success || !res.data) return { enabled: false, configured: false };
+      return res.data;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
   function getInitialFlow(): CheckoutFlow {
     if (isLoggedIn || isGuest) return 1;
@@ -40,7 +52,7 @@ function CheckoutPageInner() {
   const [fulfillment, setFulfillment] = useState<FulfillmentMethod>('delivery');
   const [pickupSlot, setPickupSlot] = useState<PickupSlot | undefined>(undefined);
   const [selectedPickupStore, setSelectedPickupStore] = useState<PickupStoreOption | null>(null);
-  const [paymentMethod, setPaymentMethod] = useState<'stripe' | 'cod' | null>(null);
+  const [paymentMethod, setPaymentMethod] = useState<CheckoutPaymentMethod | null>(null);
   const [stripeSession, setStripeSession] = useState<StripeCheckoutState | null>(null);
   const [paymentAttempt, setPaymentAttempt] = useState(0);
 
@@ -57,7 +69,7 @@ function CheckoutPageInner() {
       items
         .map(
           (item) =>
-            `${item.product.id}:${item.variant.id}:${item.quantity}:${coupon?.code ?? ''}:${giftCard?.code ?? ''}`
+            `${cartItemReactKey(item)}:${item.quantity}:${coupon?.code ?? ''}:${giftCard?.code ?? ''}`
         )
         .join('|'),
     [items, coupon?.code, giftCard?.code]
@@ -127,17 +139,7 @@ function CheckoutPageInner() {
           : undefined,
       couponCode: coupon?.code,
       giftCardCode: giftCard?.code,
-      items: items.map((item) => {
-        const row: OrderStripeIntentPayload['items'][number] = {
-          productId: item.product.id,
-          quantity: item.quantity,
-        };
-        const variantId = pickObjectId(item.variant.variantId, item.variant.id);
-        const sizeVariantId = pickObjectId(item.variant.sizeVariantId, item.variant.id);
-        if (variantId) row.variantId = variantId;
-        if (sizeVariantId) row.sizeVariantId = sizeVariantId;
-        return row;
-      }),
+      items: mapCartItemsToOrderPayload(items),
     };
   }, [flow, items, user, guestInfo, address, fulfillment, pickupSlot, selectedPickupStore, coupon, giftCard, savedAddresses]);
 
@@ -373,9 +375,11 @@ function CheckoutPageInner() {
                   onStripeSession={handleStripeSession}
                   onlineEnabled={platform?.isOnlinePaymentEnabled !== false}
                   codEnabled={platform?.isCodEnabled !== false}
+                  tamaraEnabled={!!tamaraConfigQ.data?.enabled}
+                  tamaraConfigured={!!tamaraConfigQ.data?.configured}
                   onNext={(method) => {
                     setPaymentMethod(method);
-                    if (method === 'cod') setStripeSession(null);
+                    if (method !== 'stripe') setStripeSession(null);
                     setFlow(3);
                   }}
                   onBack={() => {

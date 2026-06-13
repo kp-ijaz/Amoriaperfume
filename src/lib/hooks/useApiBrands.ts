@@ -67,7 +67,7 @@ export function useHomeBrandsRow() {
       name: b.name,
       tagline: b.description?.slice(0, 40) || 'Explore',
       count: '',
-      image: brandDisplayImage(b) || '/images/products/prod1.jpg',
+      image: brandDisplayImage(b) || '',
       accent: '#C9A84C',
     }));
   }, [apiBrands]);

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useCart } from '@/lib/hooks/useCart';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { apiValidatePromotion } from '@/lib/api/client';
+import { mapCartItemsToPromoLineItems } from '@/lib/cart/promoLineItems';
 
 /** Re-validates the applied cart coupon against current line items and customer. */
 export function useAppliedPromotionValidation() {
@@ -29,15 +30,7 @@ export function useAppliedPromotionValidation() {
 
     (async () => {
       try {
-        const lineItems = items.map((item) => {
-          const price = item.variant.salePrice ?? item.variant.price;
-          return {
-            productId: item.product.id,
-            categoryId: item.product.categoryId ?? null,
-            quantity: item.quantity,
-            lineTotal: price * item.quantity,
-          };
-        });
+        const lineItems = mapCartItemsToPromoLineItems(items);
 
         const res = await apiValidatePromotion(
           {

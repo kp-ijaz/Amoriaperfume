@@ -1,165 +1,292 @@
 'use client';
 
-import { AvailableProductFilters, ProductFilters } from '@/lib/hooks/useProducts';
+import { useState } from 'react';
+import { ChevronDown, X } from 'lucide-react';
 import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Label } from '@/components/ui/label';
+  ProductFilters,
+  AvailableProductFilters,
+  FilterOption,
+} from '@/lib/hooks/useProducts';
+import {
+  FILTER_SECTIONS,
+  GENDER_LABELS,
+  SEASON_LABELS,
+  DAY_NIGHT_LABELS,
+  countActiveSidebarFilters,
+  type SidebarFilterKey,
+} from '@/lib/plp/productFilterConfig';
+import { PriceRangeFilter } from '@/components/plp/PriceRangeFilter';
 
 interface FilterSidebarProps {
   filters: ProductFilters;
   availableFilters: AvailableProductFilters;
-  onFilterChange: (key: keyof ProductFilters, value: ProductFilters[typeof key]) => void;
+  onFilterChange: <K extends keyof ProductFilters>(key: K, value: ProductFilters[K]) => void;
   onClearAll: () => void;
+  hideFilterKeys?: SidebarFilterKey[];
 }
 
-function CheckboxGroup<T extends string>({
-  options,
-  selected,
-  onChange,
-}: {
-  options: { value: T; label: string; count: number }[];
-  selected?: T[];
-  onChange: (vals: T[]) => void;
-}) {
-  function toggle(val: T) {
-    const current = selected ?? [];
-    if (current.includes(val)) {
-      onChange(current.filter((v) => v !== val));
-    } else {
-      onChange([...current, val]);
-    }
+function getOptionsForKey(
+  key: SidebarFilterKey,
+  available: AvailableProductFilters
+): FilterOption[] {
+  switch (key) {
+    case 'categories':
+      return available.categories;
+    case 'brands':
+      return available.brands;
+    case 'genders':
+      return available.genders;
+    case 'concentrations':
+      return available.concentrations;
+    case 'sizes':
+      return available.sizes;
+    case 'seasons':
+      return available.seasons;
+    case 'dayNight':
+      return available.dayNight;
+    default:
+      return [];
+  }
+}
+
+function getOptionLabel(key: SidebarFilterKey, value: string): string {
+  if (key === 'genders') return GENDER_LABELS[value] ?? value;
+  if (key === 'seasons') return SEASON_LABELS[value] ?? value;
+  if (key === 'dayNight') return DAY_NIGHT_LABELS[value] ?? value;
+  if (key === 'sizes') return `${value} ml`;
+  return value;
+}
+
+export function FilterSidebar({
+  filters,
+  availableFilters,
+  onFilterChange,
+  onClearAll,
+  hideFilterKeys = [],
+}: FilterSidebarProps) {
+  const visibleSections = FILTER_SECTIONS.filter(
+    (s) => !hideFilterKeys.includes(s.filterKey)
+  );
+  const defaultOpen = new Set(
+    visibleSections.filter((s) => s.defaultOpen).map((s) => s.id)
+  );
+  const [openSections, setOpenSections] = useState<Set<string>>(defaultOpen);
+
+  const activeCount = countActiveSidebarFilters(filters);
+
+  function toggleSection(id: string) {
+    setOpenSections((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
   }
 
-  return (
-    <div className="space-y-2 pt-1">
-      {options.map((opt) => (
-        <div key={opt.value} className="flex items-center gap-2">
-          <Checkbox
-            id={opt.value}
-            checked={(selected ?? []).includes(opt.value)}
-            disabled={opt.count === 0}
-            onCheckedChange={() => toggle(opt.value)}
-          />
-          <Label
-            htmlFor={opt.value}
-            className={`text-sm font-normal ${opt.count === 0 ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
-          >
-            {opt.label} <span className="ml-1 text-xs text-gray-400">({opt.count})</span>
-          </Label>
-        </div>
-      ))}
-    </div>
-  );
-}
+  function toggleArrayFilter(key: SidebarFilterKey, value: string) {
+    const current = (filters[key] as string[] | undefined) ?? [];
+    const next = current.includes(value)
+      ? current.filter((v) => v !== value)
+      : [...current, value];
+    onFilterChange(key, next.length ? next : undefined);
+  }
 
-export function FilterSidebar({ filters, availableFilters, onFilterChange, onClearAll }: FilterSidebarProps) {
-  const activeCount = Object.values(filters).filter((v) =>
-    Array.isArray(v) ? v.length > 0 : v !== undefined && v !== false
-  ).length;
+  function toggleSizeFilter(sizeMl: number) {
+    const current = filters.sizes ?? [];
+    const next = current.includes(sizeMl)
+      ? current.filter((s: number) => s !== sizeMl)
+      : [...current, sizeMl];
+    onFilterChange('sizes', next.length ? next : undefined);
+  }
 
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <h3 className="font-semibold text-sm uppercase tracking-wider" style={{ color: 'var(--color-amoria-primary)' }}>
-          Filters {activeCount > 0 && <span className="ml-1 text-xs px-1.5 py-0.5 rounded-full text-white" style={{ backgroundColor: 'var(--color-amoria-accent)' }}>{activeCount}</span>}
-        </h3>
+        <h2 className="text-sm font-semibold tracking-wide uppercase" style={{ color: 'var(--color-amoria-text)' }}>
+          Filters
+        </h2>
         {activeCount > 0 && (
           <button
+            type="button"
             onClick={onClearAll}
-            className="text-xs hover:opacity-80"
-            style={{ color: 'var(--color-amoria-accent)' }}
+            className="flex items-center gap-1 text-xs hover:opacity-70 transition-opacity"
+            style={{ color: 'var(--color-amoria-primary)' }}
           >
-            Clear All
+            <X size={12} />
+            Clear all
           </button>
         )}
       </div>
 
-      <Accordion multiple defaultValue={['category', 'brand', 'gender']}>
-        <AccordionItem value="category">
-          <AccordionTrigger className="text-sm py-3">Fragrance Family</AccordionTrigger>
-          <AccordionContent>
-            <CheckboxGroup
-              options={availableFilters.categories}
-              selected={filters.categories as string[]}
-              onChange={(v) => onFilterChange('categories', v)}
-            />
-          </AccordionContent>
-        </AccordionItem>
+      <div className="space-y-1">
+        {visibleSections.map((section) => {
+          if (section.type === 'toggle') {
+            const checked = Boolean(filters[section.filterKey]);
+            return (
+              <label
+                key={section.id}
+                className="flex items-center justify-between py-3 border-b cursor-pointer"
+                style={{ borderColor: 'var(--color-amoria-border)' }}
+              >
+                <span className="text-sm" style={{ color: 'var(--color-amoria-text)' }}>
+                  {section.label}
+                </span>
+                <input
+                  type="checkbox"
+                  checked={checked}
+                  onChange={(e) =>
+                    onFilterChange(section.filterKey, e.target.checked ? true : undefined)
+                  }
+                  className="accent-[var(--color-amoria-primary)]"
+                />
+              </label>
+            );
+          }
 
-        <AccordionItem value="brand">
-          <AccordionTrigger className="text-sm py-3">Brand</AccordionTrigger>
-          <AccordionContent>
-            <CheckboxGroup
-              options={availableFilters.brands}
-              selected={filters.brands as string[]}
-              onChange={(v) => onFilterChange('brands', v)}
-            />
-          </AccordionContent>
-        </AccordionItem>
-
-        <AccordionItem value="gender">
-          <AccordionTrigger className="text-sm py-3">Gender</AccordionTrigger>
-          <AccordionContent>
-            <CheckboxGroup
-              options={availableFilters.genders}
-              selected={filters.genders as string[]}
-              onChange={(v) => onFilterChange('genders', v as ('men' | 'women' | 'unisex')[])}
-            />
-          </AccordionContent>
-        </AccordionItem>
-
-        <AccordionItem value="concentration">
-          <AccordionTrigger className="text-sm py-3">Concentration</AccordionTrigger>
-          <AccordionContent>
-            <CheckboxGroup
-              options={availableFilters.concentrations}
-              selected={filters.concentrations as string[]}
-              onChange={(v) => onFilterChange('concentrations', v)}
-            />
-          </AccordionContent>
-        </AccordionItem>
-
-        <AccordionItem value="discount">
-          <AccordionTrigger className="text-sm py-3">Offers</AccordionTrigger>
-          <AccordionContent>
-            <div className="flex items-center gap-2 pt-1">
-              <Checkbox
-                id="discount-only"
-                checked={filters.discountOnly ?? false}
-                onCheckedChange={(v) => onFilterChange('discountOnly', !!v)}
-              />
-              <Label htmlFor="discount-only" className="text-sm cursor-pointer font-normal">
-                On Sale Only
-              </Label>
-            </div>
-          </AccordionContent>
-        </AccordionItem>
-
-        <AccordionItem value="rating">
-          <AccordionTrigger className="text-sm py-3">Minimum Rating</AccordionTrigger>
-          <AccordionContent>
-            <div className="space-y-2 pt-1">
-              {[4, 3, 2].map((r) => (
-                <div key={r} className="flex items-center gap-2">
-                  <Checkbox
-                    id={`rating-${r}`}
-                    checked={filters.minRating === r}
-                    onCheckedChange={(v) => onFilterChange('minRating', v ? r : undefined)}
+          if (section.type === 'range') {
+            const isOpen = openSections.has(section.id);
+            return (
+              <div key={section.id} className="border-b" style={{ borderColor: 'var(--color-amoria-border)' }}>
+                <button
+                  type="button"
+                  onClick={() => toggleSection(section.id)}
+                  className="w-full flex items-center justify-between py-3 text-sm font-medium"
+                  style={{ color: 'var(--color-amoria-text)' }}
+                >
+                  {section.label}
+                  <ChevronDown
+                    size={14}
+                    className={`transition-transform ${isOpen ? 'rotate-180' : ''}`}
+                    style={{ color: 'var(--color-amoria-text-muted)' }}
                   />
-                  <Label htmlFor={`rating-${r}`} className="text-sm cursor-pointer font-normal">
-                    {r}+ Stars
-                  </Label>
+                </button>
+                {isOpen && (
+                  <div className="pb-3">
+                    <PriceRangeFilter
+                      bounds={availableFilters.priceBounds}
+                      value={filters.priceRange}
+                      onChange={(range) => onFilterChange('priceRange', range)}
+                    />
+                  </div>
+                )}
+              </div>
+            );
+          }
+
+          if (section.type === 'radio' && section.filterKey === 'minRating') {
+            const isOpen = openSections.has(section.id);
+            const ratings = [4, 3, 2, 1];
+            return (
+              <div key={section.id} className="border-b" style={{ borderColor: 'var(--color-amoria-border)' }}>
+                <button
+                  type="button"
+                  onClick={() => toggleSection(section.id)}
+                  className="w-full flex items-center justify-between py-3 text-sm font-medium"
+                  style={{ color: 'var(--color-amoria-text)' }}
+                >
+                  {section.label}
+                  <ChevronDown
+                    size={14}
+                    className={`transition-transform ${isOpen ? 'rotate-180' : ''}`}
+                    style={{ color: 'var(--color-amoria-text-muted)' }}
+                  />
+                </button>
+                {isOpen && (
+                  <div className="pb-3 space-y-2">
+                    {ratings.map((r) => (
+                      <label key={r} className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="minRating"
+                          checked={filters.minRating === r}
+                          onChange={() => onFilterChange('minRating', r)}
+                          className="accent-[var(--color-amoria-primary)]"
+                        />
+                        <span className="text-sm" style={{ color: 'var(--color-amoria-text)' }}>
+                          {r}+ stars
+                        </span>
+                      </label>
+                    ))}
+                    {filters.minRating != null && (
+                      <button
+                        type="button"
+                        onClick={() => onFilterChange('minRating', undefined)}
+                        className="text-xs"
+                        style={{ color: 'var(--color-amoria-primary)' }}
+                      >
+                        Any rating
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          }
+
+          const options = getOptionsForKey(section.filterKey, availableFilters);
+          if (options.length === 0 && section.type === 'checkbox') return null;
+
+          const isOpen = openSections.has(section.id);
+          const selected =
+            section.filterKey === 'sizes'
+              ? (filters.sizes ?? []).map(String)
+              : ((filters[section.filterKey] as string[] | undefined) ?? []);
+
+          return (
+            <div key={section.id} className="border-b" style={{ borderColor: 'var(--color-amoria-border)' }}>
+              <button
+                type="button"
+                onClick={() => toggleSection(section.id)}
+                className="w-full flex items-center justify-between py-3 text-sm font-medium"
+                style={{ color: 'var(--color-amoria-text)' }}
+              >
+                {section.label}
+                <ChevronDown
+                  size={14}
+                  className={`transition-transform ${isOpen ? 'rotate-180' : ''}`}
+                  style={{ color: 'var(--color-amoria-text-muted)' }}
+                />
+              </button>
+              {isOpen && (
+                <div className="pb-3 space-y-2 max-h-48 overflow-y-auto">
+                  {options.map((opt) => {
+                    const isChecked = selected.includes(opt.value);
+                    const disabled = opt.count === 0 && !isChecked;
+                    return (
+                      <label
+                        key={opt.value}
+                        className={`flex items-center justify-between gap-2 cursor-pointer ${disabled ? 'opacity-40' : ''}`}
+                      >
+                        <span className="flex items-center gap-2 min-w-0">
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            disabled={disabled}
+                            onChange={() => {
+                              if (section.filterKey === 'sizes') {
+                                toggleSizeFilter(Number(opt.value));
+                              } else {
+                                toggleArrayFilter(section.filterKey, opt.value);
+                              }
+                            }}
+                            className="accent-[var(--color-amoria-primary)] shrink-0"
+                          />
+                          <span className="text-sm truncate" style={{ color: 'var(--color-amoria-text)' }}>
+                            {opt.label}
+                          </span>
+                        </span>
+                        <span className="text-xs shrink-0" style={{ color: 'var(--color-amoria-text-muted)' }}>
+                          {opt.count}
+                        </span>
+                      </label>
+                    );
+                  })}
                 </div>
-              ))}
+              )}
             </div>
-          </AccordionContent>
-        </AccordionItem>
-      </Accordion>
+          );
+        })}
+      </div>
     </div>
   );
 }

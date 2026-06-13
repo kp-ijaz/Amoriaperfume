@@ -10,7 +10,8 @@ import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@/lib/store';
 import { openFinder, closeFinder } from '@/lib/store/uiSlice';
 import { quizQuestions } from '@/lib/data/quiz';
-import { useProductsByLimit } from '@/lib/hooks/useApiProducts';
+import { useQuizCatalogProducts } from '@/lib/hooks/useApiProducts';
+import { matchQuizProducts, buildQuizMatchesProductsUrl } from '@/lib/fragrance-finder/matchProducts';
 import { formatCurrency } from '@/lib/utils/formatCurrency';
 
 export function FragranceFinderWidget() {
@@ -31,8 +32,7 @@ export function FragranceFinderWidget() {
   const progress   = started ? Math.round((step / totalSteps) * 100) : 0;
   const isDone     = started && step >= totalSteps;
 
-  // Fetch all products for matching (prefetched so results are instant)
-  const { data: allProducts = [] } = useProductsByLimit(100);
+  const { data: allProducts = [] } = useQuizCatalogProducts();
 
   function pickAnswer(optionId: string) {
     const next = { ...answers, [current.id]: optionId };
@@ -50,23 +50,15 @@ export function FragranceFinderWidget() {
     setStarted(false);
   }
 
-  // Score API products against selected tags and return top 3
   const matches = useMemo(() => {
     if (!isDone) return [];
-    const selectedTags = quizQuestions.flatMap((q) => {
-      const opt = q.options.find((o) => o.id === answers[q.id]);
-      return opt?.tags ?? [];
-    });
-    return allProducts
-      .map((p) => ({
-        product: p,
-        score: (p.tags ?? []).filter((t) => selectedTags.includes(t)).length,
-      }))
-      .filter((x) => x.score > 0)
-      .sort((a, b) => b.score - a.score)
-      .slice(0, 3)
-      .map((x) => x.product);
+    return matchQuizProducts(allProducts, answers);
   }, [isDone, answers, allProducts]);
+
+  const seeAllHref = useMemo(
+    () => buildQuizMatchesProductsUrl(matches.map((m) => m.product.id)),
+    [matches]
+  );
 
   return (
     <>
@@ -183,14 +175,16 @@ export function FragranceFinderWidget() {
                       {/* Result header */}
                       <div className="px-5 pt-5 pb-4 text-center" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
                         <p className="text-xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.45)' }}>
-                          Based on your answers, we recommend:
+                          {matches.length > 0
+                            ? `${matches.length} fragrance${matches.length === 1 ? '' : 's'} match your preferences`
+                            : 'Based on your answers, we recommend:'}
                         </p>
                       </div>
 
                       {/* Matched products */}
                       {matches.length > 0 ? (
                         <div>
-                          {matches.map((product, i) => {
+                          {matches.map(({ product, score }, i) => {
                             const imageUrl = product.images.find((img) => img.isPrimary)?.url ?? product.images[0]?.url ?? '';
                             const variant  = product.variants[0];
                             const price    = variant?.salePrice ?? variant?.price ?? 0;
@@ -213,7 +207,7 @@ export function FragranceFinderWidget() {
                                   {imageUrl && <Image src={imageUrl} alt={product.name} fill className="object-cover" unoptimized />}
                                   {/* Match badge */}
                                   <div className="absolute top-0 left-0 px-1 py-0.5 text-[8px] font-black" style={{ backgroundColor: '#C9A84C', color: '#1A0A2E' }}>
-                                    ✓
+                                    {score}%
                                   </div>
                                 </div>
 
@@ -262,7 +256,7 @@ export function FragranceFinderWidget() {
                       {/* Footer actions */}
                       <div className="px-5 py-4 space-y-2.5" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
                         <Link
-                          href="/products"
+                          href={seeAllHref}
                           onClick={() => setOpen(false)}
                           className="block w-full text-center py-3 text-[10px] font-black tracking-[0.2em] uppercase transition-all hover:brightness-110"
                           style={{ backgroundColor: '#C9A84C', color: '#1A0A2E' }}

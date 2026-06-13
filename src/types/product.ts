@@ -26,20 +26,30 @@ export interface Product {
   categorySlug?: string;
   gender: 'men' | 'women' | 'unisex';
   concentration: string;
+  seasons: ('summer' | 'winter' | 'autumn' | 'spring')[];
+  dayNight: 'day' | 'night' | 'both';
+  sillage?: string;
+  longevity?: string;
   topNotes: string[];
   heartNotes: string[];
   baseNotes: string[];
   description: string;
+  shortDescription?: string;
   images: ProductImage[];
   variants: ProductVariant[];
   rating: number;
   reviewCount: number;
   tags: string[];
+  freeShipping?: boolean;
+  cashOnDelivery?: boolean;
+  returnable?: boolean;
   isFeatured?: boolean;
   isNewArrival?: boolean;
   isBestseller?: boolean;
   isTrending?: boolean;
   isLimitedOffer?: boolean;
+  isBrandInspiration?: boolean;
+  inspiredBrand?: string;
   isOnSale?: boolean;
 }
 

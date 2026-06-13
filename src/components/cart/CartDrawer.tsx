@@ -10,6 +10,7 @@ import { X, ArrowRight } from 'lucide-react';
 import { CartItem } from './CartItem';
 import { useCart } from '@/lib/hooks/useCart';
 import { formatCurrency } from '@/lib/utils/formatCurrency';
+import { cartItemReactKey } from '@/lib/cart/mapCartItemsToOrder';
 
 export function CartDrawer() {
   const dispatch = useDispatch();
@@ -103,7 +104,7 @@ export function CartDrawer() {
                   <AnimatePresence initial={false}>
                     {items.map((item) => (
                       <motion.div
-                        key={`${item.product.id}-${item.variant.id}`}
+                        key={cartItemReactKey(item)}
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: 'auto' }}
                         exit={{ opacity: 0, height: 0 }}

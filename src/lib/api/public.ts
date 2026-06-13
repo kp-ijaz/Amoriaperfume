@@ -25,6 +25,7 @@ export interface PublicCoverImage {
   subtitle?: string;
   content?: string;
   redirectUrl?: string;
+  mediaType?: 'image' | 'video';
   order?: number;
   enabled?: boolean;
   fixedKind?: 'best_seller' | 'online_deals';
@@ -61,11 +62,14 @@ export interface PublicPlatformSnippet {
   flashAnnouncementText?: string;
   isCodEnabled?: boolean;
   isOnlinePaymentEnabled?: boolean;
+  isTamaraEnabled?: boolean;
   deliveryCharge?: number;
   deliveryThreshold?: number;
   defaultReturnPeriodDays?: number;
   taxInclusive?: boolean;
   taxPercent?: number;
+  minGiftCardAmount?: number;
+  customPerfumePrice?: number;
 }
 
 export interface PublicHomepageLayoutRow {
@@ -77,9 +81,22 @@ export interface PublicPickupStore {
   id: string;
   name: string;
   address: string;
-  mapLink?: string;
+  mapEmbedSrc?: string;
   hours?: string;
   sortOrder?: number;
+}
+
+export interface PublicOfferPopup {
+  enabled: boolean;
+  discountPercent: number;
+  startsAt?: string;
+  endsAt?: string;
+  title?: string;
+  subtitle?: string;
+  headline?: string;
+  displayDelayMs?: number;
+  productIds: string[];
+  products: unknown[];
 }
 
 export interface PublicBootstrap {
@@ -97,6 +114,9 @@ export interface PublicContentPage {
   title: string;
   body: string;
   pageType?: string;
+  metaTitle?: string;
+  metaDescription?: string;
+  ogImage?: string;
 }
 
 export interface PublicBlogPost {
@@ -111,6 +131,10 @@ export interface PublicBlogPost {
 
 export async function apiGetPublicBootstrap(): Promise<ApiResponse<PublicBootstrap>> {
   return publicFetch(`/api/public/bootstrap${publicQuery()}`);
+}
+
+export async function apiGetPublicOfferPopup(): Promise<ApiResponse<PublicOfferPopup | null>> {
+  return publicFetch(`/api/public/offer-popup${publicQuery()}`);
 }
 
 export async function apiGetPublicCoverImages(params?: {
@@ -151,6 +175,38 @@ export async function apiSubmitContact(data: {
   message: string;
 }): Promise<ApiResponse<unknown>> {
   return publicFetch('/api/public/contact', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+}
+
+export interface PublicFragranceNote {
+  _id: string;
+  name: string;
+}
+
+export async function apiGetPublicFragranceNotes(params?: {
+  search?: string;
+  limit?: number;
+}): Promise<ApiResponse<PublicFragranceNote[]>> {
+  const q: Record<string, string> = {};
+  if (params?.search) q.search = params.search;
+  if (params?.limit != null) q.limit = String(params.limit);
+  return publicFetch(`/api/public/fragrance-notes${publicQuery(q)}`);
+}
+
+export async function apiSubmitCustomPerfume(data: {
+  name: string;
+  email: string;
+  phone?: string;
+  fragranceNotes: string[];
+  brandNames: string[];
+  inspiration?: string;
+  occasion?: string;
+  additionalNotes?: string;
+}): Promise<ApiResponse<unknown>> {
+  return publicFetch('/api/public/custom-perfume', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),

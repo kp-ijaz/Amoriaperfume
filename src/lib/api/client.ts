@@ -8,6 +8,9 @@ import {
   ApiReview,
   ApiOrder,
   ApiPromotion,
+  ApiGiftSet,
+  ApiGiftSetOccasion,
+  ApiBundle,
   PromotionValidateRequest,
   PromotionValidateResult,
   ApiLoginResponse,
@@ -110,6 +113,7 @@ export interface ProductsParams {
   page?: number;
   limit?: number;
   search?: string;
+  q?: string;
   category?: string;
   categorySlug?: string;
   brand?: string;
@@ -120,10 +124,16 @@ export interface ProductsParams {
   trending?: boolean;
   newArrival?: boolean;
   limitedOffer?: boolean;
+  brandInspiration?: boolean;
   sort?: 'price_asc' | 'price_desc' | 'newest' | 'rating' | 'most_viewed';
   gender?: string;
   concentration?: string;
-  collection?: string; // collection slug or _id
+  minPrice?: number;
+  maxPrice?: number;
+  minRating?: number;
+  seasons?: string;
+  dayNight?: string;
+  collection?: string;
 }
 
 export async function apiGetProducts(
@@ -133,6 +143,7 @@ export async function apiGetProducts(
   if (params.page)            qs.set('page', String(params.page));
   if (params.limit)           qs.set('limit', String(params.limit));
   if (params.search)          qs.set('search', params.search);
+  if (params.q)               qs.set('q', params.q);
   if (params.category)        qs.set('category', params.category);
   if (params.categorySlug)    qs.set('categorySlug', params.categorySlug);
   if (params.brand)           qs.set('brand', params.brand);
@@ -143,9 +154,15 @@ export async function apiGetProducts(
   if (params.trending != null) qs.set('trending', String(params.trending));
   if (params.newArrival != null) qs.set('newArrival', String(params.newArrival));
   if (params.limitedOffer != null) qs.set('limitedOffer', String(params.limitedOffer));
+  if (params.brandInspiration != null) qs.set('brandInspiration', String(params.brandInspiration));
   if (params.sort)            qs.set('sort', params.sort);
   if (params.gender)          qs.set('gender', params.gender);
   if (params.concentration)   qs.set('concentration', params.concentration);
+  if (params.minPrice != null) qs.set('minPrice', String(params.minPrice));
+  if (params.maxPrice != null) qs.set('maxPrice', String(params.maxPrice));
+  if (params.minRating != null) qs.set('minRating', String(params.minRating));
+  if (params.seasons)         qs.set('seasons', params.seasons);
+  if (params.dayNight)        qs.set('dayNight', params.dayNight);
   if (params.collection)      qs.set('collection', params.collection);
   const query = qs.toString() ? `?${qs.toString()}` : '';
   return apiFetch(`/api/products${query}`);
@@ -203,6 +220,29 @@ export async function apiGetBrandBySlug(slug: string): Promise<ApiResponse<ApiBr
 }
 
 // ─── Collections ──────────────────────────────────────────────────────────────
+
+// ─── Gift Sets ───────────────────────────────────────────────────────────────
+
+export async function apiGetGiftSets(
+  occasion?: ApiGiftSetOccasion
+): Promise<ApiResponse<ApiGiftSet[]>> {
+  const qs = occasion && occasion !== 'general' ? `?occasion=${encodeURIComponent(occasion)}` : '';
+  return apiFetch(`/api/gift-sets/public${qs}`);
+}
+
+export async function apiGetGiftSetBySlug(slug: string): Promise<ApiResponse<ApiGiftSet>> {
+  return apiFetch(`/api/gift-sets/public/slug/${encodeURIComponent(slug)}`);
+}
+
+// ─── Bundles ─────────────────────────────────────────────────────────────────
+
+export async function apiGetBundles(): Promise<ApiResponse<ApiBundle[]>> {
+  return apiFetch('/api/bundles/public');
+}
+
+export async function apiGetBundleBySlug(slug: string): Promise<ApiResponse<ApiBundle>> {
+  return apiFetch(`/api/bundles/public/slug/${encodeURIComponent(slug)}`);
+}
 
 export async function apiGetCollections(slug?: string): Promise<ApiResponse<ApiCollection[]>> {
   const res = await apiFetch<ApiResponse<ApiCollection[]>>('/api/collections/public');

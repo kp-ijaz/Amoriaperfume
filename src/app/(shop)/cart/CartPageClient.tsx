@@ -5,6 +5,7 @@ import { ShoppingBag } from 'lucide-react';
 import { useCart } from '@/lib/hooks/useCart';
 import { CartItem } from '@/components/cart/CartItem';
 import { CartSummary } from '@/components/cart/CartSummary';
+import { cartItemReactKey } from '@/lib/cart/mapCartItemsToOrder';
 
 export function CartPageClient() {
   const { items } = useCart();
@@ -40,7 +41,7 @@ export function CartPageClient() {
         {/* Cart items */}
         <div>
           {items.map((item) => (
-            <CartItem key={`${item.product.id}-${item.variant.id}`} item={item} />
+            <CartItem key={cartItemReactKey(item)} item={item} />
           ))}
           <div className="mt-4">
             <Link

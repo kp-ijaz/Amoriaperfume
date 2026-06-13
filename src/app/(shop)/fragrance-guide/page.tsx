@@ -1,5 +1,5 @@
-import { CmsPageContent } from '@/components/content/CmsPageContent';
+import { CmsPageByType } from '@/components/content/CmsPageByType';
 
 export default function FragranceGuidePage() {
-  return <CmsPageContent slug="fragrance-guide" fallbackTitle="Fragrance Guide" />;
+  return <CmsPageByType pageType="fragrance_guide" />;
 }

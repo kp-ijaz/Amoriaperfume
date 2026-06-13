@@ -1,13 +1,13 @@
 import { configureStore } from '@reduxjs/toolkit';
 import { persistStore, persistReducer, FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER } from 'redux-persist';
-import storage from 'redux-persist/lib/storage';
+import storage from './storage';
 import { combineReducers } from '@reduxjs/toolkit';
 import cartReducer from './cartSlice';
 import wishlistReducer from './wishlistSlice';
 import uiReducer from './uiSlice';
 import authReducer from './authSlice';
 
-const cartPersistConfig     = { key: 'amoria_cart',     storage, whitelist: ['items', 'coupon', 'giftCard', 'savedItems'] };
+const cartPersistConfig     = { key: 'amoria_cart_v2', storage, whitelist: ['items', 'coupon', 'giftCard', 'savedItems'] };
 const wishlistPersistConfig = { key: 'amoria_wishlist', storage, whitelist: ['items'] };
 const authPersistConfig     = { key: 'amoria_auth',     storage, whitelist: ['user', 'token', 'isGuest', 'guestInfo'] };
 

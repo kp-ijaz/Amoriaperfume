@@ -5,18 +5,24 @@ import { SlidersHorizontal } from 'lucide-react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { FilterSidebar } from './FilterSidebar';
 import { AvailableProductFilters, ProductFilters } from '@/lib/hooks/useProducts';
+import { countActiveSidebarFilters, type SidebarFilterKey } from '@/lib/plp/productFilterConfig';
 
 interface MobileFilterSheetProps {
   filters: ProductFilters;
   availableFilters: AvailableProductFilters;
-  onFilterChange: (key: keyof ProductFilters, value: ProductFilters[typeof key]) => void;
+  onFilterChange: <K extends keyof ProductFilters>(key: K, value: ProductFilters[K]) => void;
   onClearAll: () => void;
+  hideFilterKeys?: SidebarFilterKey[];
 }
 
-export function MobileFilterSheet({ filters, availableFilters, onFilterChange, onClearAll }: MobileFilterSheetProps) {
-  const activeCount = Object.values(filters).filter((v) =>
-    Array.isArray(v) ? v.length > 0 : v !== undefined && v !== false
-  ).length;
+export function MobileFilterSheet({
+  filters,
+  availableFilters,
+  onFilterChange,
+  onClearAll,
+  hideFilterKeys = [],
+}: MobileFilterSheetProps) {
+  const activeCount = countActiveSidebarFilters(filters);
 
   return (
     <Sheet>
@@ -49,6 +55,7 @@ export function MobileFilterSheet({ filters, availableFilters, onFilterChange, o
             availableFilters={availableFilters}
             onFilterChange={onFilterChange}
             onClearAll={onClearAll}
+            hideFilterKeys={hideFilterKeys}
           />
         </div>
       </SheetContent>

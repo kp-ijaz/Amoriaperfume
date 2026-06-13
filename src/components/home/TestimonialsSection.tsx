@@ -4,63 +4,16 @@ import { motion } from 'framer-motion';
 import useEmblaCarousel from 'embla-carousel-react';
 import Autoplay from 'embla-carousel-autoplay';
 import { Star } from 'lucide-react';
-import { useTestimonials } from '@/lib/hooks/usePublicCms';
+import { usePublicHomepageSections, useTestimonials } from '@/lib/hooks/usePublicCms';
 import { useLanguage } from '@/lib/context/LanguageContext';
-
-const FALLBACK_TESTIMONIALS = [
-  {
-    id: 1,
-    name: 'Ahmed Al Rashid',
-    location: 'Dubai, UAE',
-    rating: 5,
-    text: 'Amoria is my go-to for all fragrance purchases. The authenticity is guaranteed and delivery is always on time. Highly recommend!',
-    initials: 'AR',
-  },
-  {
-    id: 2,
-    name: 'Fatima Hassan',
-    location: 'Abu Dhabi, UAE',
-    rating: 5,
-    text: 'I ordered the Shumukh as a birthday gift and my husband was absolutely blown away. The packaging is gorgeous and the scent is divine.',
-    initials: 'FH',
-  },
-  {
-    id: 3,
-    name: 'Mohammed Al Zaabi',
-    location: 'Sharjah, UAE',
-    rating: 5,
-    text: 'Best online perfume store in the UAE. Wide selection, competitive prices, and fast delivery. The fragrance finder quiz helped me discover my new signature scent.',
-    initials: 'MZ',
-  },
-  {
-    id: 4,
-    name: 'Layla Bin Hamad',
-    location: 'Dubai, UAE',
-    rating: 4,
-    text: 'Love the curated collection here. Found fragrances I could not find anywhere else. Customer service was very helpful too.',
-    initials: 'LH',
-  },
-  {
-    id: 5,
-    name: 'Omar Al Shamsi',
-    location: 'Ajman, UAE',
-    rating: 5,
-    text: 'The oud selection is incredible. Every bottle I have ordered has been authentic and exactly as described. Will continue to be a loyal customer.',
-    initials: 'OS',
-  },
-  {
-    id: 6,
-    name: 'Sara Al Blooshi',
-    location: 'Ras Al Khaimah, UAE',
-    rating: 5,
-    text: 'Amazingly fast shipping and the products are 100% original. The prices are great and the website is so easy to use. Very happy customer!',
-    initials: 'SB',
-  },
-];
+import { TestimonialCarouselSkeleton } from '@/components/loading';
 
 export function TestimonialsSection() {
   const { t } = useLanguage();
+  const { isLoading } = usePublicHomepageSections();
   const apiItems = useTestimonials();
+
+  const [emblaRef] = useEmblaCarousel({ loop: true, align: 'start' }, [Autoplay({ delay: 4500 })]);
 
   const stats = [
     { num: '4.9',  label: t('statRating'),    sub: t('statRatingSub') },
@@ -68,26 +21,24 @@ export function TestimonialsSection() {
     { num: '50K+', label: t('statCustomers'),  sub: t('statCustomersSub') },
     { num: '1 Day',label: t('statDelivery'),   sub: t('statDeliverySub') },
   ];
-  const testimonials =
-    apiItems.length > 0
-      ? apiItems.map((t, i) => ({
-          id: i + 1,
-          name: t.name,
-          location: t.location,
-          rating: t.rating,
-          text: t.text,
-          initials: t.name
-            .split(' ')
-            .map((n) => n[0])
-            .join('')
-            .slice(0, 2)
-            .toUpperCase(),
-        }))
-      : FALLBACK_TESTIMONIALS;
+
+  if (isLoading) return <TestimonialCarouselSkeleton />;
+
+  const testimonials = apiItems.map((item, i) => ({
+    id: i + 1,
+    name: item.name,
+    location: item.location,
+    rating: item.rating,
+    text: item.text,
+    initials: item.name
+      .split(' ')
+      .map((n) => n[0])
+      .join('')
+      .slice(0, 2)
+      .toUpperCase(),
+  }));
 
   if (testimonials.length === 0) return null;
-
-  const [emblaRef] = useEmblaCarousel({ loop: true, align: 'start' }, [Autoplay({ delay: 4500 })]);
 
   return (
     <section className="relative overflow-hidden" style={{ backgroundColor: '#0D0A08' }}>

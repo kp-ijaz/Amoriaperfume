@@ -5,34 +5,29 @@ import { RootState } from '@/lib/store';
 import { closeMobileNav } from '@/lib/store/uiSlice';
 import { useBodyLock } from '@/lib/hooks/useBodyLock';
 import Link from 'next/link';
-import { X, Search, ChevronRight, Package, Truck, MapPin, Globe, Check, RotateCcw } from 'lucide-react';
+import { usePathname } from 'next/navigation';
+import { X, Search, ChevronRight, Package, Truck, RotateCcw } from 'lucide-react';
 import Image from 'next/image';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useLanguage } from '@/lib/context/LanguageContext';
-import { useState } from 'react';
-
-const NAV_LINK_KEYS: { key: string; href: string; isRed?: boolean }[] = [
-  { key: 'navHome',             href: '/' },
-  { key: 'navCollections',      href: '/collections' },
-  { key: 'navBrandInspiration', href: '/brand-inspiration' },
-  { key: 'navGiftSets',         href: '/gift-sets' },
-  { key: 'navGiftCards',        href: '/gift-cards' },
-  { key: 'navBakhoor',          href: '/bakhoor' },
-  { key: 'navSale',             href: '/products?sale=true', isRed: true },
-];
+import {
+  SHOP_NAV,
+  isDropdownNavActive,
+  isNavItemActive,
+} from '@/lib/navigation/shopNav';
+import type { TranslationKey } from '@/lib/i18n/translations';
 
 export function MobileNav() {
   const dispatch = useDispatch();
+  const pathname = usePathname();
   const isOpen = useSelector((state: RootState) => state.ui.mobileNavOpen);
-  const { t, lang, setLang, tArr } = useLanguage();
-  const [langOpen, setLangOpen] = useState(false);
+  const { t } = useLanguage();
   useBodyLock(isOpen);
 
   return (
     <AnimatePresence>
       {isOpen && (
         <>
-          {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -40,7 +35,6 @@ export function MobileNav() {
             className="fixed inset-0 bg-black/60 z-50 md:hidden"
             onClick={() => dispatch(closeMobileNav())}
           />
-          {/* Drawer */}
           <motion.div
             initial={{ x: '-100%' }}
             animate={{ x: 0 }}
@@ -49,7 +43,6 @@ export function MobileNav() {
             className="fixed left-0 top-0 bottom-0 w-80 z-50 flex flex-col md:hidden"
             style={{ backgroundColor: 'var(--color-amoria-primary)' }}
           >
-            {/* Header */}
             <div className="flex items-center justify-between p-4 border-b" style={{ borderColor: 'rgba(255,255,255,0.1)' }}>
               <div className="flex items-center gap-2">
                 <Image
@@ -74,7 +67,6 @@ export function MobileNav() {
               </button>
             </div>
 
-            {/* Search */}
             <div className="p-4 border-b" style={{ borderColor: 'rgba(255,255,255,0.1)' }}>
               <div className="relative">
                 <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/50" />
@@ -87,32 +79,75 @@ export function MobileNav() {
               </div>
             </div>
 
-            {/* Nav links — bottom padding so content clears the tab bar */}
             <nav
               className="flex-1 overflow-y-auto py-2"
               style={{ paddingBottom: 'calc(64px + env(safe-area-inset-bottom))' }}
             >
-              {NAV_LINK_KEYS.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  onClick={() => dispatch(closeMobileNav())}
-                  className="flex items-center justify-between px-4 py-3.5 text-sm font-medium border-b transition-colors hover:bg-white/5"
-                  style={{ color: link.isRed ? '#f87171' : 'rgba(255,255,255,0.85)', borderColor: 'rgba(255,255,255,0.06)' }}
-                >
-                  <span className="flex items-center gap-2">
-                    {t(link.key as Parameters<typeof t>[0])}
-                    {link.isRed && (
-                      <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded-sm" style={{ backgroundColor: '#fee2e2', color: '#dc2626' }}>
-                        HOT
-                      </span>
-                    )}
-                  </span>
-                  <ChevronRight size={16} className="opacity-40" />
-                </Link>
-              ))}
+              {SHOP_NAV.map((link) => {
+                if (link.type === 'dropdown') {
+                  const groupActive = isDropdownNavActive(pathname, link);
+                  return (
+                    <div key={link.key}>
+                      <Link
+                        href={link.href}
+                        onClick={() => dispatch(closeMobileNav())}
+                        className="flex items-center justify-between px-4 py-3.5 text-sm font-semibold border-b transition-colors hover:bg-white/5"
+                        style={{
+                          color: groupActive ? 'var(--color-amoria-accent)' : 'rgba(255,255,255,0.95)',
+                          borderColor: 'rgba(255,255,255,0.06)',
+                        }}
+                      >
+                        {t(link.key as TranslationKey)}
+                        <ChevronRight size={16} className="opacity-40" />
+                      </Link>
+                      {link.children.map((child) => (
+                        <Link
+                          key={child.href}
+                          href={child.href}
+                          onClick={() => dispatch(closeMobileNav())}
+                          className="flex items-center justify-between pl-8 pr-4 py-3 text-sm font-medium border-b transition-colors hover:bg-white/5"
+                          style={{
+                            color: isNavItemActive(pathname, child.href)
+                              ? 'var(--color-amoria-accent)'
+                              : 'rgba(255,255,255,0.75)',
+                            borderColor: 'rgba(255,255,255,0.06)',
+                          }}
+                        >
+                          {t(child.key as TranslationKey)}
+                          <ChevronRight size={14} className="opacity-40" />
+                        </Link>
+                      ))}
+                    </div>
+                  );
+                }
 
-              {/* Orders & Tracking */}
+                return (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    onClick={() => dispatch(closeMobileNav())}
+                    className="flex items-center justify-between px-4 py-3.5 text-sm font-medium border-b transition-colors hover:bg-white/5"
+                    style={{
+                      color: link.isRed ? '#f87171' : 'rgba(255,255,255,0.85)',
+                      borderColor: 'rgba(255,255,255,0.06)',
+                    }}
+                  >
+                    <span className="flex items-center gap-2">
+                      {t(link.key as TranslationKey)}
+                      {link.isRed && (
+                        <span
+                          className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded-sm"
+                          style={{ backgroundColor: '#fee2e2', color: '#dc2626' }}
+                        >
+                          HOT
+                        </span>
+                      )}
+                    </span>
+                    <ChevronRight size={16} className="opacity-40" />
+                  </Link>
+                );
+              })}
+
               <div className="mt-4 pt-4 border-t" style={{ borderColor: 'rgba(255,255,255,0.1)' }}>
                 <p className="px-4 text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'var(--color-amoria-accent)' }}>
                   {t('mobileOrders')}
@@ -134,7 +169,6 @@ export function MobileNav() {
                 </Link>
               </div>
 
-              {/* Account */}
               <div className="mt-4 pt-4 border-t" style={{ borderColor: 'rgba(255,255,255,0.1)' }}>
                 <p className="px-4 text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'var(--color-amoria-accent)' }}>
                   {t('mobileAccount')}
@@ -146,8 +180,6 @@ export function MobileNav() {
                   {t('mobileRegister')}
                 </Link>
               </div>
-
-
             </nav>
           </motion.div>
         </>

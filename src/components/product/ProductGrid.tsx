@@ -2,7 +2,7 @@
 
 import { Product } from '@/types/product';
 import { ProductCard } from './ProductCard';
-import { Skeleton } from '@/components/ui/skeleton';
+import { ProductCardSkeleton } from '@/components/loading';
 
 interface ProductGridProps {
   products: Product[];
@@ -29,20 +29,7 @@ export function ProductGrid({ products, showSkeleton = false, columns = 4 }: Pro
   const skeletonCount = columns === 5 ? 5 : columns === 3 ? 6 : 8;
 
   if (showSkeleton) {
-    return (
-      <div className={`grid ${GRID_COLS[columns]} ${GRID_GAPS[columns]}`}>
-        {Array.from({ length: skeletonCount }).map((_, i) => (
-          <div key={i} className="flex flex-col gap-0">
-            <Skeleton className="w-full" style={{ aspectRatio: '3/4', borderRadius: 0 }} />
-            <div className="pt-3 space-y-1.5">
-              <Skeleton className="h-2 w-1/4" />
-              <Skeleton className="h-3 w-3/4" />
-              <Skeleton className="h-2.5 w-1/3 mt-1" />
-            </div>
-          </div>
-        ))}
-      </div>
-    );
+    return <ProductCardSkeleton count={skeletonCount} columns={columns} />;
   }
 
   if (products.length === 0) {

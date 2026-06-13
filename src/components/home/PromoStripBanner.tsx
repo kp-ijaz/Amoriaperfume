@@ -1,18 +1,16 @@
 'use client';
 
 import Link from 'next/link';
-import { usePlatformAnnouncement } from '@/lib/hooks/usePublicCms';
+import { usePromoStripConfig } from '@/lib/hooks/usePublicCms';
 import { useLanguage } from '@/lib/context/LanguageContext';
 
 export function PromoStripBanner() {
   const { t } = useLanguage();
-  const platform = usePlatformAnnouncement();
-  const text = platform?.flashAnnouncementText?.trim();
+  const strip = usePromoStripConfig();
 
-  if (!text) return null;
+  if (!strip) return null;
 
-  const codeMatch = text.match(/code[:\s]+([A-Z0-9]+)/i);
-  const promoCode = codeMatch?.[1];
+  const { message, code, ctaHref } = strip;
 
   return (
     <div
@@ -24,12 +22,12 @@ export function PromoStripBanner() {
         overflow: 'hidden',
       }}
     >
-      {/* Subtle pattern overlay */}
       <div
         style={{
           position: 'absolute',
           inset: 0,
-          backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(26,10,46,0.04) 4px, rgba(26,10,46,0.04) 8px)',
+          backgroundImage:
+            'repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(26,10,46,0.04) 4px, rgba(26,10,46,0.04) 8px)',
           pointerEvents: 'none',
         }}
       />
@@ -47,7 +45,6 @@ export function PromoStripBanner() {
           zIndex: 1,
         }}
       >
-        {/* Left decorative line */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <svg width="22" height="2" viewBox="0 0 22 2" fill="none">
             <line x1="0" y1="1" x2="22" y2="1" stroke="#1A0A2E" strokeOpacity="0.4" strokeWidth="1.5" />
@@ -57,7 +54,6 @@ export function PromoStripBanner() {
           </svg>
         </div>
 
-        {/* Main message — centered */}
         <div
           style={{
             flex: 1,
@@ -79,9 +75,9 @@ export function PromoStripBanner() {
               lineHeight: 1.2,
             }}
           >
-            {text.split('|')[0]?.trim() || text}
+            {message}
           </span>
-          {promoCode && (
+          {code ? (
             <>
               <span style={{ color: '#1A0A2E', opacity: 0.4, fontSize: 16 }}>|</span>
               <span
@@ -106,14 +102,13 @@ export function PromoStripBanner() {
                     borderRadius: 3,
                   }}
                 >
-                  {promoCode}
+                  {code}
                 </strong>
               </span>
             </>
-          )}
+          ) : null}
         </div>
 
-        {/* Right decorative + CTA */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <svg width="6" height="6" viewBox="0 0 6 6" fill="none">
             <polygon points="3,0 6,3 3,6 0,3" fill="#1A0A2E" fillOpacity="0.5" />
@@ -123,7 +118,7 @@ export function PromoStripBanner() {
           </svg>
 
           <Link
-            href="/products"
+            href={ctaHref}
             style={{
               color: '#1A0A2E',
               fontSize: 11,

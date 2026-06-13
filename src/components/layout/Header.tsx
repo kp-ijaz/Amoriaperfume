@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useSelector, useDispatch } from 'react-redux';
@@ -15,38 +15,67 @@ import { CartDrawer } from '@/components/cart/CartDrawer';
 import { MobileNav } from './MobileNav';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { useLanguage } from '@/lib/context/LanguageContext';
+import { useUtilityBarConfig, type UtilityBarOfferDisplay } from '@/lib/hooks/usePublicCms';
+import {
+  SHOP_NAV,
+  isDropdownNavActive,
+  isNavItemActive,
+  type ShopNavItem,
+} from '@/lib/navigation/shopNav';
+import type { TranslationKey } from '@/lib/i18n/translations';
 
 const OFFER_COLORS = ['#dc2626', '#16a34a', 'var(--color-amoria-accent)', '#7c3aed', '#ea580c'];
 
-function LiveOffersTicker() {
+function LiveOffersTicker({
+  offers,
+  compact = false,
+}: {
+  offers: UtilityBarOfferDisplay[];
+  compact?: boolean;
+}) {
   const [activeIdx, setActiveIdx] = useState(0);
-  const { tArr } = useLanguage();
-  const offers = tArr('liveOffers');
 
   useEffect(() => {
+    if (offers.length === 0) return;
     const timer = setInterval(() => {
       setActiveIdx((i) => (i + 1) % offers.length);
     }, 3200);
     return () => clearInterval(timer);
   }, [offers.length]);
 
-  const text = offers[activeIdx] ?? '';
-  const color = OFFER_COLORS[activeIdx % OFFER_COLORS.length];
+  if (offers.length === 0) return null;
+
+  const offer = offers[activeIdx] ?? offers[0];
+  const text = offer.text;
+  const color = offer.color || OFFER_COLORS[activeIdx % OFFER_COLORS.length];
+
+  const inner = (
+    <motion.span
+      initial={{ opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -6 }}
+      transition={{ duration: 0.35, ease: 'easeInOut' }}
+      className={`${compact ? 'text-[11px]' : 'text-[13px]'} font-medium truncate text-center block`}
+      style={{ color }}
+    >
+      {text}
+    </motion.span>
+  );
 
   return (
     <div className="flex items-center justify-center overflow-hidden w-full">
       <AnimatePresence mode="wait">
-        <motion.span
-          key={activeIdx}
-          initial={{ opacity: 0, y: 6 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -6 }}
-          transition={{ duration: 0.35, ease: 'easeInOut' }}
-          className="text-[13px] font-medium truncate text-center"
-          style={{ color }}
-        >
-          {text}
-        </motion.span>
+        {offer.href ? (
+          <Link
+            key={activeIdx}
+            href={offer.href}
+            className="hover:opacity-80 transition-opacity truncate text-center"
+          >
+            {inner}
+          </Link>
+        ) : (
+          <div key={activeIdx}>{inner}</div>
+        )}
       </AnimatePresence>
     </div>
   );
@@ -117,20 +146,112 @@ function LanguageDropdown() {
   );
 }
 
-const NAV_LINK_KEYS: { key: string; href: string; isRed?: boolean }[] = [
-  { key: 'navHome',              href: '/' },
-  { key: 'navCollections',       href: '/collections' },
-  { key: 'navBrandInspiration',  href: '/brand-inspiration' },
-  { key: 'navGiftSets',          href: '/gift-sets' },
-  { key: 'navGiftCards',         href: '/gift-cards' },
-  { key: 'navBakhoor',           href: '/bakhoor' },
-  { key: 'navSale',              href: '/products?sale=true', isRed: true },
-];
+function GiftSetsNavDropdown({
+  item,
+  pathname,
+  t,
+}: {
+  item: Extract<ShopNavItem, { type: 'dropdown' }>;
+  pathname: string;
+  t: (key: TranslationKey) => string;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const active = isDropdownNavActive(pathname, item);
+
+  useEffect(() => {
+    function handleOutside(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener('mousedown', handleOutside);
+    return () => document.removeEventListener('mousedown', handleOutside);
+  }, []);
+
+  return (
+    <div
+      ref={ref}
+      className="relative"
+      onMouseEnter={() => setOpen(true)}
+      onMouseLeave={() => setOpen(false)}
+    >
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className={`relative flex items-center gap-1 px-3.5 py-2 text-[13px] font-medium tracking-wide group transition-colors duration-200 ${
+          active ? 'text-[#1A0A2E]' : 'text-[#4A4A4A] hover:text-[#1A0A2E]'
+        }`}
+      >
+        {t(item.key as TranslationKey)}
+        <ChevronDown
+          size={12}
+          className="transition-transform duration-200"
+          style={{ transform: open ? 'rotate(180deg)' : 'rotate(0deg)' }}
+        />
+        <span
+          className="absolute bottom-0 left-3.5 right-3.5 h-[2px] rounded-full transition-transform duration-250 origin-center"
+          style={{
+            backgroundColor: 'var(--color-amoria-accent)',
+            transform: active ? 'scaleX(1)' : 'scaleX(0)',
+          }}
+        />
+        {!active && (
+          <span
+            className="absolute bottom-0 left-3.5 right-3.5 h-[2px] rounded-full scale-x-0 group-hover:scale-x-100 transition-transform duration-250 origin-center"
+            style={{ backgroundColor: 'var(--color-amoria-accent)' }}
+          />
+        )}
+      </button>
+
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, y: -4, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -4, scale: 0.97 }}
+            transition={{ duration: 0.15, ease: [0.22, 1, 0.36, 1] }}
+            className="absolute left-0 top-full mt-1 bg-white border shadow-lg z-50 min-w-[180px] overflow-hidden rounded-sm"
+            style={{ borderColor: 'var(--color-amoria-border)' }}
+          >
+            {item.children.map((child) => {
+              const childActive = isNavItemActive(pathname, child.href);
+              return (
+                <Link
+                  key={child.href}
+                  href={child.href}
+                  onClick={() => setOpen(false)}
+                  className="flex items-center gap-2.5 w-full px-3 py-2.5 text-left hover:bg-gray-50 transition-colors"
+                  style={{ color: childActive ? 'var(--color-amoria-accent)' : 'var(--color-amoria-text)' }}
+                >
+                  <span className="text-[13px] font-medium">{t(child.key as TranslationKey)}</span>
+                  {childActive && (
+                    <Check size={11} className="ml-auto" style={{ color: 'var(--color-amoria-accent)' }} />
+                  )}
+                </Link>
+              );
+            })}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
 
 export function Header() {
   const dispatch = useDispatch();
   const pathname = usePathname();
   const { t, tArr } = useLanguage();
+  const utilityBar = useUtilityBarConfig();
+  const tickerOffers = useMemo((): UtilityBarOfferDisplay[] => {
+    if (utilityBar.offers.length > 0) return utilityBar.offers;
+    const translated = tArr('liveOffers');
+    if (translated.length > 0) {
+      return translated.map((text, i) => ({
+        text,
+        color: OFFER_COLORS[i % OFFER_COLORS.length],
+      }));
+    }
+    return [{ text: '🎁 Special Offers Available', color: 'var(--color-amoria-accent)' }];
+  }, [utilityBar.offers, tArr]);
   const cartItems = useSelector((state: RootState) => state.cart.items);
   const wishlistItems = useSelector((state: RootState) => state.wishlist.items);
   const [scrolled, setScrolled] = useState(false);
@@ -151,15 +272,6 @@ export function Header() {
 
   const cartCount = cartItems.reduce((acc, item) => acc + item.quantity, 0);
   const { isLoggedIn, isGuest, guestInfo, user, signOut, clearGuest } = useAuth();
-
-  const isActive = useCallback(
-    (href: string) => {
-      const base = href.split('?')[0];
-      if (base === '/') return pathname === '/';
-      return pathname === base || pathname.startsWith(base + '/');
-    },
-    [pathname],
-  );
 
   useEffect(() => {
     let rafId: number;
@@ -198,49 +310,113 @@ export function Header() {
       <header className="fixed top-0 left-0 right-0 z-40 w-full" style={{ backgroundColor: '#FAF8F5' }}>
 
         {/* ── TOP UTILITY BAR — live offers + language ── */}
+        {utilityBar.enabled ? (
         <div
           className="border-b"
           style={{ borderColor: 'var(--color-amoria-border)', backgroundColor: '#FAF8F5' }}
         >
-          <div className="max-w-7xl mx-auto px-4 lg:px-8 h-8 grid items-center" style={{ gridTemplateColumns: '1fr auto 1fr' }}>
+          <div className="max-w-7xl mx-auto px-4 lg:px-8">
 
-            {/* LEFT — empty placeholder to keep ticker centered */}
-            <div />
+            {/* Mobile: badge + controls on top, ticker below */}
+            <div className="sm:hidden flex flex-col">
+              <div className="flex items-center justify-between h-8">
+                {utilityBar.leftBadge ? (
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    {utilityBar.leftBadge.icon ? (
+                      <span className="text-[14px] leading-none flex-shrink-0" aria-hidden>
+                        {utilityBar.leftBadge.icon}
+                      </span>
+                    ) : null}
+                    <span
+                      className="text-[13px] font-medium truncate"
+                      style={{ color: 'var(--color-amoria-text-muted)' }}
+                    >
+                      {utilityBar.leftBadge.text}
+                    </span>
+                  </div>
+                ) : (
+                  <div />
+                )}
 
-            {/* CENTER — offers ticker (truly centered) */}
-            <div className="hidden sm:flex w-full">
-              <LiveOffersTicker />
-            </div>
+                <div className="flex items-center justify-end gap-3">
+                  {utilityBar.showStoreLocator ? (
+                    <>
+                      <Link
+                        href="/store-locator"
+                        className="flex items-center gap-1.5 flex-shrink-0 hover:opacity-70 transition-opacity"
+                        style={{ color: 'var(--color-amoria-text-muted)' }}
+                      >
+                        <MapPin size={13} />
+                      </Link>
+                      {utilityBar.showLanguageSwitcher ? (
+                        <span className="w-px h-3 opacity-25" style={{ backgroundColor: 'var(--color-amoria-text-muted)' }} />
+                      ) : null}
+                    </>
+                  ) : null}
+                  {utilityBar.showLanguageSwitcher ? <LanguageDropdown /> : null}
+                </div>
+              </div>
 
-            {/* Mobile offers ticker — compact */}
-            <div className="flex sm:hidden w-full justify-center">
-              <div className="overflow-hidden flex-1">
-                <motion.span
-                  key={`mobile-offer`}
-                  className="text-[11px] font-medium text-center block truncate"
-                  style={{ color: 'var(--color-amoria-accent)' }}
-                >
-                  {(tArr('liveOffers')[0] || '🎁 Special Offers Available')}
-                </motion.span>
+              <div
+                className="h-7 flex items-center border-t"
+                style={{ borderColor: 'var(--color-amoria-border)' }}
+              >
+                <LiveOffersTicker offers={tickerOffers} compact />
               </div>
             </div>
 
-            {/* RIGHT — store locator + language */}
-            <div className="flex items-center justify-end gap-3">
-              <a
-                href="/contact"
-                className="flex items-center gap-1.5 flex-shrink-0 hover:opacity-70 transition-opacity text-[13px] sm:text-sm"
-                style={{ color: 'var(--color-amoria-text-muted)' }}
-              >
-                <MapPin size={13} />
-                <span className="hidden sm:inline font-medium">{t('storeLocator')}</span>
-              </a>
-              <span className="hidden sm:block w-px h-3 opacity-25" style={{ backgroundColor: 'var(--color-amoria-text-muted)' }} />
-              <LanguageDropdown />
+            {/* Desktop: single-row 3-column grid */}
+            <div
+              className="hidden sm:grid h-8 items-center"
+              style={{ gridTemplateColumns: '1fr auto 1fr' }}
+            >
+              {utilityBar.leftBadge ? (
+                <div className="flex items-center gap-1.5 min-w-0">
+                  {utilityBar.leftBadge.icon ? (
+                    <span className="text-[14px] leading-none flex-shrink-0" aria-hidden>
+                      {utilityBar.leftBadge.icon}
+                    </span>
+                  ) : null}
+                  <span
+                    className="text-[13px] font-medium truncate"
+                    style={{ color: 'var(--color-amoria-text-muted)' }}
+                  >
+                    {utilityBar.leftBadge.text}
+                  </span>
+                </div>
+              ) : (
+                <div />
+              )}
+
+              {tickerOffers.length > 0 ? (
+                <LiveOffersTicker offers={tickerOffers} />
+              ) : (
+                <div />
+              )}
+
+              <div className="flex items-center justify-end gap-3">
+                {utilityBar.showStoreLocator ? (
+                  <>
+                    <Link
+                      href="/store-locator"
+                      className="flex items-center gap-1.5 flex-shrink-0 hover:opacity-70 transition-opacity"
+                      style={{ color: 'var(--color-amoria-text-muted)' }}
+                    >
+                      <MapPin size={13} />
+                      <span className="text-[13px] font-medium">{t('storeLocator')}</span>
+                    </Link>
+                    {utilityBar.showLanguageSwitcher ? (
+                      <span className="w-px h-3 opacity-25" style={{ backgroundColor: 'var(--color-amoria-text-muted)' }} />
+                    ) : null}
+                  </>
+                ) : null}
+                {utilityBar.showLanguageSwitcher ? <LanguageDropdown /> : null}
+              </div>
             </div>
 
           </div>
         </div>
+        ) : null}
 
         {/* Main header row */}
         <div
@@ -285,9 +461,20 @@ export function Header() {
 
             {/* Center nav — desktop only */}
             <nav className="hidden md:flex items-center justify-center flex-1 gap-0.5 px-4">
-              {NAV_LINK_KEYS.map((link) => {
-                const active = !link.isRed && isActive(link.href);
-                const label = t(link.key as Parameters<typeof t>[0]);
+              {SHOP_NAV.map((link) => {
+                if (link.type === 'dropdown') {
+                  return (
+                    <GiftSetsNavDropdown
+                      key={link.key}
+                      item={link}
+                      pathname={pathname}
+                      t={t}
+                    />
+                  );
+                }
+
+                const active = !link.isRed && isNavItemActive(pathname, link.href);
+                const label = t(link.key as TranslationKey);
                 return (
                   <Link
                     key={link.href}
@@ -309,7 +496,6 @@ export function Header() {
                         HOT
                       </span>
                     )}
-                    {/* Hover / active underline */}
                     {!link.isRed && (
                       <span
                         className="absolute bottom-0 left-3.5 right-3.5 h-[2px] rounded-full transition-transform duration-250 origin-center"

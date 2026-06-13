@@ -20,14 +20,18 @@ export function Footer() {
     { labelKey: 'footerLinkFAQs' as const,      href: '/faqs' },
     { labelKey: 'footerLinkTrackOrder' as const, href: '/track-order' },
     { labelKey: 'footerLinkGiftCards' as const, href: '/gift-cards' },
-    { labelKey: 'footerLinkReturns' as const,    href: '/faqs#returns' },
+    { labelKey: 'footerLinkCustomPerfume' as const, href: '/custom-perfume' },
+    { labelKey: 'footerLinkReturns' as const,    href: '/returns' },
     { labelKey: 'footerLinkContact' as const,    href: '/contact' },
     { labelKey: 'footerLinkPrivacy' as const,    href: '/privacy' },
     { labelKey: 'footerLinkTerms' as const,      href: '/terms' },
   ];
 
   return (
-    <footer style={{ backgroundColor: 'var(--color-amoria-dark)' }}>
+    <footer
+      className="pb-[calc(60px+env(safe-area-inset-bottom))] md:pb-0"
+      style={{ backgroundColor: 'var(--color-amoria-dark)' }}
+    >
       <div className="max-w-7xl mx-auto px-4 pt-16 pb-8">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 mb-12">
           {/* Col 1: Brand */}

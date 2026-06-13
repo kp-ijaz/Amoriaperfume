@@ -33,3 +33,32 @@ export function useCountdown(): CountdownTime {
 
   return time;
 }
+
+export function useCountdownTo(targetDate: string | Date | null | undefined): CountdownTime {
+  const [time, setTime] = useState<CountdownTime>({ hours: 0, minutes: 0, seconds: 0 });
+
+  useEffect(() => {
+    if (!targetDate) {
+      setTime({ hours: 0, minutes: 0, seconds: 0 });
+      return;
+    }
+
+    function getTimeRemaining(): CountdownTime {
+      const end = new Date(targetDate as string | Date);
+      const diff = Math.max(0, end.getTime() - Date.now());
+      const hours = Math.floor(diff / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+      return { hours, minutes, seconds };
+    }
+
+    setTime(getTimeRemaining());
+    const timer = setInterval(() => {
+      setTime(getTimeRemaining());
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [targetDate]);
+
+  return time;
+}

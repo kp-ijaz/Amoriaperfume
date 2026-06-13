@@ -2,12 +2,13 @@
 
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import { useCountdown } from '@/lib/hooks/useCountdown';
+import { useCountdown, useCountdownTo } from '@/lib/hooks/useCountdown';
+import { useOfferPopup } from '@/lib/context/OfferPopupContext';
 import { ProductCard } from '@/components/product/ProductCard';
+import { ProductCardSkeletonItem } from '@/components/loading';
 import {
   HOME_PRODUCTS_PER_ROW,
   useHomeSlotProducts,
-  usePublicCoverImages,
 } from '@/lib/hooks/usePublicCms';
 import { useLanguage } from '@/lib/context/LanguageContext';
 
@@ -43,7 +44,10 @@ function TimeUnit({ value, label }: { value: number; label: string; }) {
 }
 
 export function LimitedDealsSection() {
-  const { hours, minutes, seconds } = useCountdown();
+  const { config: offerConfig } = useOfferPopup();
+  const midnightCountdown = useCountdown();
+  const offerCountdown = useCountdownTo(offerConfig?.endsAt);
+  const { hours, minutes, seconds } = offerConfig?.endsAt ? offerCountdown : midnightCountdown;
   const { t } = useLanguage();
   const { data, isLoading } = useHomeSlotProducts('home-limited-offers', {
     limit: HOME_PRODUCTS_PER_ROW,
@@ -52,8 +56,6 @@ export function LimitedDealsSection() {
   const dealProducts = (data?.products ?? []).slice(0, HOME_PRODUCTS_PER_ROW);
   const sectionTitle = data?.title?.trim() || t('slotLimitedOffers');
   const sectionSubtitle = data?.subtitle?.trim() || t('slotLimitedOffersSubtitle');
-  const { data: flashHeaders = [] } = usePublicCoverImages('flash_banner');
-  const flashHeader = flashHeaders[0];
 
   if (!isLoading && dealProducts.length === 0) return null;
 
@@ -62,17 +64,6 @@ export function LimitedDealsSection() {
       className="relative overflow-hidden"
       style={{ backgroundColor: '#F5F2EE', borderTop: '1px solid #E8E3DC', borderBottom: '1px solid #E8E3DC' }}
     >
-      {flashHeader?.imageUrl ? (
-        <motion.div
-          className="absolute inset-0 bg-cover bg-center opacity-[0.07]"
-          style={{ backgroundImage: `url(${flashHeader.imageUrl})` }}
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 0.07 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.8 }}
-        />
-      ) : null}
-
       <motion.div
         className="relative z-10 max-w-7xl mx-auto px-5 sm:px-8 py-20 md:py-28"
         initial={{ opacity: 0 }}
@@ -103,7 +94,7 @@ export function LimitedDealsSection() {
                 letterSpacing: '0.03em',
               }}
             >
-              {flashHeader?.title?.trim() || sectionTitle}
+              {sectionTitle}
             </h2>
             <div className="flex items-center gap-3 mt-4">
               <motion.div
@@ -147,11 +138,7 @@ export function LimitedDealsSection() {
         >
           {isLoading
             ? Array.from({ length: HOME_PRODUCTS_PER_ROW }).map((_, i) => (
-                <div
-                  key={i}
-                  className="aspect-[3/4] animate-pulse rounded-sm"
-                  style={{ backgroundColor: 'rgba(26,10,46,0.06)' }}
-                />
+                <ProductCardSkeletonItem key={i} />
               ))
             : dealProducts.map((product) => (
                 <motion.div

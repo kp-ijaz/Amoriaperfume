@@ -7,27 +7,24 @@ import useEmblaCarousel from 'embla-carousel-react';
 import Autoplay from 'embla-carousel-autoplay';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useHeroCoverImages } from '@/lib/hooks/usePublicCms';
-import { FALLBACK_HERO_SIDE_PANELS, FALLBACK_HERO_SLIDES } from '@/components/home/heroFallbacks';
+import { HeroBannerSkeleton } from '@/components/loading';
 
 export function CompactHeroBanner() {
-  const { data, isLoading, isError } = useHeroCoverImages();
+  const { data, isLoading } = useHeroCoverImages();
 
   const sliderBanners = data?.sliders ?? [];
   const sidePanelBanners = data?.sidePanels ?? [];
-  const usingFallback = !isLoading && (isError || sliderBanners.length === 0);
 
-  const banners = (usingFallback ? FALLBACK_HERO_SLIDES : sliderBanners.map((b) => ({
+  const banners = sliderBanners.map((b) => ({
     id: b._id,
     image: b.imageUrl,
     title: b.title || 'Discover Amoria',
     subtitle: b.subtitle || '',
     ctaLink: b.redirectUrl || '/products',
     ctaText: b.content?.trim() || 'Shop Now',
-  })));
+  }));
 
-  const sidePanels = (usingFallback
-    ? FALLBACK_HERO_SIDE_PANELS
-    : sidePanelBanners.slice(0, 2).map((b) => ({
+  const sidePanels = sidePanelBanners.slice(0, 2).map((b) => ({
     id: b._id,
     image: b.imageUrl,
     badge: b.content?.split('|')[0]?.trim() || 'OFFER',
@@ -37,7 +34,7 @@ export function CompactHeroBanner() {
     code: b.content?.includes('|') ? b.content.split('|')[1]?.trim() : null,
     href: b.redirectUrl || '/products',
     cta: 'Shop Now',
-  })));
+  }));
 
   const [emblaRef, emblaApi] = useEmblaCarousel(
     { loop: true },
@@ -53,13 +50,9 @@ export function CompactHeroBanner() {
     emblaApi.on('select', () => setSelectedIndex(emblaApi.selectedScrollSnap()));
   }, [emblaApi]);
 
-  if (isLoading) {
-    return (
-      <section className="w-full h-[260px] md:h-[420px] bg-[var(--color-amoria-bg)] flex items-center justify-center">
-        <span className="w-8 h-8 border-2 border-[#1A0A2E]/20 border-t-[#1A0A2E] rounded-full animate-spin" />
-      </section>
-    );
-  }
+  if (isLoading) return <HeroBannerSkeleton />;
+
+  if (banners.length === 0) return null;
 
   return (
     <>
@@ -98,14 +91,14 @@ export function CompactHeroBanner() {
           <div className="relative overflow-hidden rounded-none md:rounded-2xl h-full">
             <div className="overflow-hidden h-full" ref={emblaRef}>
               <div className="flex h-full">
-                {banners.map((banner) => (
-                  <div key={banner.id} className="flex-[0_0_100%] relative h-full">
+                {banners.map((banner, i) => (
+                  <div key={banner.id} className="flex-[0_0_100%] relative h-full min-h-0">
                     <Image
                       src={banner.image}
                       alt={banner.title}
                       fill
                       className="object-cover"
-                      priority
+                      priority={i === 0}
                       unoptimized
                     />
                     {/* Gradient overlay */}

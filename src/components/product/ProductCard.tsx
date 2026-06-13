@@ -7,12 +7,15 @@ import { Heart, Plus, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { Product } from '@/types/product';
+import { isProductCartItem } from '@/types/cart';
 import { useCart } from '@/lib/hooks/useCart';
 import { useWishlist } from '@/lib/hooks/useWishlist';
 import { formatCurrency } from '@/lib/utils/formatCurrency';
 import { useDispatch } from 'react-redux';
 import { addToRecentlyViewed } from '@/lib/store/uiSlice';
 import { recordProductView } from '@/lib/utils/recordProductView';
+import { useOfferPopup } from '@/lib/context/OfferPopupContext';
+import { getEffectiveVariantPricing } from '@/lib/pricing/offerPopupPricing';
 
 interface ProductCardProps {
   product: Product;
@@ -21,6 +24,7 @@ interface ProductCardProps {
 
 export function ProductCard({ product, index = 0 }: ProductCardProps) {
   const { addItem, items: cartItems } = useCart();
+  const { config: offerConfig } = useOfferPopup();
   const { isInWishlist, toggleWishlist } = useWishlist();
   const dispatch = useDispatch();
 
@@ -42,20 +46,23 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
   const primaryVariant = product.variants[selectedVariantIndex] ?? product.variants[0];
 
   const inCart = cartItems.some(
-    (i) => i.product.id === product.id && i.variant.id === primaryVariant?.id
+    (i) =>
+      isProductCartItem(i) &&
+      i.product.id === product.id &&
+      i.variant.id === primaryVariant?.id
   );
 
-  const price = primaryVariant?.salePrice ?? primaryVariant?.price ?? 0;
+  const variantPricing = primaryVariant
+    ? getEffectiveVariantPricing(primaryVariant, product.id, offerConfig)
+    : null;
+  const price = variantPricing?.salePrice ?? variantPricing?.price ?? 0;
   const originalPrice =
-    primaryVariant?.salePrice && primaryVariant.price > primaryVariant.salePrice
-      ? primaryVariant.price
+    variantPricing?.salePrice != null && variantPricing.price > variantPricing.salePrice
+      ? variantPricing.price
       : null;
   const primaryImage   = product.images.find((i) => i.isPrimary)?.url ?? product.images[0]?.url ?? '';
   const secondaryImage = product.images.find((i) => !i.isPrimary)?.url;
-  const discountPercent =
-    originalPrice && price < originalPrice
-      ? Math.round(((originalPrice - price) / originalPrice) * 100)
-      : null;
+  const discountPercent = variantPricing?.discountPercent ?? null;
   const hasMultipleVariants = product.variants.length > 1;
 
   // On desktop: hover controls secondary image swap
@@ -115,7 +122,7 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
             dispatch(addToRecentlyViewed(product.id));
             recordProductView(product.id);
           }}
-          className="block w-full h-full"
+          className="relative block w-full h-full"
         >
           {/* Loading shimmer */}
           {!imgLoaded && (
@@ -273,6 +280,11 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
         <p className="text-[9px] uppercase tracking-[0.2em] mb-1" style={{ color: '#A89880' }}>
           {product.brand}
         </p>
+        {product.isBrandInspiration && product.inspiredBrand ? (
+          <p className="text-[9px] mb-1 line-clamp-1" style={{ color: '#B8B0A5' }}>
+            Inspired by {product.inspiredBrand}
+          </p>
+        ) : null}
         <Link
           href={`/products/${product.slug}`}
           className="block group/name"

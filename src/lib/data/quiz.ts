@@ -1,8 +1,21 @@
+export type SeasonValue = 'summer' | 'winter' | 'autumn' | 'spring';
+export type GenderValue = 'men' | 'women' | 'unisex';
+export type DayNightValue = 'day' | 'night' | 'both';
+
+export interface QuizCriterion {
+  gender?: GenderValue | null;
+  dayNight?: DayNightValue;
+  season?: SeasonValue;
+  noteKeywords?: string[];
+  priceMin?: number;
+  priceMax?: number;
+}
+
 export interface QuizOption {
   id: string;
   label: string;
   icon: string;
-  tags: string[];
+  criteria: QuizCriterion;
 }
 
 export interface QuizQuestion {
@@ -14,52 +27,79 @@ export interface QuizQuestion {
 export const quizQuestions: QuizQuestion[] = [
   {
     id: 1,
-    question: 'What mood should your fragrance evoke?',
+    question: 'Who is this fragrance for?',
     options: [
-      { id: 'mysterious', label: 'Mysterious & Sensual', icon: '🌙', tags: ['dark', 'mysterious', 'oud', 'evening'] },
-      { id: 'energetic', label: 'Fresh & Energetic', icon: '⚡', tags: ['fresh', 'citrus', 'aquatic', 'energetic'] },
-      { id: 'cozy', label: 'Warm & Cozy', icon: '🔥', tags: ['warm', 'amber', 'vanilla', 'gourmand'] },
-      { id: 'bold', label: 'Bold & Powerful', icon: '👑', tags: ['bold', 'commanding', 'spicy', 'strong'] },
+      { id: 'men', label: 'For Him', icon: '👔', criteria: { gender: 'men' } },
+      { id: 'women', label: 'For Her', icon: '👗', criteria: { gender: 'women' } },
+      { id: 'unisex', label: 'For Everyone', icon: '✨', criteria: { gender: 'unisex' } },
+      { id: 'any', label: 'No preference', icon: '🌐', criteria: { gender: null } },
     ],
   },
   {
     id: 2,
-    question: 'When will you mostly wear this?',
+    question: 'When will you wear it?',
     options: [
-      { id: 'daily', label: 'Daily / Office', icon: '🌅', tags: ['daily', 'office', 'light', 'moderate'] },
-      { id: 'special', label: 'Special Occasions', icon: '🎉', tags: ['special-occasion', 'elegant', 'luxurious'] },
-      { id: 'evening', label: 'Evenings & Nights', icon: '🌃', tags: ['evening', 'romantic', 'dark', 'mysterious'] },
-      { id: 'allday', label: 'All Day Every Day', icon: '☀️', tags: ['all-day', 'versatile', 'fresh', 'moderate'] },
+      { id: 'day', label: 'Daytime', icon: '🌅', criteria: { dayNight: 'day' } },
+      { id: 'night', label: 'Evening', icon: '🌃', criteria: { dayNight: 'night' } },
+      { id: 'both', label: 'Anytime', icon: '☀️', criteria: { dayNight: 'both' } },
     ],
   },
   {
     id: 3,
-    question: 'Which scent family calls to you?',
+    question: 'Which season suits you?',
     options: [
-      { id: 'oudamber', label: 'Oud & Amber', icon: '🪵', tags: ['oud', 'amber', 'oriental', 'woody'] },
-      { id: 'floral', label: 'Floral & Rose', icon: '🌹', tags: ['floral', 'rose', 'feminine', 'romantic'] },
-      { id: 'woody', label: 'Woody & Musk', icon: '🌿', tags: ['woody', 'musk', 'clean', 'masculine'] },
-      { id: 'citrus', label: 'Citrus & Fresh', icon: '🍋', tags: ['citrus', 'fresh', 'aquatic', 'energetic'] },
+      { id: 'summer', label: 'Summer', icon: '☀️', criteria: { season: 'summer' } },
+      { id: 'winter', label: 'Winter', icon: '❄️', criteria: { season: 'winter' } },
+      { id: 'spring', label: 'Spring', icon: '🌸', criteria: { season: 'spring' } },
+      { id: 'autumn', label: 'Autumn', icon: '🍂', criteria: { season: 'autumn' } },
     ],
   },
   {
     id: 4,
-    question: 'How intense should the sillage be?',
+    question: 'Which scent profile appeals to you?',
     options: [
-      { id: 'subtle', label: 'Light & Subtle', icon: '🌬️', tags: ['light', 'subtle', 'daily'] },
-      { id: 'moderate', label: 'Moderate Presence', icon: '✨', tags: ['moderate', 'all-day'] },
-      { id: 'strong', label: 'Strong & Noticeable', icon: '💫', tags: ['strong', 'commanding'] },
-      { id: 'commanding', label: 'Commanding & Bold', icon: '🌟', tags: ['commanding', 'bold', 'strong'] },
+      {
+        id: 'woody',
+        label: 'Woody & Oud',
+        icon: '🪵',
+        criteria: {
+          noteKeywords: ['oud', 'wood', 'woody', 'sandalwood', 'cedar', 'vetiver', 'patchouli', 'leather'],
+        },
+      },
+      {
+        id: 'floral',
+        label: 'Floral',
+        icon: '🌹',
+        criteria: {
+          noteKeywords: ['floral', 'rose', 'jasmine', 'lily', 'peony', 'iris', 'violet', 'ylang'],
+        },
+      },
+      {
+        id: 'citrus',
+        label: 'Fresh & Citrus',
+        icon: '🍋',
+        criteria: {
+          noteKeywords: ['citrus', 'bergamot', 'lemon', 'orange', 'grapefruit', 'fresh', 'aquatic', 'mint'],
+        },
+      },
+      {
+        id: 'warm',
+        label: 'Warm & Amber',
+        icon: '🔥',
+        criteria: {
+          noteKeywords: ['amber', 'vanilla', 'musk', 'gourmand', 'tonka', 'caramel', 'honey', 'praline'],
+        },
+      },
     ],
   },
   {
     id: 5,
-    question: "What's your per-bottle budget?",
+    question: "What's your budget per bottle?",
     options: [
-      { id: 'budget', label: 'Under AED 100', icon: '💰', tags: [] },
-      { id: 'mid', label: 'AED 100–250', icon: '💳', tags: [] },
-      { id: 'premium', label: 'AED 250–500', icon: '💎', tags: [] },
-      { id: 'luxury', label: 'AED 500+', icon: '👑', tags: ['luxurious'] },
+      { id: 'budget', label: 'Under AED 100', icon: '💰', criteria: { priceMin: 0, priceMax: 100 } },
+      { id: 'mid', label: 'AED 100–250', icon: '💳', criteria: { priceMin: 100, priceMax: 250 } },
+      { id: 'premium', label: 'AED 250–500', icon: '💎', criteria: { priceMin: 250, priceMax: 500 } },
+      { id: 'luxury', label: 'AED 500+', icon: '👑', criteria: { priceMin: 500, priceMax: Infinity } },
     ],
   },
 ];

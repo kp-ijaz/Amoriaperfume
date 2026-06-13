@@ -4,22 +4,20 @@ import { BottomTabBar } from '@/components/layout/BottomTabBar';
 import { ScrollToTop } from '@/components/ScrollToTop';
 import { PageTransition } from '@/components/layout/PageTransition';
 import { FloatingSidebar } from '@/components/layout/FloatingSidebar';
+import { ShopProviders } from '@/components/providers/ShopProviders';
 
 export default function ShopLayout({ children }: { children: React.ReactNode }) {
   return (
-    <>
+    <ShopProviders>
       <Header />
       {/* Reserve space above the fixed bottom tab bar + device safe area */}
-      <main className="flex-1 shop-main-content pt-[68px] sm:pt-[100px]">
+      <main className="flex-1 shop-main-content pt-[128px] sm:pt-[100px]">
         <PageTransition>{children}</PageTransition>
       </main>
-      {/* Footer hidden on mobile — bottom tabs replace it */}
-      <div className="hidden md:block">
-        <Footer />
-      </div>
+      <Footer />
       <BottomTabBar />
       <ScrollToTop />
       <FloatingSidebar />
-    </>
+    </ShopProviders>
   );
 }

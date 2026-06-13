@@ -170,7 +170,12 @@ function OrderCard({
                     </div>
                     <div className="flex-1 min-w-[140px]">
                       <p className="text-sm font-medium" style={{ color: 'var(--color-amoria-text)' }}>{item.productName}</p>
-                      <p className="text-xs" style={{ color: 'var(--color-amoria-text-muted)' }}>{item.brand} · Qty: {item.quantity}</p>
+                      <p className="text-xs" style={{ color: 'var(--color-amoria-text-muted)' }}>
+                        {item.brand ? `${item.brand} · ` : ''}Qty: {item.quantity}
+                        {item.includedItems?.length
+                          ? ` · Includes ${item.includedItems.length} item${item.includedItems.length === 1 ? '' : 's'}`
+                          : ''}
+                      </p>
                     </div>
                     <p className="text-sm font-semibold" style={{ color: 'var(--color-amoria-accent)' }}>
                       AED {formatAed(item.totalPrice)}

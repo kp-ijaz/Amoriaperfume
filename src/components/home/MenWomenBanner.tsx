@@ -7,6 +7,8 @@ import { formatCurrency } from '@/lib/utils/formatCurrency';
 import { useProductsByLimit } from '@/lib/hooks/useApiProducts';
 import { usePublicCoverImages } from '@/lib/hooks/usePublicCms';
 import { Product } from '@/types/product';
+import { GenderPanelSkeleton } from '@/components/loading';
+import { OutlineSkeleton } from '@/components/loading/OutlineSkeleton';
 
 function MiniProductThumb({ product }: { product: Product }) {
   const variant = product.variants[0];
@@ -35,13 +37,17 @@ function MiniProductThumb({ product }: { product: Product }) {
           backgroundColor: 'rgba(255,255,255,0.06)',
         }}
       >
-        <Image
-          src={primaryImage}
-          alt={product.name}
-          fill
-          className="object-cover mw-thumb-img"
-          sizes="80px"
-        />
+        {primaryImage ? (
+          <Image
+            src={primaryImage}
+            alt={product.name}
+            fill
+            className="object-cover mw-thumb-img"
+            sizes="80px"
+          />
+        ) : (
+          <OutlineSkeleton className="absolute inset-0 rounded-none border-0" />
+        )}
       </div>
       <p
         style={{
@@ -78,7 +84,7 @@ function GenderPanel({
   sub: string;
   ctaLabel: string;
   href: string;
-  bgImage: string;
+  bgImage?: string;
   products: Product[];
   delay?: number;
 }) {
@@ -91,14 +97,20 @@ function GenderPanel({
       style={{ position: 'relative', overflow: 'hidden', flex: 1, minHeight: 480 }}
       className="mw-panel"
     >
-      {/* Background image */}
-      <Image
-        src={bgImage}
-        alt={headline}
-        fill
-        className="object-cover mw-panel-bg"
-        sizes="(max-width: 768px) 100vw, 50vw"
-      />
+      {bgImage ? (
+        <Image
+          src={bgImage}
+          alt={headline}
+          fill
+          className="object-cover mw-panel-bg"
+          sizes="(max-width: 768px) 100vw, 50vw"
+        />
+      ) : (
+        <OutlineSkeleton
+          className="absolute inset-0 rounded-none border-0"
+          style={{ backgroundColor: 'rgba(255,255,255,0.04)' }}
+        />
+      )}
 
       {/* Gradient overlay — heavier at bottom */}
       <div
@@ -208,11 +220,28 @@ function GenderPanel({
 }
 
 export function MenWomenBanner() {
-  const { data: menProducts = [] } = useProductsByLimit(4, { featured: true, gender: 'men' });
-  const { data: womenProducts = [] } = useProductsByLimit(4, { featured: true, gender: 'women' });
-  const { data: panels = [] } = usePublicCoverImages('men_women_banner');
+  const { data: menProducts = [], isLoading: menLoading } = useProductsByLimit(4, {
+    featured: true,
+    gender: 'men',
+  });
+  const { data: womenProducts = [], isLoading: womenLoading } = useProductsByLimit(4, {
+    featured: true,
+    gender: 'women',
+  });
+  const { data: panels = [], isLoading: panelsLoading } = usePublicCoverImages('men_women_banner');
   const menPanel = panels[0];
   const womenPanel = panels[1];
+
+  const isLoading = menLoading || womenLoading || panelsLoading;
+
+  const menBg = menPanel?.imageUrl || menProducts[0]?.images[0]?.url;
+  const womenBg = womenPanel?.imageUrl || womenProducts[0]?.images[0]?.url;
+
+  if (isLoading) return <GenderPanelSkeleton />;
+
+  if (!menBg && !womenBg && menProducts.length === 0 && womenProducts.length === 0) {
+    return null;
+  }
 
   return (
     <section style={{ backgroundColor: '#0D0A08', paddingBottom: 0 }}>
@@ -304,7 +333,7 @@ export function MenWomenBanner() {
           sub={menPanel?.subtitle || "Bold, sophisticated fragrances for him."}
           ctaLabel="Shop Men's"
           href={menPanel?.redirectUrl || '/categories/mens'}
-          bgImage={menPanel?.imageUrl || menProducts[0]?.images[0]?.url || '/images/products/prod10.jpg'}
+          bgImage={menBg}
           products={menProducts}
           delay={0}
         />
@@ -315,7 +344,7 @@ export function MenWomenBanner() {
           sub={womenPanel?.subtitle || "Feminine, captivating fragrances for her."}
           ctaLabel="Shop Women's"
           href={womenPanel?.redirectUrl || '/categories/womens'}
-          bgImage={womenPanel?.imageUrl || womenProducts[0]?.images[0]?.url || '/images/products/prod11.jpg'}
+          bgImage={womenBg}
           products={womenProducts}
           delay={0.1}
         />

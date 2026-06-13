@@ -8,54 +8,8 @@ import {
   useHomeBrandsRow,
   type HomeBrandTile,
 } from '@/lib/hooks/useApiBrands';
-
-const FALLBACK_BRANDS: HomeBrandTile[] = [
-  {
-    id: 'swiss-arabian',
-    slug: 'swiss-arabian',
-    name: 'Swiss Arabian',
-    tagline: 'Since 1974',
-    count: '48 products',
-    image: '/images/products/prod1.jpg',
-    accent: '#C9A84C',
-  },
-  {
-    id: 'ajmal',
-    slug: 'ajmal',
-    name: 'Ajmal',
-    tagline: 'Since 1951',
-    count: '62 products',
-    image: '/images/products/prod2.jpg',
-    accent: '#B8A898',
-  },
-  {
-    id: 'rasasi',
-    slug: 'rasasi',
-    name: 'Rasasi',
-    tagline: 'Since 1979',
-    count: '55 products',
-    image: '/images/products/prod3.jpg',
-    accent: '#C9A84C',
-  },
-  {
-    id: 'lattafa',
-    slug: 'lattafa',
-    name: 'Lattafa',
-    tagline: 'Modern Arabian',
-    count: '70 products',
-    image: '/images/products/prod4.jpg',
-    accent: '#B8A898',
-  },
-  {
-    id: 'armaf',
-    slug: 'armaf',
-    name: 'Armaf',
-    tagline: 'Inspired Luxury',
-    count: '44 products',
-    image: '/images/products/prod5.jpg',
-    accent: '#C9A84C',
-  },
-].slice(0, HOME_BRANDS_ROW_LIMIT);
+import { BrandTileSkeleton } from '@/components/loading';
+import { OutlineSkeleton } from '@/components/loading/OutlineSkeleton';
 
 function BrandTile({ brand, index }: { brand: HomeBrandTile; index: number }) {
   return (
@@ -76,14 +30,18 @@ function BrandTile({ brand, index }: { brand: HomeBrandTile; index: number }) {
         className="brand-tile"
       >
         {/* Image — clipped so hover scale does not cover the bottom bar */}
-        <div className="brand-tile-media">
-          <Image
-            src={brand.image}
-            alt={brand.name}
-            fill
-            className="object-cover brand-tile-img"
-            sizes="(max-width: 640px) 50vw, 20vw"
-          />
+        <div className="brand-tile-media relative h-[200px] overflow-hidden isolate">
+          {brand.image ? (
+            <Image
+              src={brand.image}
+              alt={brand.name}
+              fill
+              className="object-cover brand-tile-img"
+              sizes="(max-width: 640px) 50vw, 20vw"
+            />
+          ) : (
+            <OutlineSkeleton className="absolute inset-0 rounded-none border-0" />
+          )}
           {/* Dark overlay */}
           <div
             style={{
@@ -183,9 +141,7 @@ function BrandTile({ brand, index }: { brand: HomeBrandTile; index: number }) {
 }
 
 export function ShopByBrandsGrid() {
-  const { brands: apiBrands, isLoading } = useHomeBrandsRow();
-  const brands =
-    !isLoading && apiBrands.length === 0 ? FALLBACK_BRANDS : apiBrands;
+  const { brands, isLoading } = useHomeBrandsRow();
 
   if (!isLoading && brands.length === 0) return null;
 
@@ -268,15 +224,7 @@ export function ShopByBrandsGrid() {
         {/* Single row of brands (max 5) */}
         <motion.div className="brands-grid" aria-busy={isLoading}>
           {isLoading
-            ? Array.from({ length: HOME_BRANDS_ROW_LIMIT }).map((_, i) => (
-                <div
-                  key={i}
-                  style={{
-                    height: 248,
-                    backgroundColor: 'rgba(255,255,255,0.06)',
-                  }}
-                />
-              ))
+            ? <BrandTileSkeleton count={HOME_BRANDS_ROW_LIMIT} />
             : brands.map((brand, i) => (
                 <BrandTile key={brand.id} brand={brand} index={i} />
               ))}

@@ -11,8 +11,8 @@ interface SortDropdownProps {
 const options: { value: SortOption; label: string }[] = [
   { value: 'newest', label: 'Newest' },
   { value: 'bestsellers', label: 'Best Sellers' },
-  { value: 'price-asc', label: 'Price: Low to High' },
-  { value: 'price-desc', label: 'Price: High to Low' },
+  { value: 'price_asc', label: 'Price: Low to High' },
+  { value: 'price_desc', label: 'Price: High to Low' },
   { value: 'rating', label: 'Highest Rated' },
   { value: 'most-reviewed', label: 'Most Reviewed' },
 ];

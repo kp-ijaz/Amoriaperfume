@@ -7,6 +7,7 @@ import { useStripe, useElements } from '@stripe/react-stripe-js';
 import { useCart } from '@/lib/hooks/useCart';
 import { useCreateOrder } from '@/lib/hooks/useApiOrders';
 import { apiCreateFailedPaymentOrder } from '@/lib/api/client';
+import { apiCreateTamaraCheckout } from '@/lib/api/payments';
 import { useShippingQuote } from '@/lib/hooks/useApiShipping';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { Address } from '@/types/user';
@@ -17,14 +18,18 @@ import { GuestInfo } from '@/lib/store/authSlice';
 import Image from 'next/image';
 import { toast } from 'sonner';
 import { buildShippingAddress, resolveCheckoutPhone } from '@/lib/utils/checkoutPayload';
+import { mapCartItemsToOrderPayload, cartItemReactKey } from '@/lib/cart/mapCartItemsToOrder';
+import { getCartLineTotal } from '@/lib/cart/cartPricing';
+import { isPackageCartItem } from '@/types/cart';
 import { buildStripeConfirmParams } from '@/lib/stripe/stripeConfirmParams';
 import { useAppliedPromotionValidation } from '@/lib/hooks/useAppliedPromotionValidation';
 import { isPromotionError } from '@/lib/utils/promotionErrors';
 import { AlertCircle } from 'lucide-react';
+import { CheckoutPaymentMethod } from '@/components/checkout/PaymentStep';
 
 interface ReviewStepProps {
   address: Address | null;
-  paymentMethod: 'stripe' | 'cod' | null;
+  paymentMethod: CheckoutPaymentMethod | null;
   stripePaymentIntentId?: string | null;
   fulfillmentMethod: FulfillmentMethod;
   pickupSlot?: PickupSlot;
@@ -33,7 +38,11 @@ interface ReviewStepProps {
   guestInfo?: GuestInfo | null;
 }
 
-const methodLabels = { stripe: 'Pay online', cod: 'Cash on Delivery' };
+const methodLabels: Record<CheckoutPaymentMethod, string> = {
+  stripe: 'Pay online',
+  cod: 'Cash on Delivery',
+  tamara: 'Pay with Tamara',
+};
 
 export function ReviewStep({
   address,
@@ -111,12 +120,7 @@ export function ReviewStep({
           country: 'UAE',
         };
 
-    const orderItems = items.map((item) => ({
-      productId: item.product.id,
-      variantId: item.variant.variantId ?? item.variant.id,
-      sizeVariantId: item.variant.sizeVariantId ?? item.variant.id,
-      quantity: item.quantity,
-    }));
+    const orderItems = mapCartItemsToOrderPayload(items);
 
     const orderPayload = {
       fulfillmentType: fulfillmentMethod === 'pickup' ? 'PICKUP' : 'DELIVERY',
@@ -137,7 +141,8 @@ export function ReviewStep({
             }
           : undefined,
       items: orderItems,
-      paymentMethod: paymentMethod === 'cod' ? 'COD' : 'ONLINE',
+      paymentMethod:
+        paymentMethod === 'cod' ? 'COD' : paymentMethod === 'tamara' ? 'TAMARA' : 'ONLINE',
       stripePaymentIntentId: paymentMethod === 'stripe' ? stripePaymentIntentId ?? undefined : undefined,
       pricing: {},
     } as const;
@@ -195,6 +200,20 @@ export function ReviewStep({
       }
 
       const orderId = res.data?.orderId ?? '';
+
+      if (paymentMethod === 'tamara') {
+        const checkoutRes = await apiCreateTamaraCheckout(
+          { orderId, email: customerEmail || undefined },
+          token
+        );
+        if (!checkoutRes.success || !checkoutRes.data?.checkoutUrl) {
+          throw new Error(checkoutRes.message ?? 'Could not start Tamara checkout');
+        }
+        clearCart();
+        window.location.href = checkoutRes.data.checkoutUrl;
+        return;
+      }
+
       clearCart();
 
       const params = new URLSearchParams();
@@ -300,6 +319,11 @@ export function ReviewStep({
               )}
             </div>
           )}
+          {paymentMethod === 'tamara' && (
+            <p className="text-xs mt-0.5" style={{ color: '#A89880' }}>
+              You will be redirected to Tamara to complete your payment securely.
+            </p>
+          )}
         </div>
       )}
 
@@ -309,9 +333,32 @@ export function ReviewStep({
         </h3>
         <div className="space-y-3">
           {items.map((item) => {
+            const lineTotal = getCartLineTotal(item);
+            if (isPackageCartItem(item)) {
+              return (
+                <div key={cartItemReactKey(item)} className="flex gap-3 items-center">
+                  <div className="relative w-12 h-12 flex-shrink-0" style={{ backgroundColor: '#F5F2EE' }}>
+                    {item.image && (
+                      <Image src={item.image} alt={item.name} fill className="object-cover" unoptimized />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate" style={{ color: '#1C1C1C' }}>{item.name}</p>
+                    <p className="text-xs" style={{ color: '#A89880' }}>
+                      Qty: {item.quantity} · {item.packageType === 'bundle' ? 'Bundle' : 'Gift Set'}
+                      {item.includedCount > 0 ? ` · ${item.includedCount} items` : ''}
+                    </p>
+                  </div>
+                  <p className="text-sm font-semibold flex-shrink-0" style={{ color: '#C9A84C' }}>
+                    AED {lineTotal.toFixed(2)}
+                  </p>
+                </div>
+              );
+            }
+
             const imageUrl = item.product.images.find((i) => i.isPrimary)?.url ?? item.product.images[0]?.url;
             return (
-              <div key={`${item.product.id}-${item.variant.id}`} className="flex gap-3 items-center">
+              <div key={cartItemReactKey(item)} className="flex gap-3 items-center">
                 <div className="relative w-12 h-12 flex-shrink-0" style={{ backgroundColor: '#F5F2EE' }}>
                   {imageUrl && <Image src={imageUrl} alt={item.product.name} fill className="object-cover" unoptimized />}
                 </div>
@@ -322,7 +369,7 @@ export function ReviewStep({
                   </p>
                 </div>
                 <p className="text-sm font-semibold flex-shrink-0" style={{ color: '#C9A84C' }}>
-                  AED {((item.variant.salePrice ?? item.variant.price) * item.quantity).toFixed(2)}
+                  AED {lineTotal.toFixed(2)}
                 </p>
               </div>
             );
@@ -403,7 +450,9 @@ export function ReviewStep({
                     ? 'Update payment first'
                     : paymentMethod === 'stripe'
                       ? 'Pay & Place Order →'
-                      : 'Place Order →'}
+                      : paymentMethod === 'tamara'
+                        ? 'Continue to Tamara →'
+                        : 'Place Order →'}
         </button>
       </div>
     </div>

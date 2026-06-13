@@ -1,5 +1,5 @@
-import { CmsPageContent } from '@/components/content/CmsPageContent';
+import { CmsPageByType } from '@/components/content/CmsPageByType';
 
 export default function AboutPage() {
-  return <CmsPageContent slug="about" fallbackTitle="About Amoria" />;
+  return <CmsPageByType pageType="about" />;
 }

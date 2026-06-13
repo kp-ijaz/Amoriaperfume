@@ -6,69 +6,13 @@ import { motion } from 'framer-motion';
 import { useMemo } from 'react';
 import { useCategories } from '@/lib/hooks/useApiCategories';
 import { usePublicCoverImages } from '@/lib/hooks/usePublicCms';
-
-const FALLBACK_CATEGORIES = [
-  {
-    id: 'online-deals',
-    slug: 'online-deals',
-    name: 'Online Deals',
-    image: '/images/products/prod1.jpg',
-    badge: 'SALE',
-  },
-  {
-    id: 'attar-oud',
-    slug: 'attar-oud',
-    name: 'Attar & Oud',
-    image: '/images/products/prod3.jpg',
-    badge: null,
-  },
-  {
-    id: 'bakhoor',
-    slug: 'bakhoor',
-    name: 'Bakhoor',
-    image: '/images/products/prod5.jpg',
-    badge: null,
-  },
-  {
-    id: 'gift-sets',
-    slug: 'gift-sets',
-    name: 'Gift Sets',
-    image: '/images/products/prod7.jpg',
-    badge: 'NEW',
-  },
-  {
-    id: 'niche-perfumes',
-    slug: 'niche-perfumes',
-    name: 'Niche Perfumes',
-    image: '/images/products/prod9.jpg',
-    badge: null,
-  },
-  {
-    id: 'mens',
-    slug: 'mens',
-    name: "Men's",
-    image: '/images/products/prod11.jpg',
-    badge: null,
-  },
-  {
-    id: 'womens',
-    slug: 'womens',
-    name: "Women's",
-    image: '/images/products/prod13.jpg',
-    badge: null,
-  },
-  {
-    id: 'mini-perfumes',
-    slug: 'mini-perfumes',
-    name: 'Mini Perfumes',
-    image: '/images/products/prod15.jpg',
-    badge: null,
-  },
-];
+import { CategoryStripSkeleton } from '@/components/loading';
 
 export function CategoryIconStrip() {
-  const { data: apiCategories = [] } = useCategories();
-  const { data: coverCats = [] } = usePublicCoverImages('category_cover');
+  const { data: apiCategories = [], isLoading: categoriesLoading } = useCategories();
+  const { data: coverCats = [], isLoading: coversLoading } = usePublicCoverImages('category_cover');
+
+  const isLoading = categoriesLoading || coversLoading;
 
   const categories = useMemo(() => {
     if (coverCats.length > 0) {
@@ -88,17 +32,24 @@ export function CategoryIconStrip() {
       });
     }
     if (apiCategories.length > 0) {
-      return apiCategories.slice(0, 8).map((c) => ({
-        id: c.id,
-        slug: c.slug,
-        name: c.name,
-        image: c.image || '/images/products/prod1.jpg',
-        badge: null,
-        href: `/categories/${c.slug}`,
-      }));
+      return apiCategories
+        .slice(0, 8)
+        .filter((c) => c.image)
+        .map((c) => ({
+          id: c.id,
+          slug: c.slug,
+          name: c.name,
+          image: c.image,
+          badge: null as string | null,
+          href: `/categories/${c.slug}`,
+        }));
     }
-    return FALLBACK_CATEGORIES.map((c) => ({ ...c, href: `/categories/${c.slug}` }));
+    return [];
   }, [coverCats, apiCategories]);
+
+  if (isLoading) return <CategoryStripSkeleton />;
+
+  if (categories.length === 0) return null;
 
   return (
     <section style={{ backgroundColor: '#FFFFFF', borderBottom: '1px solid #E8E3DC' }}>
@@ -109,7 +60,6 @@ export function CategoryIconStrip() {
           padding: '28px 16px 24px',
         }}
       >
-        {/* Scrollable strip — centers on desktop, scrolls on mobile */}
         <div
           style={{
             display: 'flex',
@@ -134,7 +84,7 @@ export function CategoryIconStrip() {
               style={{ scrollSnapAlign: 'start', flexShrink: 0 }}
             >
               <Link
-                href={'href' in cat && cat.href ? cat.href : `/categories/${cat.slug}`}
+                href={cat.href}
                 style={{
                   display: 'flex',
                   flexDirection: 'column',
@@ -146,21 +96,12 @@ export function CategoryIconStrip() {
                 }}
                 className="category-icon-link"
               >
-                {/* Circle wrapper */}
-                <div
-                  style={{ position: 'relative', display: 'inline-block' }}
-                  className="category-circle-wrap"
-                >
+                <div className="relative inline-block shrink-0">
                   <div
-                    className="category-circle"
+                    className="category-circle relative size-[82px] rounded-full overflow-hidden"
                     style={{
-                      width: 82,
-                      height: 82,
-                      borderRadius: '50%',
-                      overflow: 'hidden',
                       backgroundColor: '#F5F2EE',
                       border: '2px solid #E8E3DC',
-                      position: 'relative',
                       transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
                     }}
                   >
@@ -170,10 +111,10 @@ export function CategoryIconStrip() {
                       fill
                       className="object-cover"
                       sizes="82px"
+                      priority={i === 0}
                     />
                   </div>
 
-                  {/* Sale/New badge */}
                   {cat.badge && (
                     <span
                       style={{
@@ -196,7 +137,6 @@ export function CategoryIconStrip() {
                   )}
                 </div>
 
-                {/* Label */}
                 <span
                   style={{
                     fontSize: 11,
@@ -217,7 +157,6 @@ export function CategoryIconStrip() {
         </div>
       </div>
 
-      {/* Hover styles + scrollbar hide */}
       <style>{`
         .category-strip::-webkit-scrollbar { display: none; }
 

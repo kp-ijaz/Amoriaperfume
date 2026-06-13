@@ -4,8 +4,11 @@ import { useSelector, useDispatch } from 'react-redux';
 import { RootState, AppDispatch } from '@/lib/store';
 import {
   addItem,
+  addPackageItem,
   removeItem,
+  removePackageItem,
   updateQuantity,
+  updatePackageQuantity,
   clearCart,
   applyCoupon,
   removeCoupon,
@@ -18,7 +21,10 @@ import { formatCurrency } from '@/lib/utils/formatCurrency';
 import { computeTaxBreakdown } from '@/lib/utils/calculateVAT';
 import { usePlatformTax } from '@/lib/hooks/usePlatformTax';
 import { Product, ProductVariant } from '@/types/product';
-import { AppliedCoupon, AppliedGiftCard } from '@/types/cart';
+import { AppliedCoupon, AppliedGiftCard, PackageCartItem } from '@/types/cart';
+import { useOfferPopup } from '@/lib/context/OfferPopupContext';
+import { getOfferAdjustedVariant } from '@/lib/pricing/offerPopupPricing';
+import { getCartLineTotal } from '@/lib/cart/cartPricing';
 
 const FREE_SHIPPING_THRESHOLD = 200;
 const SHIPPING_COST = 25;
@@ -32,11 +38,9 @@ export function useCart(options: UseCartOptions = {}) {
   const dispatch = useDispatch<AppDispatch>();
   const { items, coupon, giftCard, savedItems } = useSelector((state: RootState) => state.cart);
   const taxSettings = usePlatformTax();
+  const { config: offerConfig } = useOfferPopup();
 
-  const subtotal = items.reduce((acc, item) => {
-    const price = item.variant.salePrice ?? item.variant.price;
-    return acc + price * item.quantity;
-  }, 0);
+  const subtotal = items.reduce((acc, item) => acc + getCartLineTotal(item), 0);
 
   const couponDiscount = coupon?.discountAmount ?? 0;
 
@@ -89,12 +93,24 @@ export function useCart(options: UseCartOptions = {}) {
     formattedShipping: freeShipping ? 'Free' : formatCurrency(shippingCost),
     formattedVat: formatCurrency(vat),
     formattedTotal: formatCurrency(total),
-    addItem: (product: Product, variant: ProductVariant, quantity?: number) =>
-      dispatch(addItem({ product, variant, quantity })),
+    addItem: (product: Product, variant: ProductVariant, quantity?: number) => {
+      const adjustedVariant = getOfferAdjustedVariant(variant, product.id, offerConfig);
+      dispatch(addItem({ product, variant: adjustedVariant, quantity }));
+    },
+    addPackageItem: (item: PackageCartItem, quantity?: number) => {
+      dispatch(addPackageItem({ item, quantity }));
+    },
     removeItem: (productId: string, variantId: string) =>
       dispatch(removeItem({ productId, variantId })),
+    removePackageItem: (packageType: PackageCartItem['packageType'], packageId: string) =>
+      dispatch(removePackageItem({ packageType, packageId })),
     updateQuantity: (productId: string, variantId: string, quantity: number) =>
       dispatch(updateQuantity({ productId, variantId, quantity })),
+    updatePackageQuantity: (
+      packageType: PackageCartItem['packageType'],
+      packageId: string,
+      quantity: number
+    ) => dispatch(updatePackageQuantity({ packageType, packageId, quantity })),
     clearCart: () => dispatch(clearCart()),
     applyCoupon: (c: AppliedCoupon) => dispatch(applyCoupon(c)),
     removeCoupon: () => dispatch(removeCoupon()),

@@ -11,7 +11,6 @@ import { MenWomenBanner } from '@/components/home/MenWomenBanner';
 import { BrandInspirations } from '@/components/home/ScentPillars';
 import { TestimonialsSection } from '@/components/home/TestimonialsSection';
 import { InstagramFeed } from '@/components/home/InstagramFeed';
-import { NewsletterSection } from '@/components/home/NewsletterSection';
 import type { HomepageLayoutKey } from '@/lib/homepage/homepageLayoutDefaults';
 import { HOME_PRODUCTS_PER_ROW } from '@/lib/hooks/usePublicCms';
 
@@ -51,7 +50,6 @@ export const HOMEPAGE_SECTION_RENDERERS: Record<HomepageLayoutKey, () => ReactNo
   brand_inspirations: () => <BrandInspirations />,
   testimonials: () => <TestimonialsSection />,
   instagram: () => <InstagramFeed />,
-  newsletter: () => <NewsletterSection />,
 };
 
 export function renderHomepageSection(key: HomepageLayoutKey): ReactNode {

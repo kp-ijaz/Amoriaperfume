@@ -5,6 +5,8 @@ import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
 import { useCollections } from '@/lib/hooks/useApiCollections';
+import { getCollectionCoverImage } from '@/lib/utils/collectionImage';
+import { OutlineSkeleton } from '@/components/loading';
 
 export default function CollectionsPage() {
   const { data: collections = [], isLoading } = useCollections();
@@ -56,7 +58,7 @@ export default function CollectionsPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {collections.map((col, i) => {
               const productCount = col.productIds?.length ?? 0;
-              const imageUrl = col.heroImage || 'https://images.unsplash.com/photo-1557053378-d3e8-4d49-a89f-1c3e7a2d6e1f?w=800&q=80';
+              const imageUrl = getCollectionCoverImage(col);
 
               return (
                 <motion.div
@@ -73,13 +75,17 @@ export default function CollectionsPage() {
                   >
                     {/* Image */}
                     <div className="relative h-52 overflow-hidden">
-                      <Image
-                        src={imageUrl}
-                        alt={col.name}
-                        fill
-                        className="object-cover transition-transform duration-500 group-hover:scale-105"
-                        unoptimized
-                      />
+                      {imageUrl ? (
+                        <Image
+                          src={imageUrl}
+                          alt={col.name}
+                          fill
+                          className="object-cover transition-transform duration-500 group-hover:scale-105"
+                          unoptimized
+                        />
+                      ) : (
+                        <OutlineSkeleton className="absolute inset-0 rounded-none border-0" />
+                      )}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                       {/* Tag */}
                       <span

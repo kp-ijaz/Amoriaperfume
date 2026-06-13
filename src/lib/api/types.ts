@@ -49,6 +49,7 @@ export interface ApiProduct {
     slug?: string;
   };
   description: string;
+  shortDescription?: string;
   category: {
     _id: string;
     name: string;
@@ -70,10 +71,16 @@ export interface ApiProduct {
   trending?: boolean;
   newArrival?: boolean;
   limitedOffer?: boolean;
+  brandInspiration?: boolean;
+  inspiredBrand?: string;
   viewCount?: number;
   published: boolean;
   gender: 'men' | 'women' | 'unisex';
   concentration: string;
+  seasons?: ('summer' | 'winter' | 'autumn' | 'spring')[];
+  dayNight?: 'day' | 'night' | 'both';
+  sillage?: string;
+  longevity?: string;
   variants: ApiProductVariant[];
   fragranceNotes: {
     topNotes: string[];
@@ -123,7 +130,9 @@ export interface ApiCollection {
   _id: string;
   name: string;
   description: string;
+  image?: string;
   heroImage: string;
+  coverImage?: string;
   productIds: {
     _id: string;
     name: string;
@@ -134,6 +143,75 @@ export interface ApiCollection {
   slug: string;
   createdAt: string;
   updatedAt: string;
+}
+
+// ─── Gift Set ────────────────────────────────────────────────────────────────
+
+export type ApiGiftSetOccasion = 'eid' | 'wedding' | 'birthday' | 'corporate' | 'general';
+
+export interface ApiGiftSetItemProduct {
+  _id: string;
+  name: string;
+  slug?: string;
+  sku?: string;
+  images?: string[];
+  brand?: { _id: string; name: string; slug?: string };
+  category?: { _id: string; name: string; slug?: string };
+  variants?: ApiProductVariant[];
+}
+
+export interface ApiGiftSetItem {
+  productId: string | ApiGiftSetItemProduct;
+  variantId: string;
+  sizeVariantId: string;
+  quantity: number;
+}
+
+export interface ApiGiftSet {
+  _id: string;
+  name: string;
+  slug: string;
+  sku: string;
+  description?: string;
+  images?: string[];
+  imagePublicIds?: string[];
+  coverImage: string;
+  coverImagePublicId?: string;
+  occasion?: ApiGiftSetOccasion;
+  items: ApiGiftSetItem[];
+  mrp: number;
+  giftSetPrice: number;
+  active: boolean;
+  sortOrder?: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+// ─── Bundle ──────────────────────────────────────────────────────────────────
+
+export interface ApiBundleItem {
+  productId: string | ApiGiftSetItemProduct;
+  variantId: string;
+  sizeVariantId: string;
+  quantity: number;
+}
+
+export interface ApiBundle {
+  _id: string;
+  name: string;
+  slug: string;
+  sku: string;
+  description?: string;
+  images?: string[];
+  imagePublicIds?: string[];
+  coverImage?: string;
+  coverImagePublicId?: string;
+  items: ApiBundleItem[];
+  mrp: number;
+  bundlePrice: number;
+  active: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 // ─── Review ──────────────────────────────────────────────────────────────────
@@ -159,9 +237,19 @@ export interface ApiReview {
 // ─── Order ───────────────────────────────────────────────────────────────────
 
 export interface ApiOrderItem {
-  productId: string;
-  variantId: string;
-  sizeVariantId: string;
+  productId?: string;
+  variantId?: string;
+  sizeVariantId?: string;
+  packageType?: 'bundle' | 'gift_set';
+  packageId?: string;
+  packageSlug?: string;
+  includedItems?: {
+    productId: string;
+    variantId?: string;
+    sizeVariantId?: string;
+    quantity: number;
+    productName?: string;
+  }[];
   quantity: number;
   productName: string;
   brand: string;
@@ -199,7 +287,7 @@ export interface ApiOrder {
     totalAmount: number;
   };
   payment: {
-    paymentMethod: 'COD' | 'ONLINE';
+    paymentMethod: 'COD' | 'ONLINE' | 'TAMARA';
     paymentStatus: 'PENDING' | 'PAID' | 'FAILED';
     transactionId: string;
   };
@@ -240,7 +328,7 @@ export interface ApiPromotion {
 }
 
 export interface PromotionValidateLineItem {
-  productId: string;
+  productId?: string;
   categoryId?: string | null;
   quantity: number;
   lineTotal: number;
@@ -317,13 +405,20 @@ export interface CreateOrderRequest {
     pincode: string;
     country: string;
   };
-  items: {
-    productId: string;
-    variantId: string;
-    sizeVariantId: string;
-    quantity: number;
-  }[];
-  paymentMethod?: 'COD' | 'ONLINE';
+  items: (
+    | {
+        productId: string;
+        variantId?: string;
+        sizeVariantId?: string;
+        quantity: number;
+      }
+    | {
+        packageType: 'bundle' | 'gift_set';
+        packageId: string;
+        quantity: number;
+      }
+  )[];
+  paymentMethod?: 'COD' | 'ONLINE' | 'TAMARA';
   stripePaymentIntentId?: string;
   paymentError?: string;
   pricing?: {

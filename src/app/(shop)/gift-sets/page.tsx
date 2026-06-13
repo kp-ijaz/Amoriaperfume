@@ -1,49 +1,86 @@
 'use client';
 
-import { useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Gift, ArrowRight } from 'lucide-react';
-import { useCategories } from '@/lib/hooks/useApiCategories';
-import { useApiProducts } from '@/lib/hooks/useApiProducts';
-import { ProductCard } from '@/components/product/ProductCard';
+import { GiftSetCard } from '@/components/gift-set/GiftSetCard';
+import { useGiftSets } from '@/lib/hooks/useGiftSets';
+import { ApiGiftSetOccasion } from '@/lib/api/types';
 
-const occasions = [
-  { label: 'Eid Gifts',  icon: '🌙', href: '/products?category=gift-sets&occasion=eid' },
-  { label: 'Weddings',   icon: '💍', href: '/products?category=gift-sets&occasion=wedding' },
-  { label: 'Birthdays',  icon: '🎂', href: '/products?category=gift-sets&occasion=birthday' },
-  { label: 'Corporate',  icon: '🤝', href: '/products?category=gift-sets&occasion=corporate' },
+const OCCASION_CHIPS: {
+  label: string;
+  icon: string;
+  occasion?: ApiGiftSetOccasion;
+}[] = [
+  { label: 'All Gift Sets', icon: '🎁' },
+  { label: 'Eid Gifts', icon: '🌙', occasion: 'eid' },
+  { label: 'Weddings', icon: '💍', occasion: 'wedding' },
+  { label: 'Birthdays', icon: '🎂', occasion: 'birthday' },
+  { label: 'Corporate', icon: '🤝', occasion: 'corporate' },
 ];
 
+function parseOccasionParam(value: string | null): ApiGiftSetOccasion | undefined {
+  if (!value) return undefined;
+  const normalized = value.trim().toLowerCase();
+  if (normalized === 'eid' || normalized === 'wedding' || normalized === 'birthday' || normalized === 'corporate') {
+    return normalized;
+  }
+  return undefined;
+}
+
 export default function GiftSetsPage() {
-  const { data: categories = [] } = useCategories();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const activeOccasion = parseOccasionParam(searchParams.get('occasion'));
+  const { data: giftSets = [], isLoading } = useGiftSets(activeOccasion);
 
-  const giftCat = categories.find((c) =>
-    c.name.toLowerCase().includes('gift') || c.slug.toLowerCase().includes('gift')
-  );
-
-  const { products: giftProducts, isLoading, setFilters } = useApiProducts();
-
-  useEffect(() => {
-    if (giftCat?.id) {
-      setFilters({ categories: [giftCat.id] });
+  function handleOccasionClick(occasion?: ApiGiftSetOccasion) {
+    if (!occasion) {
+      router.push('/gift-sets');
+      return;
     }
-  }, [giftCat?.id, setFilters]);
+    router.push(`/gift-sets?occasion=${occasion}`);
+  }
 
   return (
     <div style={{ backgroundColor: '#FAF8F5', minHeight: '100vh' }}>
-
-      {/* Hero */}
-      <div className="relative py-16 px-4 text-center overflow-hidden" style={{ backgroundColor: '#1A0A2E' }}>
-        <div className="absolute inset-0 opacity-[0.04]"
-          style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, #C9A84C 1px, transparent 0)', backgroundSize: '28px 28px' }}
+      <div
+        className="relative py-16 px-4 text-center overflow-hidden"
+        style={{ backgroundColor: '#1A0A2E' }}
+      >
+        <div
+          className="absolute inset-0 opacity-[0.04]"
+          style={{
+            backgroundImage: 'radial-gradient(circle at 2px 2px, #C9A84C 1px, transparent 0)',
+            backgroundSize: '28px 28px',
+          }}
         />
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="relative">
-          <div className="w-12 h-12 mx-auto mb-4 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(201,168,76,0.15)', border: '1px solid rgba(201,168,76,0.3)' }}>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="relative"
+        >
+          <div
+            className="w-12 h-12 mx-auto mb-4 rounded-full flex items-center justify-center"
+            style={{
+              backgroundColor: 'rgba(201,168,76,0.15)',
+              border: '1px solid rgba(201,168,76,0.3)',
+            }}
+          >
             <Gift size={22} style={{ color: '#C9A84C' }} />
           </div>
-          <p className="text-xs tracking-[0.35em] uppercase mb-3" style={{ color: 'rgba(201,168,76,0.7)' }}>For Every Occasion</p>
-          <h1 className="text-4xl md:text-5xl font-light text-white mb-3" style={{ fontFamily: 'var(--font-heading)' }}>
+          <p
+            className="text-xs tracking-[0.35em] uppercase mb-3"
+            style={{ color: 'rgba(201,168,76,0.7)' }}
+          >
+            For Every Occasion
+          </p>
+          <h1
+            className="text-4xl md:text-5xl font-light text-white mb-3"
+            style={{ fontFamily: 'var(--font-heading)' }}
+          >
             Gift <em style={{ color: '#C9A84C' }}>Sets</em>
           </h1>
           <p className="text-sm max-w-md mx-auto" style={{ color: 'rgba(255,255,255,0.5)' }}>
@@ -52,57 +89,97 @@ export default function GiftSetsPage() {
         </motion.div>
       </div>
 
-      {/* Occasion strip */}
       <div style={{ backgroundColor: 'white', borderBottom: '1px solid #E8E3DC' }}>
         <div className="max-w-5xl mx-auto px-4 py-5 flex flex-wrap justify-center gap-3">
-          {occasions.map((occ) => (
-            <Link key={occ.label} href={occ.href} className="flex items-center gap-2 px-4 py-2 text-sm font-medium transition-all border hover:border-[#1A0A2E]" style={{ borderColor: '#E8E3DC', backgroundColor: '#FAF8F5', color: '#1A0A2E' }}>
-              <span>{occ.icon}</span>
-              {occ.label}
-            </Link>
-          ))}
+          {OCCASION_CHIPS.map((occ) => {
+            const isActive = occ.occasion === activeOccasion || (!occ.occasion && !activeOccasion);
+            return (
+              <button
+                key={occ.label}
+                type="button"
+                onClick={() => handleOccasionClick(occ.occasion)}
+                className="flex items-center gap-2 px-4 py-2 text-sm font-medium transition-all border"
+                style={{
+                  borderColor: isActive ? '#1A0A2E' : '#E8E3DC',
+                  backgroundColor: isActive ? '#1A0A2E' : '#FAF8F5',
+                  color: isActive ? '#C9A84C' : '#1A0A2E',
+                }}
+              >
+                <span>{occ.icon}</span>
+                {occ.label}
+              </button>
+            );
+          })}
+          <Link
+            href="/gift-cards"
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium transition-all border hover:border-[#1A0A2E]"
+            style={{ borderColor: '#E8E3DC', backgroundColor: '#FAF8F5', color: '#1A0A2E' }}
+          >
+            <span>💳</span>
+            Gift Cards
+          </Link>
         </div>
       </div>
 
-      {/* Gift set products */}
-      <div className="max-w-5xl mx-auto px-4 py-14">
+      <div className="max-w-6xl mx-auto px-4 py-14">
         {isLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[...Array(3)].map((_, i) => <div key={i} className="aspect-square bg-gray-100 animate-pulse" />)}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[...Array(6)].map((_, i) => (
+              <div
+                key={i}
+                className="animate-pulse"
+                style={{ backgroundColor: 'white', border: '1px solid #E8E3DC' }}
+              >
+                <div className="h-56 bg-gray-100" />
+                <div className="p-5 space-y-2">
+                  <div className="h-4 bg-gray-100 rounded w-2/3" />
+                  <div className="h-3 bg-gray-100 rounded w-1/2" />
+                  <div className="h-3 bg-gray-100 rounded w-full" />
+                </div>
+              </div>
+            ))}
           </div>
-        ) : giftProducts.length > 0 ? (
-          <>
-            <div className="flex items-center justify-between mb-8">
-              <h2 className="text-2xl font-light" style={{ fontFamily: 'var(--font-heading)', color: '#1A0A2E' }}>All Gift Sets</h2>
-              <Link href="/products?category=gift-sets" className="text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 hover:gap-2.5 transition-all" style={{ color: '#C9A84C' }}>
-                View All <ArrowRight size={13} />
-              </Link>
-            </div>
-            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-              {giftProducts.map((product, i) => (
-                <ProductCard key={product.id} product={product} index={i} />
-              ))}
-            </div>
-          </>
+        ) : giftSets.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {giftSets.map((giftSet, i) => (
+              <GiftSetCard key={giftSet._id} giftSet={giftSet} index={i} />
+            ))}
+          </div>
         ) : (
           <div className="text-center py-20">
-            <Gift size={48} className="mx-auto mb-4" style={{ color: '#E8E3DC' }} />
-            <h2 className="text-xl font-light mb-2" style={{ fontFamily: 'var(--font-heading)', color: '#1A0A2E' }}>Gift Sets Coming Soon</h2>
-            <p className="text-sm mb-6" style={{ color: '#6B6B6B' }}>We are curating the perfect gift collection. Browse our full range in the meantime.</p>
-            <Link href="/products" className="inline-flex items-center gap-2 px-6 py-3 text-sm font-bold" style={{ backgroundColor: '#1A0A2E', color: '#C9A84C' }}>
+            <p className="text-sm mb-6" style={{ color: '#6B6B6B' }}>
+              {activeOccasion
+                ? 'No gift sets for this occasion yet. Try another filter or browse all fragrances.'
+                : 'Gift sets are being curated. Browse our full fragrance range in the meantime.'}
+            </p>
+            <Link
+              href="/products"
+              className="inline-flex items-center gap-2 px-6 py-3 text-sm font-bold"
+              style={{ backgroundColor: '#1A0A2E', color: '#C9A84C' }}
+            >
               Browse All Fragrances <ArrowRight size={14} />
             </Link>
           </div>
         )}
       </div>
 
-      {/* Gift wrapping note */}
       <div style={{ backgroundColor: '#1A0A2E' }}>
         <div className="max-w-3xl mx-auto px-4 py-10 text-center">
-          <p className="text-xs tracking-[0.28em] uppercase mb-3" style={{ color: 'rgba(201,168,76,0.6)' }}>Complimentary Service</p>
-          <h3 className="text-2xl font-light text-white mb-3" style={{ fontFamily: 'var(--font-heading)' }}>Free Gift <em style={{ color: '#C9A84C' }}>Wrapping</em></h3>
+          <p
+            className="text-xs tracking-[0.28em] uppercase mb-3"
+            style={{ color: 'rgba(201,168,76,0.6)' }}
+          >
+            Complimentary Service
+          </p>
+          <h3
+            className="text-2xl font-light text-white mb-3"
+            style={{ fontFamily: 'var(--font-heading)' }}
+          >
+            Free Gift <em style={{ color: '#C9A84C' }}>Wrapping</em>
+          </h3>
           <p className="text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>
-            Every gift set comes beautifully wrapped in our signature gold and purple packaging — at no extra charge.
+            Every gift set comes beautifully wrapped in our signature gold and purple packaging — at no
+            extra charge.
           </p>
         </div>
       </div>

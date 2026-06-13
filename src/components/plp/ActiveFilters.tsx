@@ -2,83 +2,121 @@
 
 import { X } from 'lucide-react';
 import { ProductFilters } from '@/lib/hooks/useProducts';
+import {
+  CHIP_LABELS,
+  GENDER_LABELS,
+  SEASON_LABELS,
+  DAY_NIGHT_LABELS,
+  LOCKED_SCOPE_KEYS,
+  SIDEBAR_FILTER_KEYS,
+  countActiveSidebarFilters,
+} from '@/lib/plp/productFilterConfig';
 
 interface ActiveFiltersProps {
   filters: ProductFilters;
   onRemove: (key: keyof ProductFilters, value?: string) => void;
   onClearAll: () => void;
+  hideChipKeys?: (keyof ProductFilters)[];
 }
 
-export function ActiveFilters({ filters, onRemove, onClearAll }: ActiveFiltersProps) {
-  const chips: { key: keyof ProductFilters; value: string; label: string }[] = [];
+function Chip({
+  label,
+  onRemove,
+}: {
+  label: string;
+  onRemove: () => void;
+}) {
+  return (
+    <span
+      className="inline-flex items-center gap-1.5 px-3 py-1 text-xs rounded-full border"
+      style={{
+        borderColor: 'var(--color-amoria-border)',
+        color: 'var(--color-amoria-text)',
+        backgroundColor: 'var(--color-amoria-surface)',
+      }}
+    >
+      {label}
+      <button type="button" onClick={onRemove} className="hover:opacity-70" aria-label={`Remove ${label}`}>
+        <X size={12} />
+      </button>
+    </span>
+  );
+}
 
-  if (filters.categories?.length) {
-    filters.categories.forEach((v) => chips.push({ key: 'categories', value: v, label: v }));
-  }
-  if (filters.brands?.length) {
-    filters.brands.forEach((v) => chips.push({ key: 'brands', value: v, label: v }));
-  }
-  if (filters.genders?.length) {
-    filters.genders.forEach((v) => chips.push({ key: 'genders', value: v, label: v }));
-  }
-  if (filters.concentrations?.length) {
-    filters.concentrations.forEach((v) => chips.push({ key: 'concentrations', value: v, label: v }));
-  }
-  if (filters.discountOnly) {
-    chips.push({ key: 'discountOnly', value: 'true', label: 'On Sale' });
-  }
-  if (filters.limitedOffer) {
-    chips.push({ key: 'limitedOffer', value: 'true', label: 'Limited offers' });
-  }
-  if (filters.featured) {
-    chips.push({ key: 'featured', value: 'true', label: 'Featured' });
-  }
-  if (filters.bestSeller) {
-    chips.push({ key: 'bestSeller', value: 'true', label: 'Best sellers' });
-  }
-  if (filters.availability === 'online') {
-    chips.push({ key: 'availability', value: 'online', label: 'Online only deals' });
-  }
-  if (filters.trending) {
-    chips.push({ key: 'trending', value: 'true', label: 'Trending' });
-  }
-  if (filters.newArrival) {
-    chips.push({ key: 'newArrival', value: 'true', label: 'New arrivals' });
-  }
-  if (filters.serverSort === 'most_viewed') {
-    chips.push({ key: 'serverSort', value: 'most_viewed', label: 'Most viewed' });
-  }
-  if (filters.minRating) {
-    chips.push({ key: 'minRating', value: String(filters.minRating), label: `${filters.minRating}+ Stars` });
+export function ActiveFilters({
+  filters,
+  onRemove,
+  onClearAll,
+  hideChipKeys = [],
+}: ActiveFiltersProps) {
+  const chips: { key: keyof ProductFilters; label: string; value?: string }[] = [];
+
+  for (const key of SIDEBAR_FILTER_KEYS) {
+    if (hideChipKeys.includes(key)) continue;
+    const value = filters[key];
+    const groupLabel = CHIP_LABELS[key] ?? key;
+
+    if (Array.isArray(value)) {
+      for (const v of value) {
+        let display = v;
+        if (key === 'genders') display = GENDER_LABELS[v] ?? v;
+        if (key === 'seasons') display = SEASON_LABELS[v] ?? v;
+        if (key === 'dayNight') display = DAY_NIGHT_LABELS[v] ?? v;
+        if (key === 'sizes') display = `${v} ml`;
+        chips.push({ key, label: `${groupLabel}: ${display}`, value: String(v) });
+      }
+    } else if (key === 'priceRange' && value && typeof value === 'object' && 'min' in value) {
+      chips.push({ key, label: `Price: AED ${value.min} – ${value.max}` });
+    } else if (key === 'minRating' && value != null) {
+      chips.push({ key, label: `Rating: ${value}+ stars` });
+    } else if ((key === 'discountOnly' || key === 'inStockOnly') && value) {
+      chips.push({ key, label: CHIP_LABELS[key] ?? key });
+    }
   }
 
-  if (!chips.length) return null;
+  for (const key of LOCKED_SCOPE_KEYS) {
+    if (hideChipKeys.includes(key)) continue;
+    if (SIDEBAR_FILTER_KEYS.includes(key as (typeof SIDEBAR_FILTER_KEYS)[number])) continue;
+
+    const value = filters[key];
+    if (value === undefined || value === false) continue;
+
+    if (key === 'productIds' && Array.isArray(value) && value.length) {
+      chips.push({ key, label: CHIP_LABELS.productIds ?? 'Quiz matches' });
+    } else if (key === 'searchQuery' && typeof value === 'string' && value.trim()) {
+      chips.push({ key, label: `Search: "${value}"` });
+    } else if (key === 'availability' && value === 'online') {
+      chips.push({ key, label: CHIP_LABELS.availability ?? 'Online only' });
+    } else if (typeof value === 'boolean' && value) {
+      chips.push({ key, label: CHIP_LABELS[key] ?? key });
+    } else if (key === 'serverSort' && value === 'most_viewed') {
+      chips.push({ key, label: CHIP_LABELS.serverSort ?? 'Most viewed' });
+    }
+  }
+
+  if (chips.length === 0) return null;
+
+  const sidebarCount = countActiveSidebarFilters(filters);
 
   return (
-    <div className="flex flex-wrap items-center gap-2 py-3">
-      {chips.map((chip) => (
-        <span
-          key={`${chip.key}-${chip.value}`}
-          className="flex items-center gap-1.5 px-3 py-1 text-xs font-medium border rounded-full"
-          style={{ borderColor: 'var(--color-amoria-accent)', color: 'var(--color-amoria-primary)', backgroundColor: 'rgba(201,168,76,0.1)' }}
-        >
-          {chip.label}
-          <button
-            onClick={() => onRemove(chip.key, chip.value)}
-            className="hover:opacity-70"
-            aria-label={`Remove ${chip.label} filter`}
-          >
-            <X size={12} />
-          </button>
-        </span>
+    <div className="flex flex-wrap items-center gap-2 mb-4">
+      {chips.map((chip, i) => (
+        <Chip
+          key={`${String(chip.key)}-${chip.value ?? i}`}
+          label={chip.label}
+          onRemove={() => onRemove(chip.key, chip.value)}
+        />
       ))}
-      <button
-        onClick={onClearAll}
-        className="text-xs font-medium hover:opacity-80"
-        style={{ color: 'var(--color-amoria-text-muted)' }}
-      >
-        Clear All
-      </button>
+      {sidebarCount > 1 && (
+        <button
+          type="button"
+          onClick={onClearAll}
+          className="text-xs underline hover:opacity-70"
+          style={{ color: 'var(--color-amoria-primary)' }}
+        >
+          Clear all
+        </button>
+      )}
     </div>
   );
 }

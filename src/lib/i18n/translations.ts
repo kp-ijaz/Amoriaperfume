@@ -39,6 +39,15 @@ const t = {
 
   // ── Header / Top bar ──────────────────────────────────────────────────
   storeLocator: { en: 'Store Locator', ar: 'موقع المتجر' },
+  storeLocatorTitle: { en: 'Store Locator', ar: 'موقع المتجر' },
+  storeLocatorSubtitle: { en: 'Find your nearest Amoria pickup store', ar: 'اعثر على أقرب متجر أموريا للاستلام' },
+  storeHours: { en: 'Opening hours', ar: 'ساعات العمل' },
+  getDirections: { en: 'Get directions', ar: 'احصل على الاتجاهات' },
+  storeLocatorEmpty: {
+    en: 'No pickup stores are available right now. Shop online and we will deliver to your door.',
+    ar: 'لا توجد متاجر استلام متاحة حالياً. تسوق عبر الإنترنت وسنوصل طلبك إلى بابك.',
+  },
+  storeLocatorShopOnline: { en: 'Shop online', ar: 'تسوق عبر الإنترنت' },
   langEnglish: { en: 'English', ar: 'English' },
   langArabic: { en: 'العربية', ar: 'العربية' },
   searchPlaceholder: { en: 'Search perfumes...', ar: 'ابحث عن العطور...' },
@@ -51,7 +60,9 @@ const t = {
   navBrandInspiration: { en: 'Brand Inspiration', ar: 'إلهام الماركات' },
   navGiftSets: { en: 'Gift Sets', ar: 'طقم الهدايا' },
   navGiftCards: { en: 'Gift Cards', ar: 'بطاقات الهدايا' },
+  navBundles: { en: 'Bundles', ar: 'الباقات' },
   navBakhoor: { en: 'Bakhoor', ar: 'البخور' },
+  navCustomPerfume: { en: 'Custom Perfume', ar: 'عطر مخصص' },
   navSale: { en: 'Sale', ar: 'التخفيضات' },
 
   // ── Account dropdown ───────────────────────────────────────────────────
@@ -100,19 +111,6 @@ const t = {
   statDeliverySub: { en: 'Same-day Dubai', ar: 'نفس اليوم في دبي' },
   verifiedBadge: { en: 'Verified', ar: 'موثق' },
 
-  // ── Newsletter ─────────────────────────────────────────────────────────
-  newsletterLabel: { en: 'Join the Community', ar: 'انضم للمجتمع' },
-  newsletterHeading1: { en: 'Stay in', ar: 'ابقَ في' },
-  newsletterHeading2: { en: 'The Scent', ar: 'روح العطر' },
-  newsletterBody: {
-    en: 'Be first to discover new arrivals, exclusive offers, and the stories behind our finest Arabian fragrances.',
-    ar: 'كن أول من يكتشف المنتجات الجديدة والعروض الحصرية وقصص أرقى عطورنا العربية.',
-  },
-  newsletterPlaceholder: { en: 'Your email address', ar: 'بريدك الإلكتروني' },
-  newsletterButton: { en: 'Subscribe', ar: 'اشترك' },
-  newsletterSuccess: { en: "✓ You're on the list! Watch your inbox.", ar: '✓ تم تسجيلك! تحقق من بريدك الوارد.' },
-  newsletterPrivacy: { en: 'No spam. Just exclusive offers and fragrance stories.', ar: 'لا رسائل مزعجة. فقط عروض حصرية وقصص عطور.' },
-
   // ── Instagram ──────────────────────────────────────────────────────────
   igLabel: { en: '@amoriaperfumeofficial', ar: '@amoriaperfumeofficial' },
   igHeading1: { en: 'Follow Our', ar: 'تابع' },
@@ -142,6 +140,7 @@ const t = {
   footerLinkTrackOrder: { en: 'Track Order', ar: 'تتبع الطلب' },
   footerLinkGiftCards: { en: 'Gift Cards', ar: 'بطاقات الهدايا' },
   footerLinkReturns: { en: 'Returns & Exchange', ar: 'الإرجاع والاستبدال' },
+  footerLinkCustomPerfume: { en: 'Custom Perfume', ar: 'عطر مخصص' },
   footerLinkContact: { en: 'Contact Us', ar: 'اتصل بنا' },
   footerLinkPrivacy: { en: 'Privacy Policy', ar: 'سياسة الخصوصية' },
   footerLinkTerms: { en: 'Terms of Service', ar: 'شروط الخدمة' },
@@ -149,6 +148,55 @@ const t = {
   footerCopyright: {
     en: '© 2025 Amoria. All rights reserved. Made with ❤ in UAE.',
     ar: '© 2025 أموريا. جميع الحقوق محفوظة. صُنع بـ ❤ في الإمارات.',
+  },
+
+  // ── Custom Perfume ─────────────────────────────────────────────────────
+  customPerfumeTitle: { en: 'Custom Perfume', ar: 'عطر مخصص' },
+  customPerfumeSubtitle: {
+    en: 'Tell us your favourite notes and brands — our perfumers will craft something uniquely yours.',
+    ar: 'أخبرنا بالنوتات والماركات المفضلة لديك — سيصنع لك عطارونا عطراً فريداً.',
+  },
+  customPerfumeStartingFrom: { en: 'Starting from', ar: 'يبدأ من' },
+  customPerfumePriceConsultation: { en: 'Price on consultation', ar: 'السعر عند الاستشارة' },
+  customPerfumeName: { en: 'Name', ar: 'الاسم' },
+  customPerfumeEmail: { en: 'Email', ar: 'البريد الإلكتروني' },
+  customPerfumePhone: { en: 'Phone (optional)', ar: 'الهاتف (اختياري)' },
+  customPerfumeNotes: { en: 'Fragrance notes', ar: 'نوتات العطر' },
+  customPerfumeNotesHint: {
+    en: 'Select notes you love, or type a custom note and press Enter.',
+    ar: 'اختر النوتات التي تحبها، أو اكتب نوتة مخصصة واضغط Enter.',
+  },
+  customPerfumeOtherNote: { en: 'Search or add a custom note...', ar: 'ابحث أو أضف نوتة مخصصة...' },
+  customPerfumeBrands: { en: 'Preferred brands', ar: 'الماركات المفضلة' },
+  customPerfumeBrandsHint: {
+    en: 'Choose brands whose style inspires you.',
+    ar: 'اختر الماركات التي تلهمك بأسلوبها.',
+  },
+  customPerfumeInspiration: { en: 'Inspiration', ar: 'الإلهام' },
+  customPerfumeInspirationPlaceholder: {
+    en: 'Perfumes you love or want to smell like...',
+    ar: 'عطور تحبها أو تريد أن تشبه رائحتها...',
+  },
+  customPerfumeOccasion: { en: 'Occasion (optional)', ar: 'المناسبة (اختياري)' },
+  customPerfumeOccasionPlaceholder: {
+    en: 'e.g. wedding, daily wear, evening',
+    ar: 'مثال: زفاف، استخدام يومي، مساء',
+  },
+  customPerfumeAdditional: { en: 'Additional preferences', ar: 'تفضيلات إضافية' },
+  customPerfumeAdditionalPlaceholder: {
+    en: 'Anything else we should know...',
+    ar: 'أي شيء آخر يجب أن نعرفه...',
+  },
+  customPerfumeSubmit: { en: 'Submit Request', ar: 'إرسال الطلب' },
+  customPerfumeSubmitting: { en: 'Submitting...', ar: 'جاري الإرسال...' },
+  customPerfumeSuccess: {
+    en: 'Request submitted! Our team will contact you shortly.',
+    ar: 'تم إرسال الطلب! سيتواصل معك فريقنا قريباً.',
+  },
+  customPerfumeThankYou: { en: 'Thank you', ar: 'شكراً لك' },
+  customPerfumeThankYouBody: {
+    en: 'We have received your custom perfume request. A perfumer will review your preferences and reach out soon.',
+    ar: 'استلمنا طلب العطر المخصص. سيراجع العطار تفضيلاتك ويتواصل معك قريباً.',
   },
 
   // ── MobileNav ──────────────────────────────────────────────────────────

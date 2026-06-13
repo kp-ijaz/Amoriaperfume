@@ -1,5 +1,5 @@
-import { CmsPageContent } from '@/components/content/CmsPageContent';
+import { CmsPageByType } from '@/components/content/CmsPageByType';
 
 export default function PrivacyPage() {
-  return <CmsPageContent slug="privacy" fallbackTitle="Privacy Policy" />;
+  return <CmsPageByType pageType="privacy" />;
 }

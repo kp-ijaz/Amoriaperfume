@@ -4,17 +4,12 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { usePublicCoverImages } from '@/lib/hooks/usePublicCms';
+import { PromoBannerSkeleton } from '@/components/loading';
 
 export function PromoBanners() {
   const { data: covers = [], isLoading } = usePublicCoverImages('home_banner_v3');
 
-  if (isLoading) {
-    return (
-      <section className="py-8 flex justify-center">
-        <span className="w-8 h-8 border-2 border-[#1A0A2E]/20 border-t-[#1A0A2E] rounded-full animate-spin" />
-      </section>
-    );
-  }
+  if (isLoading) return <PromoBannerSkeleton />;
 
   if (covers.length === 0) return null;
 

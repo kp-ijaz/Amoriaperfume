@@ -227,7 +227,12 @@ function OrderTimeline({
                 <div className="flex-1 min-w-0">
                   <p className="text-[10px] font-semibold uppercase tracking-wider mb-0.5" style={{ color: '#A89880' }}>{item.brand}</p>
                   <p className="text-sm font-medium truncate" style={{ color: '#1C1C1C' }}>{item.productName}</p>
-                  <p className="text-xs mt-0.5" style={{ color: '#6B6B6B' }}>Qty: {item.quantity}</p>
+                  <p className="text-xs mt-0.5" style={{ color: '#6B6B6B' }}>
+                    Qty: {item.quantity}
+                    {item.includedItems?.length
+                      ? ` · Includes ${item.includedItems.length} item${item.includedItems.length === 1 ? '' : 's'}`
+                      : ''}
+                  </p>
                 </div>
                 <p className="text-sm font-bold flex-shrink-0" style={{ color: '#C9A84C' }}>
                   {formatCurrency(toAed(item.totalPrice))}

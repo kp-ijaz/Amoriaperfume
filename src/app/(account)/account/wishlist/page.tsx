@@ -13,6 +13,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { useState, useEffect } from 'react';
 import { useLanguage } from '@/lib/context/LanguageContext';
+import { isProductCartItem } from '@/types/cart';
 
 import { Product } from '@/types/product';
 
@@ -104,7 +105,12 @@ export default function WishlistPage() {
 
   // Check if a specific variant is already in cart
   function isVariantInCart(productId: string, variantId: string) {
-    return cartItems.some((i) => i.product.id === productId && i.variant.id === variantId);
+    return cartItems.some(
+      (i) =>
+        isProductCartItem(i) &&
+        i.product.id === productId &&
+        i.variant.id === variantId
+    );
   }
 
   function handleRemove(productId: string, name: string) {
@@ -252,7 +258,7 @@ export default function WishlistPage() {
                   >
                     {/* Image */}
                     <div className="relative aspect-square overflow-hidden" style={{ backgroundColor: '#F5F2EE' }}>
-                      <Link href={`/products/${product.slug}`}>
+                      <Link href={`/products/${product.slug}`} className="relative block w-full h-full">
                         <Image
                           src={primary.url}
                           alt={primary.alt}

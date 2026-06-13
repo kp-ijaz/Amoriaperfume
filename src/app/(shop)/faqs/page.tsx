@@ -1,5 +1,5 @@
-import { CmsPageContent } from '@/components/content/CmsPageContent';
+import { CmsPageByType } from '@/components/content/CmsPageByType';
 
-export default function FAQsPage() {
-  return <CmsPageContent slug="faqs" fallbackTitle="FAQs" />;
+export default function FaqsPage() {
+  return <CmsPageByType pageType="faqs" />;
 }

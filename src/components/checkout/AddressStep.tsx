@@ -553,9 +553,9 @@ export function AddressStep({ isGuest = false, pickupStores = [], onNext }: Addr
                             <MapPin size={14} className="mt-0.5 flex-shrink-0" style={{ color: '#C9A84C' }} />
                             <div>
                               <p style={{ color: '#1C1C1C' }}>{store.address}</p>
-                              {store.mapLink ? (
+                              {store.address ? (
                                 <a
-                                  href={store.mapLink}
+                                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(store.address)}`}
                                   target="_blank"
                                   rel="noreferrer"
                                   className="text-[11px] underline underline-offset-2 mt-0.5 block"

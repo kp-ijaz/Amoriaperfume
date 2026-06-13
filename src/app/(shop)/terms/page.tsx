@@ -1,5 +1,5 @@
-import { CmsPageContent } from '@/components/content/CmsPageContent';
+import { CmsPageByType } from '@/components/content/CmsPageByType';
 
 export default function TermsPage() {
-  return <CmsPageContent slug="terms" fallbackTitle="Terms & Conditions" />;
+  return <CmsPageByType pageType="terms" />;
 }
