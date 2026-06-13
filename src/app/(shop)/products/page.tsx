@@ -23,7 +23,7 @@ export default function ProductsPage() {
       featured: searchParams.get('featured') === 'true' ? true : undefined,
       limitedOffer: searchParams.get('limitedOffer') === 'true' ? true : undefined,
       discountOnly: searchParams.get('sale') === 'true' ? true : undefined,
-      serverSort: searchParams.get('sort') === 'most_viewed' ? ('most_viewed' as const) : undefined,
+      serverSort: searchParams.get('sort') === 'most_viewed' ? 'most_viewed' : undefined,
     }),
     [searchParams]
   );
