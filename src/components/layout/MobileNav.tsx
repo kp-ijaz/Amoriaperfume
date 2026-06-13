@@ -5,10 +5,11 @@ import { RootState } from '@/lib/store';
 import { closeMobileNav } from '@/lib/store/uiSlice';
 import { useBodyLock } from '@/lib/hooks/useBodyLock';
 import Link from 'next/link';
-import { X, Search, ChevronRight, Package, Truck } from 'lucide-react';
+import { X, Search, ChevronRight, Package, Truck, MapPin, Globe, Check } from 'lucide-react';
 import Image from 'next/image';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useLanguage } from '@/lib/context/LanguageContext';
+import { useState } from 'react';
 
 const NAV_LINK_KEYS: { key: string; href: string; isRed?: boolean }[] = [
   { key: 'navHome',             href: '/' },
@@ -22,7 +23,8 @@ const NAV_LINK_KEYS: { key: string; href: string; isRed?: boolean }[] = [
 export function MobileNav() {
   const dispatch = useDispatch();
   const isOpen = useSelector((state: RootState) => state.ui.mobileNavOpen);
-  const { t } = useLanguage();
+  const { t, lang, setLang, tArr } = useLanguage();
+  const [langOpen, setLangOpen] = useState(false);
   useBodyLock(isOpen);
 
   return (
@@ -137,6 +139,77 @@ export function MobileNav() {
                 <Link href="/register" onClick={() => dispatch(closeMobileNav())} className="flex items-center justify-between px-4 py-3 text-sm transition-colors hover:bg-white/5" style={{ color: 'rgba(255,255,255,0.7)' }}>
                   {t('mobileRegister')}
                 </Link>
+              </div>
+
+              {/* Store & Settings */}
+              <div className="mt-4 pt-4 border-t" style={{ borderColor: 'rgba(255,255,255,0.1)' }}>
+                <p className="px-4 text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'var(--color-amoria-accent)' }}>
+                  SETTINGS
+                </p>
+
+                {/* Store Locator */}
+                <Link
+                  href="/contact"
+                  onClick={() => dispatch(closeMobileNav())}
+                  className="flex items-center gap-3 px-4 py-3 text-sm transition-colors hover:bg-white/5 border-b"
+                  style={{ color: 'rgba(255,255,255,0.85)', borderColor: 'rgba(255,255,255,0.06)' }}
+                >
+                  <MapPin size={15} style={{ color: 'rgba(201,168,76,0.7)' }} />
+                  {t('storeLocator')}
+                  <ChevronRight size={14} className="ml-auto opacity-40" />
+                </Link>
+
+                {/* Language Selector */}
+                <div className="relative">
+                  <button
+                    onClick={() => setLangOpen(!langOpen)}
+                    className="flex items-center gap-3 w-full px-4 py-3 text-sm transition-colors hover:bg-white/5 border-b"
+                    style={{ color: 'rgba(255,255,255,0.85)', borderColor: 'rgba(255,255,255,0.06)' }}
+                  >
+                    <Globe size={15} style={{ color: 'rgba(201,168,76,0.7)' }} />
+                    <span>{lang === 'ar' ? 'العربية' : 'English'}</span>
+                    <ChevronRight
+                      size={14}
+                      className="ml-auto opacity-40 transition-transform"
+                      style={{ transform: langOpen ? 'rotate(90deg)' : 'rotate(0deg)' }}
+                    />
+                  </button>
+
+                  {/* Language options */}
+                  <AnimatePresence>
+                    {langOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="overflow-hidden"
+                        style={{ backgroundColor: 'rgba(255,255,255,0.05)' }}
+                      >
+                        {(['en', 'ar'] as const).map((code) => {
+                          const label = code === 'ar' ? 'العربية' : 'English';
+                          const isActive = lang === code;
+                          return (
+                            <button
+                              key={code}
+                              onClick={() => {
+                                setLang(code);
+                                setLangOpen(false);
+                              }}
+                              className="flex items-center gap-3 w-full px-8 py-2.5 text-sm transition-colors hover:bg-white/10"
+                              style={{ color: isActive ? 'var(--color-amoria-accent)' : 'rgba(255,255,255,0.7)' }}
+                              dir={code === 'ar' ? 'rtl' : 'ltr'}
+                            >
+                              {label}
+                              {isActive && (
+                                <Check size={14} className="ml-auto" style={{ color: 'var(--color-amoria-accent)' }} />
+                              )}
+                            </button>
+                          );
+                        })}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
               </div>
 
             </nav>

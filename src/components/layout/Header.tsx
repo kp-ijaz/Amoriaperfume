@@ -129,7 +129,7 @@ const NAV_LINK_KEYS: { key: string; href: string; isRed?: boolean }[] = [
 export function Header() {
   const dispatch = useDispatch();
   const pathname = usePathname();
-  const { t } = useLanguage();
+  const { t, tArr } = useLanguage();
   const cartItems = useSelector((state: RootState) => state.cart.items);
   const wishlistItems = useSelector((state: RootState) => state.wishlist.items);
   const [scrolled, setScrolled] = useState(false);
@@ -198,7 +198,7 @@ export function Header() {
 
         {/* ── TOP UTILITY BAR — live offers + language ── */}
         <div
-          className="border-b hidden sm:block"
+          className="border-b"
           style={{ borderColor: 'var(--color-amoria-border)', backgroundColor: '#FAF8F5' }}
         >
           <div className="max-w-7xl mx-auto px-4 lg:px-8 h-8 grid items-center" style={{ gridTemplateColumns: '1fr auto 1fr' }}>
@@ -207,7 +207,22 @@ export function Header() {
             <div />
 
             {/* CENTER — offers ticker (truly centered) */}
-            <LiveOffersTicker />
+            <div className="hidden sm:flex w-full">
+              <LiveOffersTicker />
+            </div>
+
+            {/* Mobile offers ticker — compact */}
+            <div className="flex sm:hidden w-full justify-center">
+              <div className="overflow-hidden flex-1">
+                <motion.span
+                  key={`mobile-offer`}
+                  className="text-[11px] font-medium text-center block truncate"
+                  style={{ color: 'var(--color-amoria-accent)' }}
+                >
+                  {(tArr('liveOffers')[0] || '🎁 Special Offers Available')}
+                </motion.span>
+              </div>
+            </div>
 
             {/* RIGHT — store locator + language */}
             <div className="flex items-center justify-end gap-3">
@@ -220,7 +235,9 @@ export function Header() {
                 <span className="text-[13px] font-medium">{t('storeLocator')}</span>
               </a>
               <span className="hidden sm:block w-px h-3 opacity-25" style={{ backgroundColor: 'var(--color-amoria-text-muted)' }} />
-              <LanguageDropdown />
+              <div className="hidden sm:block">
+                <LanguageDropdown />
+              </div>
             </div>
 
           </div>
