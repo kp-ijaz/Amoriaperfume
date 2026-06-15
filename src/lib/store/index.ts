@@ -10,12 +10,13 @@ import authReducer from './authSlice';
 const cartPersistConfig     = { key: 'amoria_cart_v2', storage, whitelist: ['items', 'coupon', 'giftCard', 'savedItems'] };
 const wishlistPersistConfig = { key: 'amoria_wishlist', storage, whitelist: ['items'] };
 const authPersistConfig     = { key: 'amoria_auth',     storage, whitelist: ['user', 'token', 'isGuest', 'guestInfo'] };
+const uiPersistConfig       = { key: 'amoria_ui',       storage, whitelist: ['finderOpen'] };
 
 const rootReducer = combineReducers({
   cart:     persistReducer(cartPersistConfig,     cartReducer),
   wishlist: persistReducer(wishlistPersistConfig, wishlistReducer),
   auth:     persistReducer(authPersistConfig,     authReducer),
-  ui:       uiReducer,
+  ui:       persistReducer(uiPersistConfig,       uiReducer),
 });
 
 export const store = configureStore({
