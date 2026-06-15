@@ -4,6 +4,7 @@ import { BottomTabBar } from '@/components/layout/BottomTabBar';
 import { ScrollToTop } from '@/components/ScrollToTop';
 import { PageTransition } from '@/components/layout/PageTransition';
 import { FloatingSidebar } from '@/components/layout/FloatingSidebar';
+import { FragranceFinderWidget } from '@/components/home/FragranceFinderWidget';
 import { ShopProviders } from '@/components/providers/ShopProviders';
 
 export default function ShopLayout({ children }: { children: React.ReactNode }) {
@@ -18,6 +19,7 @@ export default function ShopLayout({ children }: { children: React.ReactNode }) 
       <BottomTabBar />
       <ScrollToTop />
       <FloatingSidebar />
+      <FragranceFinderWidget />
     </ShopProviders>
   );
 }

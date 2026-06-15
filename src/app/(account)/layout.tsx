@@ -3,7 +3,6 @@ import { Footer } from '@/components/layout/Footer';
 import { AccountSubNav } from '@/components/account/AccountSubNav';
 import { BottomTabBar } from '@/components/layout/BottomTabBar';
 import { FloatingSidebar } from '@/components/layout/FloatingSidebar';
-import { FragranceFinderWidget } from '@/components/home/FragranceFinderWidget';
 
 export default function AccountLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -21,7 +20,6 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
       <Footer />
       <BottomTabBar />
       <FloatingSidebar />
-      <FragranceFinderWidget />
     </>
   );
 }
