@@ -92,13 +92,13 @@ export function CategoryIconStrip() {
                   gap: 10,
                   textDecoration: 'none',
                   padding: '0 14px',
-                  minWidth: 80,
+                  minWidth: 110,
                 }}
                 className="category-icon-link"
               >
                 <div className="relative inline-block shrink-0">
                   <div
-                    className="category-circle relative size-[82px] rounded-full overflow-hidden"
+                    className="category-circle relative size-[110px] rounded-full overflow-hidden"
                     style={{
                       backgroundColor: '#F5F2EE',
                       border: '2px solid #E8E3DC',
@@ -110,7 +110,7 @@ export function CategoryIconStrip() {
                       alt={cat.name}
                       fill
                       className="object-cover"
-                      sizes="82px"
+                      sizes="110px"
                       priority={i === 0}
                     />
                   </div>
@@ -139,12 +139,12 @@ export function CategoryIconStrip() {
 
                 <span
                   style={{
-                    fontSize: 11,
+                    fontSize: 12,
                     fontWeight: 500,
                     color: '#3A3A3A',
                     textAlign: 'center',
                     lineHeight: 1.3,
-                    maxWidth: 82,
+                    maxWidth: 110,
                     display: 'block',
                     letterSpacing: '0.01em',
                   }}
