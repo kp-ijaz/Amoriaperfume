@@ -1,7 +1,7 @@
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, MessageCircle } from 'lucide-react';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@/lib/store';
 import { openFinder } from '@/lib/store/uiSlice';
@@ -20,6 +20,22 @@ export function FloatingSidebar() {
           exit={{ opacity: 0, y: 20 }}
           transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
         >
+          {/* WhatsApp Button */}
+          <motion.a
+            href="https://wa.me/971505566655"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Chat on WhatsApp"
+            className="flex items-center justify-center w-14 h-14 rounded-full shadow-xl transition-transform hover:scale-110 active:scale-95"
+            style={{ backgroundColor: '#25D366', border: '2px solid rgba(255,255,255,0.3)', color: 'white' }}
+            initial={{ opacity: 0, scale: 0.7 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.3, delay: 0.05, ease: [0.22, 1, 0.36, 1] }}
+          >
+            <MessageCircle size={22} fill="currentColor" />
+          </motion.a>
+
+          {/* Find Your Scent Button */}
           <motion.button
             onClick={() => dispatch(openFinder())}
             aria-label="Find Your Scent"
