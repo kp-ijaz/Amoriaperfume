@@ -187,22 +187,18 @@ function GiftSetsNavDropdown({
           className="transition-transform duration-200"
           style={{ transform: open ? 'rotate(180deg)' : 'rotate(0deg)' }}
         />
-        {item.key !== 'navMore' && (
-          <>
-            <span
-              className="absolute bottom-0 left-3.5 right-3.5 h-[2px] rounded-full transition-transform duration-250 origin-center"
-              style={{
-                backgroundColor: 'var(--color-amoria-accent)',
-                transform: active ? 'scaleX(1)' : 'scaleX(0)',
-              }}
-            />
-            {!active && (
-              <span
-                className="absolute bottom-0 left-3.5 right-3.5 h-[2px] rounded-full scale-x-0 group-hover:scale-x-100 transition-transform duration-250 origin-center"
-                style={{ backgroundColor: 'var(--color-amoria-accent)' }}
-              />
-            )}
-          </>
+        <span
+          className="absolute bottom-0 left-3.5 right-3.5 h-[2px] rounded-full transition-transform duration-250 origin-center"
+          style={{
+            backgroundColor: 'var(--color-amoria-accent)',
+            transform: active ? 'scaleX(1)' : 'scaleX(0)',
+          }}
+        />
+        {!active && (
+          <span
+            className="absolute bottom-0 left-3.5 right-3.5 h-[2px] rounded-full scale-x-0 group-hover:scale-x-100 transition-transform duration-250 origin-center"
+            style={{ backgroundColor: 'var(--color-amoria-accent)' }}
+          />
         )}
       </button>
 

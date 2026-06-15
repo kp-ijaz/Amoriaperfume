@@ -27,7 +27,6 @@ export const SHOP_NAV: ShopNavItem[] = [
     key: 'navMore',
     href: '#',
     children: [
-      { key: 'navHome', href: '/' },
       { key: 'navSale', href: '/products?sale=true' },
       { key: 'navAbout', href: '/about' },
       { key: 'navContact', href: '/contact' },
