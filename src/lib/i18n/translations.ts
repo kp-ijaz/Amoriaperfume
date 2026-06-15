@@ -64,6 +64,10 @@ const t = {
   navBakhoor: { en: 'Bakhoor', ar: 'البخور' },
   navCustomPerfume: { en: 'Custom Perfume', ar: 'عطر مخصص' },
   navSale: { en: 'Sale', ar: 'التخفيضات' },
+  navMore: { en: 'More', ar: 'المزيد' },
+  navAbout: { en: 'About Us', ar: 'معلومات عنا' },
+  navContact: { en: 'Contact', ar: 'اتصل بنا' },
+  navFAQs: { en: 'FAQs', ar: 'الأسئلة الشائعة' },
 
   // ── Account dropdown ───────────────────────────────────────────────────
   signIn: { en: 'Sign In', ar: 'تسجيل الدخول' },
