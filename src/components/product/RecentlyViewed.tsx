@@ -19,11 +19,9 @@ export function RecentlyViewed() {
       >
         Recently Viewed
       </h2>
-      <div className="flex gap-4 overflow-x-auto pb-2 mt-8">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
         {recentProducts.map((product) => (
-          <div key={product.id} className="flex-shrink-0 w-52">
-            <ProductCard product={product} />
-          </div>
+          <ProductCard key={product.id} product={product} />
         ))}
       </div>
     </section>
