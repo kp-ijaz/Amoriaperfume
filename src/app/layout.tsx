@@ -6,6 +6,7 @@ import { QueryProvider } from '@/components/providers/QueryProvider';
 import { LanguageProvider } from '@/lib/context/LanguageContext';
 import { CustomCursor } from '@/components/ui/CustomCursor';
 import { Toaster } from 'sonner';
+import { FragranceFinderWidget } from '@/components/home/FragranceFinderWidget';
 
 const cormorant = Cormorant_Garamond({
   variable: '--font-heading',
@@ -54,6 +55,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <LanguageProvider>
             <CustomCursor />
             {children}
+            <FragranceFinderWidget />
             <Toaster
               position="bottom-right"
               theme="dark"
