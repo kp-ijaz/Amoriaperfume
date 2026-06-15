@@ -561,20 +561,20 @@ export function Header() {
                   ) : (
                     <button
                       onClick={openSearch}
-                      className="hidden md:flex p-3 hover:opacity-70 transition-opacity"
+                      className="hidden md:flex p-2.5 hover:opacity-70 transition-opacity"
                       aria-label="Search"
                     >
-                      <Search size={22} style={{ color: 'var(--color-amoria-primary)' }} />
+                      <Search size={20} style={{ color: 'var(--color-amoria-primary)' }} />
                     </button>
                   )}
                 </AnimatePresence>
 
                 {/* Mobile search icon (doesn't expand) */}
                 <button
-                  className="md:hidden p-3 hover:opacity-70 transition-opacity"
+                  className="md:hidden p-2.5 hover:opacity-70 transition-opacity"
                   aria-label="Search"
                 >
-                  <Search size={22} style={{ color: 'var(--color-amoria-primary)' }} />
+                  <Search size={20} style={{ color: 'var(--color-amoria-primary)' }} />
                 </button>
 
                 {/* Search dropdown */}
@@ -647,10 +647,10 @@ export function Header() {
               {/* Wishlist */}
               <Link
                 href="/account/wishlist"
-                className="relative p-3 hover:opacity-70 transition-opacity hidden md:flex"
+                className="relative p-2.5 hover:opacity-70 transition-opacity hidden md:flex"
                 aria-label="Wishlist"
               >
-                <Heart size={22} style={{ color: 'var(--color-amoria-primary)' }} />
+                <Heart size={20} style={{ color: 'var(--color-amoria-primary)' }} />
                 {wishlistItems.length > 0 && (
                   <span
                     className="absolute top-1 right-1 w-[16px] h-[16px] rounded-full text-[9px] font-bold flex items-center justify-center text-white"
@@ -664,10 +664,10 @@ export function Header() {
               {/* Cart */}
               <button
                 onClick={() => dispatch(openCartDrawer())}
-                className="relative p-3 hover:opacity-70 transition-opacity"
+                className="relative p-2.5 hover:opacity-70 transition-opacity"
                 aria-label="Cart"
               >
-                <ShoppingBag size={22} style={{ color: 'var(--color-amoria-primary)' }} />
+                <ShoppingBag size={20} style={{ color: 'var(--color-amoria-primary)' }} />
                 {cartCount > 0 && (
                   <span
                     className="absolute top-1 right-1 w-[16px] h-[16px] rounded-full text-[9px] font-bold flex items-center justify-center text-white"
@@ -680,17 +680,17 @@ export function Header() {
 
               {/* Account */}
               <div className="relative group hidden md:block">
-                <button className="p-3 hover:opacity-70 transition-opacity flex items-center gap-1">
+                <button className="p-2.5 hover:opacity-70 transition-opacity flex items-center gap-1">
                   {isLoggedIn ? (
                     <div
-                      className="w-8 h-8 rounded-full flex items-center justify-center text-[12px] font-bold"
+                      className="w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold"
                       style={{ backgroundColor: '#1A0A2E', color: '#C9A84C' }}
                     >
                       {user!.firstName[0]}{user!.lastName[0]}
                     </div>
                   ) : (
                     <>
-                      <User size={22} style={{ color: 'var(--color-amoria-primary)' }} />
+                      <User size={20} style={{ color: 'var(--color-amoria-primary)' }} />
                       <ChevronDown size={12} style={{ color: 'var(--color-amoria-primary)' }} />
                     </>
                   )}
