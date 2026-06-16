@@ -31,7 +31,7 @@ export default function BrandInspirationPage() {
         <div style={{ backgroundColor: '#FAF8F5' }}>
           <div
             className="relative py-16 px-4 text-center overflow-hidden"
-            style={{ backgroundColor: '#0D0A08' }}
+            style={{ backgroundColor: '#1a0a2e' }}
           >
             <div
               className="absolute inset-0 opacity-[0.04]"

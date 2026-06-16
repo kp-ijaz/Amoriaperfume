@@ -29,8 +29,8 @@ export default function BakhoorPage() {
   return (
     <div style={{ backgroundColor: '#FAF8F5', minHeight: '100vh' }}>
       <div
-        className="relative py-20 px-4 text-center overflow-hidden"
-        style={{ backgroundColor: '#0D0A08' }}
+        className="relative py-8 md:py-10 px-4 text-center overflow-hidden"
+        style={{ backgroundColor: '#1a0a2e' }}
       >
         <div
           className="absolute inset-0 opacity-[0.03]"
@@ -46,33 +46,33 @@ export default function BakhoorPage() {
           className="relative"
         >
           <motion.div
-            animate={{ y: [0, -6, 0] }}
+            animate={{ y: [0, -4, 0] }}
             transition={{ repeat: Infinity, duration: 3, ease: 'easeInOut' }}
-            className="text-4xl mb-4"
+            className="text-2xl mb-2"
           >
             🪔
           </motion.div>
           <p
-            className="text-xs tracking-[0.35em] uppercase mb-3"
+            className="text-[10px] tracking-[0.35em] uppercase mb-1.5"
             style={{ color: 'rgba(201,168,76,0.7)' }}
           >
             Arabian Tradition
           </p>
           <h1
-            className="text-4xl md:text-5xl font-light text-white mb-3"
+            className="text-2xl md:text-4xl font-light text-white mb-2"
             style={{ fontFamily: 'var(--font-heading)' }}
           >
             <em style={{ color: '#C9A84C' }}>Bakhoor</em>
           </h1>
-          <p className="text-sm max-w-lg mx-auto" style={{ color: 'rgba(255,255,255,0.5)' }}>
+          <p className="text-xs md:text-sm max-w-md mx-auto line-clamp-2" style={{ color: 'rgba(255,255,255,0.5)' }}>
             The ancient art of Arabian home fragrance — where sacred smoke carries blessings and fills every
             corner with warmth.
           </p>
         </motion.div>
       </div>
 
-      <div style={{ backgroundColor: 'white', borderBottom: '1px solid #E8E3DC' }}>
-        <div className="max-w-5xl mx-auto px-4 py-12 grid grid-cols-1 md:grid-cols-3 gap-8">
+      <div className="hidden md:block" style={{ backgroundColor: 'white', borderBottom: '1px solid #E8E3DC' }}>
+        <div className="max-w-5xl mx-auto px-4 py-4 md:py-5 grid grid-cols-3 gap-3 md:gap-6">
           {aboutPoints.map((pt, i) => (
             <motion.div
               key={pt.title}
@@ -82,11 +82,11 @@ export default function BakhoorPage() {
               transition={{ delay: i * 0.1, duration: 0.4 }}
               className="text-center"
             >
-              <div className="text-3xl mb-3">{pt.icon}</div>
-              <h3 className="text-base font-semibold mb-2" style={{ color: '#1A0A2E' }}>
+              <div className="text-lg md:text-xl mb-1">{pt.icon}</div>
+              <h3 className="text-xs md:text-sm font-semibold mb-0.5" style={{ color: '#1A0A2E' }}>
                 {pt.title}
               </h3>
-              <p className="text-sm leading-relaxed" style={{ color: '#6B6B6B' }}>
+              <p className="text-[10px] md:text-xs leading-snug line-clamp-3" style={{ color: '#6B6B6B' }}>
                 {pt.desc}
               </p>
             </motion.div>
@@ -100,6 +100,7 @@ export default function BakhoorPage() {
         hideFilterKeys={['categories']}
         hideChipKeys={['categorySlug']}
         hero={null}
+        contentClassName="py-4 md:py-6"
       />
 
       <div style={{ backgroundColor: '#1A0A2E' }}>

@@ -10,15 +10,7 @@ export type ShopNavItem =
 export const SHOP_NAV: ShopNavItem[] = [
   { type: 'link', key: 'navCollections', href: '/collections' },
   { type: 'link', key: 'navBrandInspiration', href: '/brand-inspiration' },
-  {
-    type: 'dropdown',
-    key: 'navGiftSets',
-    href: '/gift-sets',
-    children: [
-      { key: 'navGiftSets', href: '/gift-sets' },
-      { key: 'navGiftCards', href: '/gift-cards' },
-    ],
-  },
+  { type: 'link', key: 'navGiftSets', href: '/gift-sets' },
   { type: 'link', key: 'navBundles', href: '/bundles' },
   { type: 'link', key: 'navCustomPerfume', href: '/custom-perfume' },
   { type: 'link', key: 'navBakhoor', href: '/bakhoor' },
@@ -28,6 +20,7 @@ export const SHOP_NAV: ShopNavItem[] = [
     href: '#',
     children: [
       { key: 'navSale', href: '/products?sale=true' },
+      { key: 'navGiftCards', href: '/gift-cards' },
       { key: 'navAbout', href: '/about' },
       { key: 'navContact', href: '/contact' },
       { key: 'navFAQs', href: '/faqs' },

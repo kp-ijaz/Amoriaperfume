@@ -429,9 +429,10 @@ body {
   max-width: 100vw;
 }
 
-/* ─── MOBILE: Scroll to top button above bottom tab bar ─────── */
+/* ─── MOBILE: Scroll to top above floating FAB stack + bottom tab bar ── */
 .scroll-to-top-btn {
-  bottom: calc(80px + env(safe-area-inset-bottom));
+  /* bottom-24 (96px) + 2×FAB (56px) + gap (12px) + spacing (16px) */
+  bottom: calc(236px + env(safe-area-inset-bottom));
 }
 @media (min-width: 768px) {
   .scroll-to-top-btn {

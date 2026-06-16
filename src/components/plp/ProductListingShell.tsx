@@ -23,6 +23,7 @@ export type ProductListingShellProps = {
   onRemoveFilter?: (key: keyof ProductFilters, value?: string) => void;
   onClearAll?: () => void;
   children?: ReactNode;
+  contentClassName?: string;
 };
 
 export function ProductListingShell({
@@ -35,6 +36,7 @@ export function ProductListingShell({
   onRemoveFilter: onRemoveFilterProp,
   onClearAll: onClearAllProp,
   children,
+  contentClassName = 'py-8',
 }: ProductListingShellProps) {
   const [view, setView] = useState<'grid' | 'list'>('grid');
 
@@ -80,7 +82,7 @@ export function ProductListingShell({
     <div>
       {hero}
 
-      <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className={`max-w-7xl mx-auto px-4 ${contentClassName}`}>
         <div className="flex items-center justify-between gap-4 mb-4 flex-wrap">
           <div className="flex items-center gap-3">
             <div className="lg:hidden">
