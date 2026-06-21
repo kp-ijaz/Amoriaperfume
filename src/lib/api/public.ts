@@ -28,6 +28,8 @@ export interface PublicCoverImage {
   mediaType?: 'image' | 'video';
   order?: number;
   enabled?: boolean;
+  showMobile?: boolean;
+  showDesktop?: boolean;
   fixedKind?: 'best_seller' | 'online_deals';
   collection?: {
     _id: string;

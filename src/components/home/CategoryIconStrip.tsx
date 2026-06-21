@@ -6,17 +6,21 @@ import { motion } from 'framer-motion';
 import { useMemo } from 'react';
 import { useCategories } from '@/lib/hooks/useApiCategories';
 import { usePublicCoverImages } from '@/lib/hooks/usePublicCms';
+import { useIsDesktop } from '@/lib/hooks/useIsDesktop';
+import { filterCoverImagesForDevice } from '@/lib/utils/coverImageDevice';
 import { CategoryStripSkeleton } from '@/components/loading';
 
 export function CategoryIconStrip() {
   const { data: apiCategories = [], isLoading: categoriesLoading } = useCategories();
   const { data: coverCats = [], isLoading: coversLoading } = usePublicCoverImages('category_cover');
+  const isDesktop = useIsDesktop();
 
   const isLoading = categoriesLoading || coversLoading;
 
   const categories = useMemo(() => {
-    if (coverCats.length > 0) {
-      return coverCats.map((c) => {
+    const visibleCovers = filterCoverImagesForDevice(coverCats, isDesktop);
+    if (visibleCovers.length > 0) {
+      return visibleCovers.map((c) => {
         const col = c.collection;
         const collectionHref = col?.slug
           ? `/products?collection=${encodeURIComponent(col.slug)}`
@@ -45,7 +49,7 @@ export function CategoryIconStrip() {
         }));
     }
     return [];
-  }, [coverCats, apiCategories]);
+  }, [coverCats, apiCategories, isDesktop]);
 
   if (isLoading) return <CategoryStripSkeleton />;
 

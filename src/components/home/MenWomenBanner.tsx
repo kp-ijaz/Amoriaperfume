@@ -3,9 +3,12 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
+import { useMemo } from 'react';
 import { formatCurrency } from '@/lib/utils/formatCurrency';
 import { useProductsByLimit } from '@/lib/hooks/useApiProducts';
 import { usePublicCoverImages } from '@/lib/hooks/usePublicCms';
+import { useIsDesktop } from '@/lib/hooks/useIsDesktop';
+import { filterCoverImagesForDevice } from '@/lib/utils/coverImageDevice';
 import { Product } from '@/types/product';
 import { GenderPanelSkeleton } from '@/components/loading';
 import { OutlineSkeleton } from '@/components/loading/OutlineSkeleton';
@@ -229,8 +232,13 @@ export function MenWomenBanner() {
     gender: 'women',
   });
   const { data: panels = [], isLoading: panelsLoading } = usePublicCoverImages('men_women_banner');
-  const menPanel = panels[0];
-  const womenPanel = panels[1];
+  const isDesktop = useIsDesktop();
+  const visiblePanels = useMemo(
+    () => filterCoverImagesForDevice(panels, isDesktop),
+    [panels, isDesktop]
+  );
+  const menPanel = visiblePanels[0];
+  const womenPanel = visiblePanels[1];
 
   const isLoading = menLoading || womenLoading || panelsLoading;
 
