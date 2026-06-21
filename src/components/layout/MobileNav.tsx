@@ -1,11 +1,12 @@
 'use client';
 
+import { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@/lib/store';
 import { closeMobileNav } from '@/lib/store/uiSlice';
 import { useBodyLock } from '@/lib/hooks/useBodyLock';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { X, Search, ChevronRight, Package, Truck, RotateCcw } from 'lucide-react';
 import Image from 'next/image';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -20,9 +21,19 @@ import type { TranslationKey } from '@/lib/i18n/translations';
 export function MobileNav() {
   const dispatch = useDispatch();
   const pathname = usePathname();
+  const router = useRouter();
   const isOpen = useSelector((state: RootState) => state.ui.mobileNavOpen);
   const { t } = useLanguage();
+  const [searchQuery, setSearchQuery] = useState('');
   useBodyLock(isOpen);
+
+  function submitSearch() {
+    const q = searchQuery.trim();
+    if (!q) return;
+    dispatch(closeMobileNav());
+    setSearchQuery('');
+    router.push(`/products?q=${encodeURIComponent(q)}`);
+  }
 
   return (
     <AnimatePresence>
@@ -69,10 +80,27 @@ export function MobileNav() {
 
             <div className="p-4 border-b" style={{ borderColor: 'rgba(255,255,255,0.1)' }}>
               <div className="relative">
-                <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/50" />
+                <button
+                  type="button"
+                  onClick={submitSearch}
+                  aria-label="Search"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-white/50 hover:text-white transition-colors"
+                >
+                  <Search size={16} />
+                </button>
                 <input
                   type="search"
+                  inputMode="search"
+                  enterKeyHint="search"
                   placeholder={t('mobileSearchPlaceholder')}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      submitSearch();
+                    }
+                  }}
                   className="w-full pl-9 pr-4 py-2.5 text-sm rounded-none outline-none text-white placeholder:text-white/50"
                   style={{ backgroundColor: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)' }}
                 />

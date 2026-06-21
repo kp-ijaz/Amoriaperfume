@@ -1,5 +1,5 @@
 import { Product } from '@/types/product';
-import { ProductCard } from './ProductCard';
+import { ProductGrid } from './ProductGrid';
 
 interface RelatedProductsProps {
   products: Product[];
@@ -16,11 +16,8 @@ export function RelatedProducts({ products }: RelatedProductsProps) {
       >
         Related Products
       </h2>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
-        {products.map((product) => (
-          <ProductCard key={product.id} product={product} />
-        ))}
-      </div>
+      {/* Same grid the home page uses — identical card sizing, columns and gaps */}
+      <ProductGrid products={products} columns={4} />
     </section>
   );
 }

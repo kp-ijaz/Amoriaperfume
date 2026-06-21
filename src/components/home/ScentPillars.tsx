@@ -95,8 +95,7 @@ export function BrandInspirations() {
           >
             <Link
               href="/products?brandInspiration=true"
-              className="inline-flex items-center justify-center px-10 py-3 text-[11px] font-bold tracking-[0.25em] uppercase transition-all duration-300 hover:bg-[#1A0A2E] hover:text-white hover:border-[#1A0A2E]"
-              style={{ border: '1px solid #1A0A2E', color: '#1A0A2E' }}
+              className="inline-flex items-center justify-center px-10 py-3 text-[11px] font-bold tracking-[0.25em] uppercase transition-all duration-300 border border-[#1A0A2E] text-[#1A0A2E] hover:bg-[#1A0A2E] hover:text-white hover:border-[#1A0A2E]"
             >
               View All
             </Link>

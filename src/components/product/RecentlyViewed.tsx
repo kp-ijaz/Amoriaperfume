@@ -3,7 +3,7 @@
 import { useSelector } from 'react-redux';
 import { RootState } from '@/lib/store';
 import { useProductsByIds } from '@/lib/hooks/useApiProducts';
-import { ProductCard } from './ProductCard';
+import { ProductGrid } from './ProductGrid';
 
 export function RecentlyViewed() {
   const recentIds = useSelector((state: RootState) => state.ui.recentlyViewed);
@@ -19,11 +19,8 @@ export function RecentlyViewed() {
       >
         Recently Viewed
       </h2>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
-        {recentProducts.map((product) => (
-          <ProductCard key={product.id} product={product} />
-        ))}
-      </div>
+      {/* Same grid the home page uses — identical card sizing, columns and gaps */}
+      <ProductGrid products={recentProducts} columns={4} />
     </section>
   );
 }

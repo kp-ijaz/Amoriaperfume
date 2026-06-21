@@ -443,24 +443,24 @@ export function Header() {
               style={{ transform: scrolled ? 'scale(0.92)' : 'scale(1)', transformOrigin: 'left center' }}
             >
               <Image
-                src="/brand-icon.png"
+                src="/amoria_logo.png"
                 alt="Amoria"
                 width={40}
                 height={40}
                 className="transition-all duration-300 object-contain"
-                style={{ width: scrolled ? 32 : 40, height: scrolled ? 32 : 40 }}
+                style={{ width: scrolled ? 28 : 34, height: scrolled ? 28 : 34 }}
                 priority
               />
               <span
                 className="text-2xl font-bold tracking-[0.18em]"
-                style={{ fontFamily: 'var(--font-heading)', color: 'var(--color-amoria-primary)' }}
+                style={{ fontFamily: 'var(--font-heading)', color: '#000000' }}
               >
                 AMORIA
               </span>
             </Link>
 
             {/* Center nav — desktop only */}
-            <nav className="hidden md:flex items-center justify-center flex-1 gap-0.5 px-4">
+            <nav className="hidden md:flex items-center justify-center flex-nowrap whitespace-nowrap flex-1 gap-0.5 px-4">
               {SHOP_NAV.map((link) => {
                 if (link.type === 'dropdown') {
                   return (
@@ -520,25 +520,40 @@ export function Header() {
             <div className="flex items-center gap-0.5 ml-auto md:ml-0">
 
               {/* Search — expandable on desktop */}
-              <div ref={searchRef} className="relative">
+              <div ref={searchRef} className="relative flex items-center">
+                {/* Desktop toggle — always stays in its slot so opening the field
+                    never reflows the header or wraps the nav onto two lines */}
+                <button
+                  onClick={() => { if (searchOpen) { setSearchOpen(false); setSearchQuery(''); } else { openSearch(); } }}
+                  className="hidden md:flex p-2.5 hover:opacity-70 transition-opacity"
+                  aria-label="Search"
+                  aria-expanded={searchOpen}
+                >
+                  <Search size={20} style={{ color: 'var(--color-amoria-primary)' }} />
+                </button>
+
+                {/* Expanded field — absolute overlay (does not consume layout width),
+                    so the nav keeps its exact closed-state alignment */}
                 <AnimatePresence>
-                  {searchOpen ? (
+                  {searchOpen && (
                     <motion.div
                       initial={{ width: 0, opacity: 0 }}
-                      animate={{ width: 220, opacity: 1 }}
+                      animate={{ width: 280, opacity: 1 }}
                       exit={{ width: 0, opacity: 0 }}
                       transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-                      className="hidden md:flex items-center border rounded-none overflow-hidden"
-                      style={{ borderColor: 'var(--color-amoria-accent)' }}
+                      className="hidden md:flex items-center h-10 border rounded-sm overflow-hidden absolute right-0 top-1/2 -translate-y-1/2 z-50 shadow-md"
+                      style={{ borderColor: 'var(--color-amoria-accent)', backgroundColor: '#FFFFFF' }}
                     >
-                      <Search
-                        size={14}
-                        className="ml-2.5 flex-shrink-0"
-                        style={{ color: 'var(--color-amoria-text-muted)' }}
-                      />
+                      {/* Left column — search icon */}
+                      <span className="flex items-center justify-center w-9 h-full flex-shrink-0">
+                        <Search size={15} style={{ color: 'var(--color-amoria-text-muted)' }} />
+                      </span>
+
+                      {/* Center column — input */}
                       <input
                         ref={searchInputRef}
-                        type="search"
+                        type="text"
+                        enterKeyHint="search"
                         placeholder={t('searchPlaceholder')}
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
@@ -548,31 +563,28 @@ export function Header() {
                             setSearchQuery('');
                           }
                         }}
-                        className="flex-1 pl-2 pr-2 py-1.5 text-xs outline-none bg-transparent"
+                        className="flex-1 min-w-0 h-full px-1 text-[13px] outline-none bg-transparent"
                         style={{ color: 'var(--color-amoria-text)' }}
                       />
+
+                      {/* Right column — close button (divided) */}
                       <button
                         onClick={() => { setSearchOpen(false); setSearchQuery(''); }}
-                        className="p-1.5 hover:opacity-60 transition-opacity"
+                        className="flex items-center justify-center w-9 h-full flex-shrink-0 border-l hover:bg-gray-50 transition-colors"
+                        style={{ borderColor: 'var(--color-amoria-border)' }}
+                        aria-label="Close search"
                       >
-                        <X size={12} style={{ color: 'var(--color-amoria-text-muted)' }} />
+                        <X size={14} style={{ color: 'var(--color-amoria-text-muted)' }} />
                       </button>
                     </motion.div>
-                  ) : (
-                    <button
-                      onClick={openSearch}
-                      className="hidden md:flex p-2.5 hover:opacity-70 transition-opacity"
-                      aria-label="Search"
-                    >
-                      <Search size={20} style={{ color: 'var(--color-amoria-primary)' }} />
-                    </button>
                   )}
                 </AnimatePresence>
 
-                {/* Mobile search icon (doesn't expand) */}
+                {/* Mobile search icon — opens the mobile nav drawer (which holds the search field) */}
                 <button
                   className="md:hidden p-2.5 hover:opacity-70 transition-opacity"
                   aria-label="Search"
+                  onClick={() => dispatch(openMobileNav())}
                 >
                   <Search size={20} style={{ color: 'var(--color-amoria-primary)' }} />
                 </button>

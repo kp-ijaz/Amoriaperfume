@@ -53,107 +53,82 @@ export function CategoryIconStrip() {
 
   return (
     <section style={{ backgroundColor: '#FFFFFF', borderBottom: '1px solid #E8E3DC' }}>
-      <div
-        style={{
-          maxWidth: 1280,
-          margin: '0 auto',
-          padding: '28px 16px 24px',
-        }}
-      >
+      <div className="max-w-[1280px] mx-auto px-4 pt-7 pb-6">
+        {/* Scroll port — snaps on touch, hides scrollbar */}
         <div
+          className="category-strip overflow-x-auto"
           style={{
-            display: 'flex',
-            alignItems: 'flex-start',
-            gap: 3,
-            overflowX: 'auto',
             scrollbarWidth: 'none',
             msOverflowStyle: 'none',
             WebkitOverflowScrolling: 'touch',
             scrollSnapType: 'x mandatory',
-            justifyContent: 'center',
           }}
-          className="category-strip"
         >
-          {categories.map((cat, i) => (
-            <motion.div
-              key={cat.id}
-              initial={{ opacity: 0, y: 14 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.42, delay: i * 0.055, ease: [0.22, 1, 0.36, 1] }}
-              style={{ scrollSnapAlign: 'start', flexShrink: 0 }}
-            >
-              <Link
-                href={cat.href}
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: 10,
-                  textDecoration: 'none',
-                  padding: '0 14px',
-                  minWidth: 110,
-                }}
-                className="category-icon-link"
+          {/* w-max + mx-auto = centered when it fits, scrolls from the start
+              (no clipped half-circles) when it overflows */}
+          <div className="flex items-start gap-0.5 sm:gap-1 w-max mx-auto">
+            {categories.map((cat, i) => (
+              <motion.div
+                key={cat.id}
+                initial={{ opacity: 0, y: 14 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.42, delay: i * 0.055, ease: [0.22, 1, 0.36, 1] }}
+                className="shrink-0"
+                style={{ scrollSnapAlign: 'start' }}
               >
-                <div className="relative inline-block shrink-0">
-                  <div
-                    className="category-circle relative size-[110px] rounded-full overflow-hidden"
-                    style={{
-                      backgroundColor: '#F5F2EE',
-                      border: '2px solid #E8E3DC',
-                      transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
-                    }}
-                  >
-                    <Image
-                      src={cat.image}
-                      alt={cat.name}
-                      fill
-                      className="object-cover"
-                      sizes="110px"
-                      priority={i === 0}
-                    />
-                  </div>
-
-                  {cat.badge && (
-                    <span
+                <Link
+                  href={cat.href}
+                  className="category-icon-link flex flex-col items-center gap-2.5 no-underline px-2 sm:px-2.5 md:px-3 min-w-[82px] sm:min-w-[102px] md:min-w-[108px]"
+                >
+                  <div className="relative inline-block shrink-0">
+                    <div
+                      className="category-circle relative size-[72px] sm:size-[92px] md:size-[110px] rounded-full overflow-hidden"
                       style={{
-                        position: 'absolute',
-                        top: 2,
-                        right: 2,
-                        backgroundColor: cat.badge === 'SALE' ? '#DC2626' : '#C9A84C',
-                        color: '#fff',
-                        fontSize: 7,
-                        fontWeight: 700,
-                        letterSpacing: '0.08em',
-                        padding: '2px 5px',
-                        borderRadius: 3,
-                        lineHeight: 1,
-                        zIndex: 10,
+                        backgroundColor: '#F5F2EE',
+                        border: '2px solid #E8E3DC',
+                        transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
                       }}
                     >
-                      {cat.badge}
-                    </span>
-                  )}
-                </div>
+                      <Image
+                        src={cat.image}
+                        alt={cat.name}
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 640px) 72px, (max-width: 768px) 92px, 110px"
+                        priority={i === 0}
+                      />
+                    </div>
 
-                <span
-                  style={{
-                    fontSize: 12,
-                    fontWeight: 500,
-                    color: '#3A3A3A',
-                    textAlign: 'center',
-                    lineHeight: 1.3,
-                    maxWidth: 110,
-                    display: 'block',
-                    letterSpacing: '0.01em',
-                  }}
-                >
-                  {cat.name}
-                </span>
-              </Link>
-            </motion.div>
-          ))}
+                    {cat.badge && (
+                      <span
+                        style={{
+                          position: 'absolute',
+                          top: 2,
+                          right: 2,
+                          backgroundColor: cat.badge === 'SALE' ? '#DC2626' : '#C9A84C',
+                          color: '#fff',
+                          fontSize: 7,
+                          fontWeight: 700,
+                          letterSpacing: '0.08em',
+                          padding: '2px 5px',
+                          borderRadius: 3,
+                          lineHeight: 1,
+                          zIndex: 10,
+                        }}
+                      >
+                        {cat.badge}
+                      </span>
+                    )}
+                  </div>
+
+                  <span className="text-[11px] sm:text-xs font-medium text-[#3A3A3A] text-center leading-tight tracking-[0.01em] max-w-[80px] sm:max-w-[100px] md:max-w-[110px]">
+                    {cat.name}
+                  </span>
+                </Link>
+              </motion.div>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -166,12 +141,6 @@ export function CategoryIconStrip() {
         }
         .category-icon-link:hover span:last-child {
           color: #C9A84C;
-        }
-
-        @media (max-width: 767px) {
-          .category-strip {
-            justify-content: flex-start !important;
-          }
         }
       `}</style>
     </section>

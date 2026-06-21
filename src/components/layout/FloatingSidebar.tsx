@@ -4,16 +4,32 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles } from 'lucide-react';
 import { RiWhatsappFill } from 'react-icons/ri';
 import { useSelector, useDispatch } from 'react-redux';
+import { usePathname } from 'next/navigation';
 import { RootState } from '@/lib/store';
 import { openFinder } from '@/lib/store/uiSlice';
 
+// Ordering / checkout flows where the floating buttons would overlap the
+// price, order summary and primary CTA — hide them here.
+const HIDDEN_ON_PREFIXES = ['/cart', '/checkout', '/order-confirmation'];
+
 export function FloatingSidebar() {
   const dispatch = useDispatch();
+  const pathname = usePathname();
   const finderOpen = useSelector((s: RootState) => s.ui.finderOpen);
+  const cartDrawerOpen = useSelector((s: RootState) => s.ui.cartDrawerOpen);
+  const mobileNavOpen = useSelector((s: RootState) => s.ui.mobileNavOpen);
+
+  const hiddenForRoute = HIDDEN_ON_PREFIXES.some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
+  );
+
+  // Also hide whenever an overlay (cart drawer / mobile nav) is open — the
+  // floating buttons would otherwise sit on top of the drawer's price & CTA.
+  const hidden = finderOpen || cartDrawerOpen || mobileNavOpen || hiddenForRoute;
 
   return (
     <AnimatePresence>
-      {!finderOpen && (
+      {!hidden && (
         <motion.div
           className="fixed bottom-24 right-4 z-[140] flex flex-col gap-3 items-center"
           initial={{ opacity: 0, y: 20 }}
