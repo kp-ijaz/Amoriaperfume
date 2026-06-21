@@ -61,18 +61,8 @@ export function CategoryIconStrip() {
         }}
       >
         <div
-          style={{
-            display: 'flex',
-            alignItems: 'flex-start',
-            gap: 3,
-            overflowX: 'auto',
-            scrollbarWidth: 'none',
-            msOverflowStyle: 'none',
-            WebkitOverflowScrolling: 'touch',
-            scrollSnapType: 'x mandatory',
-            justifyContent: 'center',
-          }}
-          className="category-strip"
+          className="category-strip flex items-start justify-start gap-2 overflow-x-auto snap-x snap-mandatory [scrollbar-width:none] [-ms-overflow-style:none] md:flex-wrap md:justify-center md:gap-x-2 md:gap-y-4 md:overflow-visible md:snap-none"
+          style={{ WebkitOverflowScrolling: 'touch' }}
         >
           {categories.map((cat, i) => (
             <motion.div
@@ -81,24 +71,15 @@ export function CategoryIconStrip() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.42, delay: i * 0.055, ease: [0.22, 1, 0.36, 1] }}
-              style={{ scrollSnapAlign: 'start', flexShrink: 0 }}
+              className="shrink-0 snap-start md:w-[calc((100%-5*0.5rem)/6)] md:max-w-[calc((100%-5*0.5rem)/6)] md:flex-[0_0_calc((100%-5*0.5rem)/6)] md:snap-none"
             >
               <Link
                 href={cat.href}
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: 10,
-                  textDecoration: 'none',
-                  padding: '0 14px',
-                  minWidth: 110,
-                }}
-                className="category-icon-link"
+                className="category-icon-link flex min-w-[120px] flex-col items-center gap-2.5 px-3 no-underline md:min-w-0 md:w-full md:px-1"
               >
                 <div className="relative inline-block shrink-0">
                   <div
-                    className="category-circle relative size-[110px] rounded-full overflow-hidden"
+                    className="category-circle relative size-[120px] rounded-full overflow-hidden"
                     style={{
                       backgroundColor: '#F5F2EE',
                       border: '2px solid #E8E3DC',
@@ -110,7 +91,7 @@ export function CategoryIconStrip() {
                       alt={cat.name}
                       fill
                       className="object-cover"
-                      sizes="110px"
+                      sizes="120px"
                       priority={i === 0}
                     />
                   </div>
@@ -144,7 +125,7 @@ export function CategoryIconStrip() {
                     color: '#3A3A3A',
                     textAlign: 'center',
                     lineHeight: 1.3,
-                    maxWidth: 110,
+                    maxWidth: 120,
                     display: 'block',
                     letterSpacing: '0.01em',
                   }}
@@ -166,12 +147,6 @@ export function CategoryIconStrip() {
         }
         .category-icon-link:hover span:last-child {
           color: #C9A84C;
-        }
-
-        @media (max-width: 767px) {
-          .category-strip {
-            justify-content: flex-start !important;
-          }
         }
       `}</style>
     </section>
