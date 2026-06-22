@@ -14,3 +14,13 @@ export const heroCarouselAspectClass =
 
 /** Full-width stacked side offers (1920×420 export) */
 export const heroSidePanelAspectClass = 'aspect-[1920/420]';
+
+export const PROMO_BANNER_SIZE = {
+  mobile: { width: 750, height: 313 },
+  desktop: { width: 1400, height: 500 },
+} as const;
+
+export const promoBannerMobileAspectClass = 'aspect-[750/313]';
+export const promoBannerDesktopAspectClass = 'md:aspect-[28/10]';
+export const promoBannerAspectClass =
+  `${promoBannerMobileAspectClass} ${promoBannerDesktopAspectClass}`;

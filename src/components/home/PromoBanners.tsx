@@ -7,6 +7,7 @@ import { useMemo } from 'react';
 import { usePublicCoverImages } from '@/lib/hooks/usePublicCms';
 import { useIsDesktop } from '@/lib/hooks/useIsDesktop';
 import { filterCoverImagesForDevice } from '@/lib/utils/coverImageDevice';
+import { promoBannerAspectClass } from '@/lib/constants/heroBannerSizes';
 import { PromoBannerSkeleton } from '@/components/loading';
 
 function PromoBannerCard({
@@ -19,7 +20,10 @@ function PromoBannerCard({
   href: string;
 }) {
   const content = (
-    <div className="relative h-full w-full min-h-0 overflow-hidden">
+    <div
+      className="relative h-full w-full min-h-0 overflow-hidden"
+      style={{ backgroundColor: 'var(--color-amoria-bg)' }}
+    >
       <Image
         src={image}
         alt={alt}
@@ -31,8 +35,7 @@ function PromoBannerCard({
     </div>
   );
 
-  const className =
-    'group relative block w-full min-h-0 overflow-hidden aspect-[12/5] md:aspect-[28/10]';
+  const className = `group relative block w-full min-h-0 overflow-hidden ${promoBannerAspectClass}`;
 
   if (href) {
     return (
@@ -75,7 +78,7 @@ export function PromoBanners() {
       style={{ backgroundColor: 'var(--color-amoria-bg)' }}
     >
       <motion.div
-        className="mx-auto grid w-full max-w-7xl min-h-0 grid-cols-1 gap-3 px-4 md:grid-cols-2 md:gap-4 md:px-6"
+        className="mx-auto grid w-full min-h-0 grid-cols-1 gap-3 px-4 md:grid-cols-2 md:gap-4 md:px-4 lg:px-6"
         initial={{ opacity: 0, y: 16 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
