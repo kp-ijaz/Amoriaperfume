@@ -8,7 +8,7 @@ import Autoplay from 'embla-carousel-autoplay';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useHeroCoverImages } from '@/lib/hooks/usePublicCms';
 import { useIsDesktop } from '@/lib/hooks/useIsDesktop';
-import { filterCoverImagesForDevice } from '@/lib/utils/coverImageDevice';
+import { filterCoverImagesForDevice, resolveCoverImageUrl } from '@/lib/utils/coverImageDevice';
 import {
   heroCarouselAspectClass,
   heroSidePanelAspectClass,
@@ -102,14 +102,14 @@ export function CompactHeroBanner() {
 
   const banners = sliderBanners.map((b) => ({
     id: b._id,
-    image: b.imageUrl,
+    image: resolveCoverImageUrl(b, isDesktop),
     href: b.redirectUrl?.trim() || '',
     alt: b.title?.trim() || 'Promotional banner',
   }));
 
   const sidePanels = sidePanelBanners.map((b) => ({
     id: b._id,
-    image: b.imageUrl,
+    image: resolveCoverImageUrl(b, isDesktop),
     href: b.redirectUrl?.trim() || '',
     alt: b.title?.trim() || 'Promotional offer',
   }));

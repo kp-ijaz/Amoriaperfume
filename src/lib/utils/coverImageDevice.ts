@@ -21,3 +21,11 @@ export function filterCoverImagesForDevice<T extends CoverImageDeviceFlags>(
 ): T[] {
   return items.filter((item) => coverImageVisibleOnDevice(item, isDesktop));
 }
+
+export function resolveCoverImageUrl(
+  cover: { imageUrl: string; mobileImageUrl?: string },
+  isDesktop: boolean
+): string {
+  if (isDesktop) return cover.imageUrl;
+  return cover.mobileImageUrl?.trim() || cover.imageUrl;
+}

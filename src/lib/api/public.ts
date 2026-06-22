@@ -20,6 +20,7 @@ export interface PublicCoverImage {
   _id: string;
   banner_type: string;
   imageUrl: string;
+  mobileImageUrl?: string;
   thumbnailUrl?: string;
   title?: string;
   subtitle?: string;

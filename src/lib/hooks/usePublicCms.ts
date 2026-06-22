@@ -68,6 +68,7 @@ export function usePublicCoverImages(bannerType?: string) {
         .map((b) => ({
           ...b,
           imageUrl: resolveCmsMediaUrl(b.imageUrl),
+          mobileImageUrl: b.mobileImageUrl ? resolveCmsMediaUrl(b.mobileImageUrl) : b.mobileImageUrl,
           thumbnailUrl: b.thumbnailUrl ? resolveCmsMediaUrl(b.thumbnailUrl) : b.thumbnailUrl,
         }));
     },
@@ -91,6 +92,7 @@ export function useHeroCoverImages() {
         .map((b) => ({
           ...b,
           imageUrl: resolveCmsMediaUrl(b.imageUrl),
+          mobileImageUrl: b.mobileImageUrl ? resolveCmsMediaUrl(b.mobileImageUrl) : b.mobileImageUrl,
           thumbnailUrl: b.thumbnailUrl ? resolveCmsMediaUrl(b.thumbnailUrl) : b.thumbnailUrl,
         }));
       return {

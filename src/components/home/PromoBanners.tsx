@@ -6,7 +6,7 @@ import { motion } from 'framer-motion';
 import { useMemo } from 'react';
 import { usePublicCoverImages } from '@/lib/hooks/usePublicCms';
 import { useIsDesktop } from '@/lib/hooks/useIsDesktop';
-import { filterCoverImagesForDevice } from '@/lib/utils/coverImageDevice';
+import { filterCoverImagesForDevice, resolveCoverImageUrl } from '@/lib/utils/coverImageDevice';
 import { promoBannerAspectClass } from '@/lib/constants/heroBannerSizes';
 import { PromoBannerSkeleton } from '@/components/loading';
 
@@ -69,7 +69,7 @@ export function PromoBanners() {
     id: b._id,
     href: b.redirectUrl?.trim() || '',
     alt: b.title?.trim() || 'Promotional banner',
-    image: b.imageUrl,
+    image: resolveCoverImageUrl(b, isDesktop),
   }));
 
   return (
