@@ -1,6 +1,6 @@
 'use client';
 
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { usePathname } from 'next/navigation';
 
 interface PageTransitionProps {
@@ -9,16 +9,22 @@ interface PageTransitionProps {
 
 export function PageTransition({ children }: PageTransitionProps) {
   const pathname = usePathname();
+  const reduceMotion = useReducedMotion();
+  const isHome = pathname === '/';
+
+  if (reduceMotion) {
+    return <div>{children}</div>;
+  }
 
   return (
     <AnimatePresence mode="wait" initial={false}>
       <motion.div
         key={pathname}
-        initial={{ opacity: 0, y: 10 }}
+        initial={isHome ? false : { opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -6 }}
         transition={{
-          duration: 0.28,
+          duration: isHome ? 0.12 : 0.28,
           ease: [0.22, 1, 0.36, 1],
         }}
       >

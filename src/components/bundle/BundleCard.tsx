@@ -41,7 +41,6 @@ export function BundleCard({ bundle, index = 0 }: BundleCardProps) {
               alt={bundle.name}
               fill
               className="object-cover transition-transform duration-500 group-hover:scale-105"
-              unoptimized
             />
           ) : (
             <OutlineSkeleton className="absolute inset-0 rounded-none border-0" />

@@ -11,7 +11,6 @@ export default function LoginPage() {
           alt="Amoria Login"
           fill
           className="object-cover"
-          unoptimized
         />
         <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center">
           <span className="text-3xl font-bold tracking-[0.15em]" style={{ fontFamily: 'var(--font-heading)', color: 'var(--color-amoria-accent)' }}>

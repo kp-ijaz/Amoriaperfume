@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useParams } from 'next/navigation';
 import { getReturnDetail, RETURN_STATUS_LABELS, type ReturnRequest } from '@/lib/api/returns';
 import { useReturnAuthToken } from '@/lib/hooks/useReturns';
@@ -158,8 +159,9 @@ export default function ReturnDetailPage() {
           </h2>
           <div className="flex gap-3">
             {data.lineItem.image ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={data.lineItem.image} alt="" className="w-16 h-16 object-cover bg-gray-100" />
+              <div className="relative w-16 h-16 bg-gray-100 shrink-0">
+                <Image src={data.lineItem.image} alt={data.lineItem.productName} fill className="object-cover" sizes="64px" />
+              </div>
             ) : null}
             <div>
               <p className="font-medium" style={{ color: 'var(--color-amoria-text)' }}>
@@ -209,8 +211,9 @@ export default function ReturnDetailPage() {
                 {ev.mediaType === 'video' ? (
                   <video src={ev.url} controls className="w-full aspect-square object-cover" preload="metadata" />
                 ) : (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={ev.url} alt="" className="w-full aspect-square object-cover" />
+                  <div className="relative w-full aspect-square">
+                    <Image src={ev.url} alt={`Return evidence ${i + 1}`} fill className="object-cover" sizes="(max-width: 640px) 50vw, 33vw" />
+                  </div>
                 )}
               </div>
             ))}

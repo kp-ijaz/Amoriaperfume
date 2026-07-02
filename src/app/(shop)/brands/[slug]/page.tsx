@@ -1,53 +1,49 @@
-'use client';
-
-import { use, useMemo } from 'react';
+import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import Link from 'next/link';
-import { useBrandBySlug } from '@/lib/hooks/useApiBrands';
-import { ProductListingShell } from '@/components/plp/ProductListingShell';
+import { adaptBrand } from '@/lib/api/adapters';
+import { fetchBrandBySlug } from '@/lib/api/server';
+import { buildPageMetadata } from '@/lib/seo/metadata';
+import { buildBreadcrumbJsonLd } from '@/lib/seo/jsonld';
+import { JsonLd } from '@/components/seo/JsonLd';
+import { BrandPageClient } from './BrandPageClient';
 
-export default function BrandPage({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = use(params);
-  const { data: brand, isLoading: brandLoading } = useBrandBySlug(slug);
+type PageProps = { params: Promise<{ slug: string }> };
 
-  const lockedFilters = useMemo(() => ({ brandSlug: slug }), [slug]);
-  const initialFilters = useMemo(() => ({ brandSlug: slug }), [slug]);
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { slug } = await params;
+  const brand = await fetchBrandBySlug(slug);
+  if (!brand) {
+    return buildPageMetadata({ title: 'Brand Not Found', path: `/brands/${slug}`, noIndex: true });
+  }
+  const title = `${brand.name} Perfumes`;
+  const description =
+    brand.description?.trim() ||
+    `Shop ${brand.name} perfumes, oud, and attars online at Amoria UAE. Authentic fragrances with delivery across Dubai and the Emirates.`;
+  return buildPageMetadata({
+    title,
+    description,
+    path: `/brands/${slug}`,
+    image: brand.productCoverImage || brand.logo,
+    keywords: [brand.name, 'perfume', 'oud', 'UAE'],
+  });
+}
 
-  if (!brandLoading && !brand) return notFound();
+export default async function BrandPage({ params }: PageProps) {
+  const { slug } = await params;
+  const api = await fetchBrandBySlug(slug);
+  if (!api) notFound();
+
+  const initialBrand = adaptBrand(api);
+  const breadcrumbs = buildBreadcrumbJsonLd([
+    { name: 'Home', path: '/' },
+    { name: 'Brands', path: '/brands' },
+    { name: api.name, path: `/brands/${slug}` },
+  ]);
 
   return (
-    <ProductListingShell
-      initialFilters={initialFilters}
-      lockedFilters={lockedFilters}
-      hideFilterKeys={['brands']}
-      hideChipKeys={['brandSlug']}
-      hero={
-        <div className="py-10 px-4 text-center" style={{ backgroundColor: 'var(--color-amoria-primary)' }}>
-          <nav
-            className="flex items-center justify-center gap-2 text-xs mb-3"
-            style={{ color: 'rgba(255,255,255,0.5)' }}
-          >
-            <Link href="/" className="hover:opacity-80">
-              Home
-            </Link>
-            <span>/</span>
-            <Link href="/products" className="hover:opacity-80">
-              Brands
-            </Link>
-            <span>/</span>
-            <span className="text-white">{brand?.name ?? slug}</span>
-          </nav>
-          <h1
-            className="text-3xl md:text-5xl font-light text-white"
-            style={{ fontFamily: 'var(--font-heading)' }}
-          >
-            {brandLoading ? <span className="opacity-50">Loading…</span> : brand?.name}
-          </h1>
-          {brand?.description && (
-            <p className="text-white/60 text-sm mt-3 max-w-lg mx-auto">{brand.description}</p>
-          )}
-        </div>
-      }
-    />
+    <>
+      <JsonLd data={breadcrumbs} />
+      <BrandPageClient slug={slug} initialBrand={initialBrand} />
+    </>
   );
 }

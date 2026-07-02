@@ -83,7 +83,7 @@ export function ProductSection({
           >
             <p
               className="text-[10px] tracking-[0.38em] uppercase font-semibold mb-2"
-              style={{ color: isDark ? 'rgba(201,168,76,0.6)' : '#C9A84C' }}
+              style={{ color: isDark ? 'rgba(201,168,76,0.6)' : '#7A5E1A' }}
             >
               {subtitle ?? (isDark ? 'Most Loved' : 'Just Landed')}
             </p>

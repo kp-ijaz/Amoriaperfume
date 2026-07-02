@@ -53,7 +53,7 @@ export function BottomTabBar() {
               <Icon
                 size={20}
                 strokeWidth={active ? 2 : 1.5}
-                style={{ color: active ? '#C9A84C' : 'rgba(255,255,255,0.45)', transition: 'color 0.2s' }}
+                style={{ color: active ? '#C9A84C' : 'rgba(255,255,255,0.6)', transition: 'color 0.2s' }}
               />
               {badge > 0 && (
                 <span
@@ -67,7 +67,7 @@ export function BottomTabBar() {
 
             <span
               className="text-[9px] font-medium tracking-wide"
-              style={{ color: active ? '#C9A84C' : 'rgba(255,255,255,0.35)', transition: 'color 0.2s' }}
+              style={{ color: active ? '#C9A84C' : 'rgba(255,255,255,0.6)', transition: 'color 0.2s' }}
             >
               {tab.label}
             </span>

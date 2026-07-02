@@ -29,7 +29,6 @@ export function ProductImageGallery({ images, productName }: ProductImageGallery
               fill
               className="object-cover group-hover:scale-105 transition-transform duration-500"
               priority
-              unoptimized
             />
           )}
         </div>
@@ -49,7 +48,6 @@ export function ProductImageGallery({ images, productName }: ProductImageGallery
                 alt={`Thumbnail ${i + 1}`}
                 fill
                 className="object-cover"
-                unoptimized
               />
             </button>
           ))}
@@ -61,7 +59,7 @@ export function ProductImageGallery({ images, productName }: ProductImageGallery
         <div className="flex">
           {images.map((img, i) => (
             <div key={i} className="flex-[0_0_100%] relative aspect-square bg-gray-50">
-              <Image src={img.url} alt={img.alt} fill className="object-cover" unoptimized />
+              <Image src={img.url} alt={img.alt} fill className="object-cover" />
             </div>
           ))}
         </div>

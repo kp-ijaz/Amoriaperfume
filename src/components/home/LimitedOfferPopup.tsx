@@ -55,6 +55,7 @@ function TimeBox({ value, label }: { value: number; label: string }) {
 }
 
 export function LimitedOfferPopup() {
+  const [mounted, setMounted] = useState(false);
   const [visible, setVisible] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { config, products, isLoading } = useOfferPopup();
@@ -64,7 +65,14 @@ export function LimitedOfferPopup() {
   const { hours, minutes, seconds } = useCountdownTo(config?.endsAt);
 
   useEffect(() => {
-    if (!config || isLoading || deals.length === 0) return;
+    const idle = window.requestIdleCallback ?? ((cb: () => void) => setTimeout(cb, 1));
+    const cancel = window.cancelIdleCallback ?? clearTimeout;
+    const id = idle(() => setMounted(true));
+    return () => cancel(id);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted || !config || isLoading || deals.length === 0) return;
     if (hasSeenHomeOfferPopup(config)) return;
 
     const delay = config.displayDelayMs ?? 5000;
@@ -75,14 +83,23 @@ export function LimitedOfferPopup() {
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [config, isLoading, deals.length]);
+  }, [mounted, config, isLoading, deals.length]);
 
   const dismiss = () => {
     if (config) markHomeOfferPopupSeen(config);
     setVisible(false);
   };
 
-  if (!config || isLoading || deals.length === 0) return null;
+  useEffect(() => {
+    if (!visible) return;
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') dismiss();
+    }
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [visible, config]);
+
+  if (!mounted || !config || isLoading || deals.length === 0) return null;
 
   const discountPercent = config.discountPercent;
   const headline = config.headline?.trim() || 'Today Only';
@@ -104,6 +121,9 @@ export function LimitedOfferPopup() {
           />
 
           <motion.div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="limited-offer-title"
             className="fixed z-[201]"
             style={{
               top: '50%',
@@ -178,7 +198,7 @@ export function LimitedOfferPopup() {
               <div className="flex flex-col flex-1 min-h-0 min-w-0" style={{ backgroundColor: '#FAF6EE' }}>
                 <div className="flex-shrink-0 flex items-center justify-between px-5 py-3.5" style={{ borderBottom: '1px solid rgba(26,10,46,0.08)' }}>
                   <div>
-                    <p className="text-base font-semibold leading-none" style={{ fontFamily: 'var(--font-heading)', color: '#1A0A2E', letterSpacing: '0.06em' }}>
+                    <p id="limited-offer-title" className="text-base font-semibold leading-none" style={{ fontFamily: 'var(--font-heading)', color: '#1A0A2E', letterSpacing: '0.06em' }}>
                       {title}
                     </p>
                     <p className="text-[9px] tracking-[0.2em] uppercase mt-0.5" style={{ color: '#A89880' }}>
@@ -187,9 +207,9 @@ export function LimitedOfferPopup() {
                   </div>
                   <button
                     onClick={dismiss}
-                    className="w-7 h-7 flex items-center justify-center rounded-full transition-all hover:bg-black/8 hover:scale-110"
+                    className="min-h-12 min-w-12 flex items-center justify-center rounded-full transition-all hover:bg-black/8 hover:scale-110"
                     style={{ color: 'rgba(26,10,46,0.4)', border: '1px solid rgba(26,10,46,0.12)' }}
-                    aria-label="Close"
+                    aria-label="Close offer popup"
                   >
                     <X size={13} strokeWidth={2.5} />
                   </button>
@@ -218,7 +238,7 @@ export function LimitedOfferPopup() {
                       >
                         <div className="relative flex-shrink-0 w-[58px] h-[58px] overflow-hidden rounded-sm">
                           {imageUrl && (
-                            <Image src={imageUrl} alt={product.name} fill className="object-cover" unoptimized />
+                            <Image src={imageUrl} alt={product.name} fill className="object-cover" />
                           )}
                           {hasDiscount && discount > 0 && (
                             <div className="absolute top-0 right-0 text-[8px] font-black px-1 py-0.5" style={{ backgroundColor: '#C9A84C', color: '#1A0A2E' }}>

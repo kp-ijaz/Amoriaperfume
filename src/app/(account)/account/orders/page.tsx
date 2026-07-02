@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Package, ChevronDown, ChevronUp, RotateCcw } from 'lucide-react';
 import { useOrders, useSendGuestOrdersOtp, useVerifiedGuestOrders, useVerifyGuestOrdersOtp } from '@/lib/hooks/useApiOrders';
 import { ApiOrder } from '@/lib/api/types';
@@ -162,10 +163,9 @@ function OrderCard({
               return (
                 <div key={i} className="border-b pb-3 last:border-b-0 last:pb-0" style={{ borderColor: 'var(--color-amoria-border)' }}>
                   <div className="flex items-center gap-3 flex-wrap">
-                    <div className="w-12 h-12 bg-gray-100 shrink-0 overflow-hidden">
+                    <div className="relative w-12 h-12 bg-gray-100 shrink-0 overflow-hidden">
                       {item.image && (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={item.image} alt={item.productName} className="w-full h-full object-cover" />
+                        <Image src={item.image} alt={item.productName} fill className="object-cover" sizes="48px" />
                       )}
                     </div>
                     <div className="flex-1 min-w-[140px]">

@@ -77,7 +77,6 @@ export function FeaturedCollections() {
               alt={mainItem.title}
               fill
               className="object-cover group-hover:scale-105 transition-transform duration-[1200ms] ease-out"
-              unoptimized
             />
             {/* Gradient overlay */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
@@ -128,7 +127,6 @@ export function FeaturedCollections() {
                   alt={item.title}
                   fill
                   className="object-cover group-hover:scale-105 transition-transform duration-[1200ms] ease-out"
-                  unoptimized
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent" />
 

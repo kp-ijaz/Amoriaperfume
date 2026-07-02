@@ -3,6 +3,9 @@ import { Footer } from '@/components/layout/Footer';
 import { AccountSubNav } from '@/components/account/AccountSubNav';
 import { BottomTabBar } from '@/components/layout/BottomTabBar';
 import { FloatingSidebar } from '@/components/layout/FloatingSidebar';
+import { noIndexMetadata } from '@/lib/seo/metadata';
+
+export const metadata = noIndexMetadata;
 
 export default function AccountLayout({ children }: { children: React.ReactNode }) {
   return (

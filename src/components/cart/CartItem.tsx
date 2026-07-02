@@ -25,7 +25,7 @@ export function CartItem({ item }: CartItemProps) {
           style={{ width: '72px', aspectRatio: '3/4', backgroundColor: '#F5F2EE' }}
         >
           {item.image ? (
-            <Image src={item.image} alt={item.name} fill className="object-cover" unoptimized />
+            <Image src={item.image} alt={item.name} fill className="object-cover" />
           ) : null}
         </div>
 
@@ -109,7 +109,6 @@ export function CartItem({ item }: CartItemProps) {
             alt={item.product.name}
             fill
             className="object-cover"
-            unoptimized
           />
         )}
       </div>

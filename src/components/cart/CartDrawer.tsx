@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@/lib/store';
 import { closeCartDrawer } from '@/lib/store/uiSlice';
@@ -17,6 +18,15 @@ export function CartDrawer() {
   const isOpen = useSelector((state: RootState) => state.ui.cartDrawerOpen);
   useBodyLock(isOpen);
   const { items, subtotal, shippingCost, vat, total, taxInclusive, taxPercent } = useCart();
+
+  useEffect(() => {
+    if (!isOpen) return;
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') dispatch(closeCartDrawer());
+    }
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [isOpen, dispatch]);
 
   const totalCount = items.reduce((a, i) => a + i.quantity, 0);
 
@@ -41,6 +51,9 @@ export function CartDrawer() {
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'tween', duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="cart-drawer-title"
             className="fixed right-0 top-0 bottom-0 z-50 flex flex-col bg-white"
             style={{ width: 'min(420px, 100vw)' }}
           >
@@ -51,6 +64,7 @@ export function CartDrawer() {
             >
               <div className="flex items-center gap-3">
                 <h2
+                  id="cart-drawer-title"
                   className="text-xs font-semibold tracking-[0.2em] uppercase"
                   style={{ color: '#1A0A2E' }}
                 >
@@ -67,7 +81,7 @@ export function CartDrawer() {
               </div>
               <button
                 onClick={() => dispatch(closeCartDrawer())}
-                className="p-1.5 hover:opacity-50 transition-opacity"
+                className="min-h-12 min-w-12 flex items-center justify-center hover:opacity-50 transition-opacity"
                 aria-label="Close cart"
               >
                 <X size={18} style={{ color: '#1C1C1C' }} />

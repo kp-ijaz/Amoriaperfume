@@ -220,7 +220,7 @@ function OrderTimeline({
               <div key={i} className="flex items-center gap-3">
                 <div className="w-14 h-14 flex-shrink-0 overflow-hidden" style={{ border: '1px solid #E8E3DC' }}>
                   {item.image
-                    ? <Image src={item.image} alt={item.productName} width={56} height={56} className="object-cover w-full h-full" unoptimized />
+                    ? <Image src={item.image} alt={item.productName} width={56} height={56} className="object-cover w-full h-full" />
                     : <div className="w-full h-full bg-gray-50 flex items-center justify-center"><Package size={18} style={{ color: '#E8E3DC' }} /></div>
                   }
                 </div>

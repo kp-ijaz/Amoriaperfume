@@ -26,7 +26,6 @@ export function FragranceFinderCTA() {
       >
         <source src="https://videos.pexels.com/video-files/5688891/5688891-hd_1920_1080_30fps.mp4" type="video/mp4" />
         <source src="https://videos.pexels.com/video-files/3571264/3571264-hd_1280_720_25fps.mp4" type="video/mp4" />
-        <source src="https://www.w3schools.com/html/mov_bbb.mp4" type="video/mp4" />
       </video>
 
       {/* Mute / Unmute */}

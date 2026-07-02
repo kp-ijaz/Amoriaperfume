@@ -18,6 +18,7 @@ import { apiGetProducts } from '@/lib/api/client';
 import { adaptProducts } from '@/lib/api/adapters';
 import { ApiProduct } from '@/lib/api/types';
 import { Product } from '@/types/product';
+import type { HeroCoverBundle } from '@/lib/utils/heroCoverImages';
 import { OfferPopupConfig } from '@/lib/pricing/offerPopupPricing';
 import {
   formatPromoStripMessage,
@@ -78,7 +79,7 @@ export function usePublicCoverImages(bannerType?: string) {
 }
 
 /** Single request for hero carousel + side panels (avoids duplicate storefront resolution). */
-export function useHeroCoverImages() {
+export function useHeroCoverImages(initialData?: HeroCoverBundle) {
   return useQuery({
     queryKey: ['public', 'cover-images', 'hero-bundle'],
     queryFn: async () => {
@@ -86,20 +87,10 @@ export function useHeroCoverImages() {
       if (!res.success) {
         throw new Error(res.message ?? 'Failed to load hero banners');
       }
-      const { resolveCmsMediaUrl } = await import('@/lib/utils/cmsMediaUrl');
-      const all = (Array.isArray(res.data) ? res.data : [])
-        .filter((b) => b.imageUrl && b.enabled !== false)
-        .map((b) => ({
-          ...b,
-          imageUrl: resolveCmsMediaUrl(b.imageUrl),
-          mobileImageUrl: b.mobileImageUrl ? resolveCmsMediaUrl(b.mobileImageUrl) : b.mobileImageUrl,
-          thumbnailUrl: b.thumbnailUrl ? resolveCmsMediaUrl(b.thumbnailUrl) : b.thumbnailUrl,
-        }));
-      return {
-        sliders: all.filter((b) => b.banner_type === 'home_slider'),
-        sidePanels: all.filter((b) => b.banner_type === 'hero_side_panel'),
-      };
+      const { processHeroCoverImages } = await import('@/lib/utils/heroCoverImages');
+      return processHeroCoverImages(Array.isArray(res.data) ? res.data : []);
     },
+    initialData,
     staleTime: 60 * 1000,
     retry: 2,
   });

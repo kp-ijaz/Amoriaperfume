@@ -66,7 +66,6 @@ function GridTile({ img, index, viewPostLabel }: { img: IgGridItem; index: numbe
           alt={img.alt}
           fill
           className="object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
-          unoptimized
         />
       ) : (
         <div

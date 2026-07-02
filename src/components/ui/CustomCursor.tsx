@@ -15,12 +15,12 @@ export function CustomCursor() {
   const touchedRef              = useRef(false);
 
   useEffect(() => {
-    // Comprehensive touch/mobile detection
-    const noHover    = window.matchMedia('(hover: none)').matches;
-    const coarse     = window.matchMedia('(pointer: coarse)').matches;
-    const hasTouch   = navigator.maxTouchPoints > 0;
+    const noHover = window.matchMedia('(hover: none)').matches;
+    const coarse = window.matchMedia('(pointer: coarse)').matches;
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const hasTouch = navigator.maxTouchPoints > 0;
 
-    if (noHover || coarse || hasTouch) return; // pure touch device — do nothing
+    if (noHover || coarse || hasTouch || reducedMotion) return;
     setShow(true);
 
     const onMove = (e: MouseEvent) => {
@@ -62,7 +62,7 @@ export function CustomCursor() {
     <>
       {/* Scoped to real mouse devices only — never hides native tap cursor on mobile */}
       <style>{`
-        @media (hover: hover) and (pointer: fine) {
+        @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
           * { cursor: none !important; }
         }
       `}</style>

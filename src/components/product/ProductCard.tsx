@@ -226,7 +226,8 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
                       <button
                         key={v.id}
                         onClick={(e) => handleVariantSelect(e, idx)}
-                        className="text-[9px] font-semibold tracking-wider uppercase px-2 py-1 transition-all duration-150 shrink-0"
+                        aria-label={`Select ${v.sizeMl > 0 ? `${v.sizeMl}ml` : v.concentration} variant`}
+                        className="text-[9px] font-semibold tracking-wider uppercase px-2 py-2 min-h-12 transition-all duration-150 shrink-0"
                         style={{
                           backgroundColor: selectedVariantIndex === idx ? '#1A0A2E' : 'transparent',
                           color: selectedVariantIndex === idx ? 'white' : '#6B6B6B',
@@ -277,7 +278,7 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
 
       {/* ── TEXT DETAILS ────────────────────────────── */}
       <div className="pt-3">
-        <p className="text-[9px] uppercase tracking-[0.2em] mb-1" style={{ color: '#A89880' }}>
+        <p className="text-[9px] uppercase tracking-[0.2em] mb-1" style={{ color: 'var(--color-amoria-text-light)' }}>
           {product.brand}
         </p>
         {product.isBrandInspiration && product.inspiredBrand ? (

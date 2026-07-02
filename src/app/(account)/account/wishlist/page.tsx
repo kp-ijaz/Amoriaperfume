@@ -264,7 +264,6 @@ export default function WishlistPage() {
                           alt={primary.alt}
                           fill
                           className="object-cover transition-transform duration-500 group-hover:scale-105"
-                          unoptimized
                         />
                       </Link>
 

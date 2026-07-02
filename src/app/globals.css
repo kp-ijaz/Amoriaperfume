@@ -57,8 +57,8 @@
   --color-amoria-surface: #FFFFFF;
   --color-amoria-surface-2: #F5F2EE;
   --color-amoria-text: #1C1C1C;
-  --color-amoria-text-muted: #6B6B6B;
-  --color-amoria-text-light: #A89880;
+  --color-amoria-text-muted: #595959;
+  --color-amoria-text-light: #6B6358;
   --color-amoria-border: #E8E3DC;
 
   /* Animations */
@@ -116,7 +116,7 @@
   --secondary: #2D1554;
   --secondary-foreground: #FAF8F5;
   --muted: #2D1554;
-  --muted-foreground: #A89880;
+  --muted-foreground: #6B6358;
   --accent: #C9A84C;
   --accent-foreground: #1A0A2E;
   --destructive: oklch(0.704 0.191 22.216);

@@ -1,34 +1,24 @@
 import { CompactHeroBanner } from '@/components/home/CompactHeroBanner';
-
 import { CategoryIconStrip } from '@/components/home/CategoryIconStrip';
-
 import { HomepageDynamicSections } from '@/components/home/HomepageDynamicSections';
+import { LimitedOfferPopupLazy } from '@/components/home/LimitedOfferPopupLazy';
+import { JsonLd } from '@/components/seo/JsonLd';
+import { fetchHeroCoverImages } from '@/lib/api/server';
+import { homeMetadata } from '@/lib/seo/static-pages';
+import { buildOrganizationJsonLd, buildWebSiteJsonLd } from '@/lib/seo/jsonld';
 
-import { LimitedOfferPopup } from '@/components/home/LimitedOfferPopup';
+export const metadata = homeMetadata;
 
-import { FragranceFinderWidget } from '@/components/home/FragranceFinderWidget';
-
-
-
-export default function HomePage() {
+export default async function HomePage() {
+  const initialHeroData = await fetchHeroCoverImages();
 
   return (
-
     <>
-
-      <CompactHeroBanner />
-
+      <JsonLd data={[buildOrganizationJsonLd(), buildWebSiteJsonLd()]} />
+      <CompactHeroBanner initialHeroData={initialHeroData} />
       <CategoryIconStrip />
-
       <HomepageDynamicSections />
-
-      <LimitedOfferPopup />
-
-      <FragranceFinderWidget />
-
+      <LimitedOfferPopupLazy />
     </>
-
   );
-
 }
-

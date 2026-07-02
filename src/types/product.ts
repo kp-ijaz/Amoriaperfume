@@ -4,6 +4,13 @@ export interface ProductImage {
   isPrimary: boolean;
 }
 
+export interface ProductSeo {
+  metaTitle?: string;
+  metaDescription?: string;
+  keywords?: string[];
+  canonicalPath?: string;
+}
+
 export interface ProductVariant {
   id: string;
   variantId?: string;
@@ -13,6 +20,9 @@ export interface ProductVariant {
   price: number;
   salePrice?: number;
   stock: number;
+  sku?: string;
+  barcode?: string;
+  outOfStock?: boolean;
 }
 
 export interface Product {
@@ -51,6 +61,10 @@ export interface Product {
   isBrandInspiration?: boolean;
   inspiredBrand?: string;
   isOnSale?: boolean;
+  seo?: ProductSeo;
+  stockStatus?: 'in_stock' | 'low' | 'out_of_stock';
+  sku?: string;
+  updatedAt?: string;
 }
 
 export interface Category {

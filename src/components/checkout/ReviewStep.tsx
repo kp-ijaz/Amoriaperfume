@@ -339,7 +339,7 @@ export function ReviewStep({
                 <div key={cartItemReactKey(item)} className="flex gap-3 items-center">
                   <div className="relative w-12 h-12 flex-shrink-0" style={{ backgroundColor: '#F5F2EE' }}>
                     {item.image && (
-                      <Image src={item.image} alt={item.name} fill className="object-cover" unoptimized />
+                      <Image src={item.image} alt={item.name} fill className="object-cover" />
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -360,7 +360,7 @@ export function ReviewStep({
             return (
               <div key={cartItemReactKey(item)} className="flex gap-3 items-center">
                 <div className="relative w-12 h-12 flex-shrink-0" style={{ backgroundColor: '#F5F2EE' }}>
-                  {imageUrl && <Image src={imageUrl} alt={item.product.name} fill className="object-cover" unoptimized />}
+                  {imageUrl && <Image src={imageUrl} alt={item.product.name} fill className="object-cover" />}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium truncate" style={{ color: '#1C1C1C' }}>{item.product.name}</p>

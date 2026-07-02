@@ -53,6 +53,7 @@ export function Footer() {
                 href="https://instagram.com/amoria.ae"
                 target="_blank"
                 rel="noopener noreferrer"
+                aria-label="Follow Amoria on Instagram"
                 className="w-9 h-9 rounded-full flex items-center justify-center transition-colors"
                 style={{ backgroundColor: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.7)' }}
               >
@@ -62,6 +63,7 @@ export function Footer() {
                 href="https://tiktok.com/@amoria.ae"
                 target="_blank"
                 rel="noopener noreferrer"
+                aria-label="Follow Amoria on TikTok"
                 className="w-9 h-9 rounded-full flex items-center justify-center transition-colors text-xs font-bold"
                 style={{ backgroundColor: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.7)' }}
               >

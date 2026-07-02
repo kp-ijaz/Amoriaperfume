@@ -18,11 +18,26 @@ export interface PaginatedData<T> {
 
 // ─── Product ─────────────────────────────────────────────────────────────────
 
+export interface ApiProductSeo {
+  metaTitle?: string;
+  metaDescription?: string;
+  keywords?: string[];
+  canonicalPath?: string;
+}
+
+export interface ApiCatalogMeta {
+  minPrice?: number;
+  maxPrice?: number;
+  totalStock?: number;
+  stockStatus?: 'in_stock' | 'low' | 'out_of_stock';
+}
+
 export interface ApiSizeVariant {
   _id: string;
   size: string;         // "50 ml", "100 ml", "30 ml"
   stock: number;
   sku: string;
+  barcode?: string;
   discount: number;
   discountType: 'percentage' | 'fixed';
   finalPrice: number;   // in AED
@@ -91,6 +106,8 @@ export interface ApiProduct {
     avg: number;
     count: number;
   };
+  seo?: ApiProductSeo;
+  catalogMeta?: ApiCatalogMeta;
   createdAt: string;
   updatedAt: string;
 }

@@ -8,11 +8,20 @@ function publicQuery(extra?: Record<string, string>) {
   return `?${q.toString()}`;
 }
 
-async function publicFetch<T>(path: string, options?: RequestInit): Promise<T> {  const apiBase = getApiBase();
+async function publicFetch<T>(
+  path: string,
+  options?: RequestInit & { revalidate?: number | false }
+): Promise<T> {
+  const apiBase = getApiBase();
   if (!apiBase && typeof window === 'undefined') {
     throw new Error('NEXT_PUBLIC_API_BASE_URL is not set.');
   }
-  const res = await fetch(`${apiBase}${path}`, options);
+  const { revalidate, ...fetchOptions } = options ?? {};
+  const nextInit = revalidate !== undefined ? { next: { revalidate } } : undefined;
+  const res = await fetch(`${apiBase}${path}`, {
+    ...fetchOptions,
+    ...(nextInit ? { next: nextInit.next } : {}),
+  });
   return res.json() as Promise<T>;
 }
 
@@ -140,22 +149,28 @@ export async function apiGetPublicOfferPopup(): Promise<ApiResponse<PublicOfferP
   return publicFetch(`/api/public/offer-popup${publicQuery()}`);
 }
 
-export async function apiGetPublicCoverImages(params?: {
-  banner_type?: string;
-  device?: 'mobile' | 'desktop';
-}): Promise<ApiResponse<PublicCoverImage[]>> {
+export async function apiGetPublicCoverImages(
+  params?: {
+    banner_type?: string;
+    device?: 'mobile' | 'desktop';
+  },
+  options?: RequestInit & { revalidate?: number | false }
+): Promise<ApiResponse<PublicCoverImage[]>> {
   const q: Record<string, string> = {};
   if (params?.banner_type) q.banner_type = params.banner_type;
   if (params?.device) q.device = params.device;
-  return publicFetch(`/api/public/cover-images${publicQuery(q)}`);
+  return publicFetch(`/api/public/cover-images${publicQuery(q)}`, options);
 }
 
 export async function apiGetPublicHomepageSections(): Promise<ApiResponse<PublicHomepageSection[]>> {
   return publicFetch(`/api/public/homepage-sections${publicQuery()}`);
 }
 
-export async function apiGetPublicPage(slug: string): Promise<ApiResponse<PublicContentPage>> {
-  return publicFetch(`/api/public/pages/${encodeURIComponent(slug)}${publicQuery()}`);
+export async function apiGetPublicPage(
+  slug: string,
+  options?: RequestInit & { revalidate?: number | false }
+): Promise<ApiResponse<PublicContentPage>> {
+  return publicFetch(`/api/public/pages/${encodeURIComponent(slug)}${publicQuery()}`, options);
 }
 
 export async function apiGetPublicHomeSlots(): Promise<ApiResponse<PublicHomeSlot[]>> {

@@ -47,6 +47,9 @@ function adaptSizeVariant(
     price: hasDiscount ? mrpPrice : price,
     salePrice: hasDiscount ? price : undefined,
     stock: size.stock,
+    sku: size.sku,
+    barcode: size.barcode,
+    outOfStock: size.outOfStock,
   };
 }
 
@@ -113,6 +116,17 @@ export function adaptProduct(api: ApiProduct): Product {
     isBrandInspiration: Boolean(api.brandInspiration),
     inspiredBrand: api.inspiredBrand?.trim() || undefined,
     isOnSale,
+    seo: api.seo
+      ? {
+          metaTitle: api.seo.metaTitle?.trim() || undefined,
+          metaDescription: api.seo.metaDescription?.trim() || undefined,
+          keywords: api.seo.keywords,
+          canonicalPath: api.seo.canonicalPath?.trim() || undefined,
+        }
+      : undefined,
+    stockStatus: api.catalogMeta?.stockStatus,
+    sku: api.sku,
+    updatedAt: api.updatedAt,
   };
 }
 

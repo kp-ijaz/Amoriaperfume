@@ -14,22 +14,26 @@ const apiProxyTarget = (
   .replace(/^http:\/\/localhost/i, "http://127.0.0.1");
 
 if (
-  process.env.NODE_ENV === "production" &&
+  process.env.NODE_ENV === "development" &&
   /^(https?:\/\/)?(localhost|127\.0\.0\.1)(:\d+)?$/i.test(apiProxyTarget)
 ) {
   console.warn(
-    "[Amoriaperfume] API_PROXY_TARGET resolves to localhost in production. Set API_PROXY_TARGET to your deployed backend URL."
+    "[Amoriaperfume] API_PROXY_TARGET resolves to localhost in development."
   );
 }
 
+const isProd = process.env.NODE_ENV === "production";
+
 const nextConfig: NextConfig = {
-  // Allow HMR / _next dev assets when testing from phone or another machine on the LAN.
   allowedDevOrigins: [
     "localhost",
     "127.0.0.1",
     "10.255.254.95",
     ...extraDevOrigins,
   ],
+  experimental: {
+    optimizePackageImports: ["lucide-react", "framer-motion"],
+  },
   async rewrites() {
     return [
       { source: "/api/:path*", destination: `${apiProxyTarget}/api/:path*` },
@@ -37,10 +41,13 @@ const nextConfig: NextConfig = {
     ];
   },
   images: {
-    remotePatterns: [
-      { protocol: "https", hostname: "**" },
-      { protocol: "http", hostname: "**" },
-    ],
+    formats: ["image/avif", "image/webp"],
+    remotePatterns: isProd
+      ? [{ protocol: "https", hostname: "**" }]
+      : [
+          { protocol: "https", hostname: "**" },
+          { protocol: "http", hostname: "**" },
+        ],
   },
 };
 

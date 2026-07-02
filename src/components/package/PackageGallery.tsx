@@ -44,7 +44,6 @@ export function PackageGallery({
           fill
           className={objectFit === 'contain' ? `object-contain ${imagePadding}` : 'object-cover'}
           priority
-          unoptimized
         />
       </div>
     );
@@ -66,7 +65,7 @@ export function PackageGallery({
               backgroundColor: '#F8F8F8',
             }}
           >
-            <Image src={url} alt={`${name} ${i + 1}`} fill className="object-cover" unoptimized />
+            <Image src={url} alt={`${name} ${i + 1}`} fill className="object-cover" />
           </button>
         ))}
       </div>
@@ -91,7 +90,6 @@ export function PackageGallery({
                 fill
                 className={objectFit === 'contain' ? `object-contain ${imagePadding}` : 'object-cover'}
                 priority
-                unoptimized
               />
             </motion.div>
           </AnimatePresence>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@/lib/store';
 import { closeMobileNav } from '@/lib/store/uiSlice';
@@ -27,6 +27,15 @@ export function MobileNav() {
   const [searchQuery, setSearchQuery] = useState('');
   useBodyLock(isOpen);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') dispatch(closeMobileNav());
+    }
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [isOpen, dispatch]);
+
   function submitSearch() {
     const q = searchQuery.trim();
     if (!q) return;
@@ -51,6 +60,9 @@ export function MobileNav() {
             animate={{ x: 0 }}
             exit={{ x: '-100%' }}
             transition={{ type: 'tween', duration: 0.3 }}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="mobile-nav-title"
             className="fixed left-0 top-0 bottom-0 w-80 z-50 flex flex-col md:hidden"
             style={{ backgroundColor: 'var(--color-amoria-primary)' }}
           >
@@ -58,12 +70,13 @@ export function MobileNav() {
               <div className="flex items-center gap-2">
                 <Image
                   src="/brand-icon.png"
-                  alt="Amoria"
+                  alt=""
                   width={32}
                   height={32}
                   className="object-contain"
                 />
                 <span
+                  id="mobile-nav-title"
                   className="text-xl font-bold tracking-[0.15em]"
                   style={{ fontFamily: 'var(--font-heading)', color: 'var(--color-amoria-accent)' }}
                 >
@@ -72,7 +85,8 @@ export function MobileNav() {
               </div>
               <button
                 onClick={() => dispatch(closeMobileNav())}
-                className="p-2 text-white/70 hover:text-white"
+                className="min-h-12 min-w-12 flex items-center justify-center text-white/70 hover:text-white"
+                aria-label="Close menu"
               >
                 <X size={20} />
               </button>

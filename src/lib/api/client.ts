@@ -23,6 +23,8 @@ import { getApiBase } from './resolveApiBase';
 
 export { getApiBase } from './resolveApiBase';
 
+export type ApiFetchOptions = RequestInit & { revalidate?: number | false };
+
 const TOKEN_KEY = 'amoria_access_token';
 const GUEST_ORDERS_TOKEN_KEY = 'amoria_guest_orders_token';
 
@@ -59,7 +61,7 @@ export function clearGuestOrdersToken(): void {
 
 async function apiFetch<T>(
   path: string,
-  options: RequestInit = {},
+  options: ApiFetchOptions = {},
   token?: string | null
 ): Promise<T> {
   const apiBase = getApiBase();
@@ -69,15 +71,26 @@ async function apiFetch<T>(
     );
   }
 
+  const { revalidate, ...fetchOptions } = options;
+
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    ...(options.headers as Record<string, string>),
+    ...(fetchOptions.headers as Record<string, string>),
   };
 
   const authToken = token ?? getStoredToken();
   if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
 
-  const res = await fetch(`${apiBase}${path}`, { ...options, headers });
+  const nextInit =
+    revalidate !== undefined
+      ? { next: { revalidate } }
+      : undefined;
+
+  const res = await fetch(`${apiBase}${path}`, {
+    ...fetchOptions,
+    headers,
+    ...(nextInit ? { next: nextInit.next } : {}),
+  });
   const json = await res.json();
   return json as T;
 }
@@ -137,7 +150,8 @@ export interface ProductsParams {
 }
 
 export async function apiGetProducts(
-  params: ProductsParams = {}
+  params: ProductsParams = {},
+  options?: ApiFetchOptions
 ): Promise<ApiResponse<PaginatedData<ApiProduct>>> {
   const qs = new URLSearchParams();
   if (params.page)            qs.set('page', String(params.page));
@@ -165,7 +179,7 @@ export async function apiGetProducts(
   if (params.dayNight)        qs.set('dayNight', params.dayNight);
   if (params.collection)      qs.set('collection', params.collection);
   const query = qs.toString() ? `?${qs.toString()}` : '';
-  return apiFetch(`/api/products${query}`);
+  return apiFetch(`/api/products${query}`, options);
 }
 
 export async function apiRecordProductView(productId: string): Promise<ApiResponse<{ viewCount: number }>> {
@@ -176,8 +190,11 @@ export async function apiGetProduct(id: string): Promise<ApiResponse<ApiProduct>
   return apiFetch(`/api/products/${id}`);
 }
 
-export async function apiGetProductBySlug(slug: string): Promise<ApiResponse<ApiProduct>> {
-  return apiFetch(`/api/products/slug/${encodeURIComponent(slug)}`);
+export async function apiGetProductBySlug(
+  slug: string,
+  options?: ApiFetchOptions
+): Promise<ApiResponse<ApiProduct>> {
+  return apiFetch(`/api/products/slug/${encodeURIComponent(slug)}`, options);
 }
 
 export async function apiGetProductReviews(
@@ -196,27 +213,39 @@ export async function apiCreateProductReview(
 
 // ─── Categories ───────────────────────────────────────────────────────────────
 
-export async function apiGetCategories(slug?: string): Promise<ApiResponse<PaginatedData<ApiCategory>>> {
-  const query = slug ? `?slug=${encodeURIComponent(slug)}` : '';
-  return apiFetch(`/api/categories${query}`);
+export async function apiGetCategories(
+  params?: { slug?: string; limit?: number },
+  options?: ApiFetchOptions
+): Promise<ApiResponse<PaginatedData<ApiCategory>>> {
+  const qs = new URLSearchParams();
+  if (params?.slug) qs.set('slug', params.slug);
+  if (params?.limit) qs.set('limit', String(params.limit));
+  const query = qs.toString() ? `?${qs.toString()}` : '';
+  return apiFetch(`/api/categories${query}`, options);
 }
 
-export async function apiGetCategoryBySlug(slug: string): Promise<ApiResponse<ApiCategory>> {
-  return apiFetch(`/api/categories/slug/${encodeURIComponent(slug)}`);
+export async function apiGetCategoryBySlug(
+  slug: string,
+  options?: ApiFetchOptions
+): Promise<ApiResponse<ApiCategory>> {
+  return apiFetch(`/api/categories/slug/${encodeURIComponent(slug)}`, options);
 }
 
 // ─── Brands ───────────────────────────────────────────────────────────────────
 
-export async function apiGetBrands(): Promise<ApiResponse<ApiBrand[]>> {
-  return apiFetch('/api/brands');
+export async function apiGetBrands(options?: ApiFetchOptions): Promise<ApiResponse<ApiBrand[]>> {
+  return apiFetch('/api/brands', options);
 }
 
 export async function apiGetBrand(id: string): Promise<ApiResponse<ApiBrand>> {
   return apiFetch(`/api/brands/${id}`);
 }
 
-export async function apiGetBrandBySlug(slug: string): Promise<ApiResponse<ApiBrand>> {
-  return apiFetch(`/api/brands/slug/${encodeURIComponent(slug)}`);
+export async function apiGetBrandBySlug(
+  slug: string,
+  options?: ApiFetchOptions
+): Promise<ApiResponse<ApiBrand>> {
+  return apiFetch(`/api/brands/slug/${encodeURIComponent(slug)}`, options);
 }
 
 // ─── Collections ──────────────────────────────────────────────────────────────
@@ -224,24 +253,31 @@ export async function apiGetBrandBySlug(slug: string): Promise<ApiResponse<ApiBr
 // ─── Gift Sets ───────────────────────────────────────────────────────────────
 
 export async function apiGetGiftSets(
-  occasion?: ApiGiftSetOccasion
+  occasion?: ApiGiftSetOccasion,
+  options?: ApiFetchOptions
 ): Promise<ApiResponse<ApiGiftSet[]>> {
   const qs = occasion && occasion !== 'general' ? `?occasion=${encodeURIComponent(occasion)}` : '';
-  return apiFetch(`/api/gift-sets/public${qs}`);
+  return apiFetch(`/api/gift-sets/public${qs}`, options);
 }
 
-export async function apiGetGiftSetBySlug(slug: string): Promise<ApiResponse<ApiGiftSet>> {
-  return apiFetch(`/api/gift-sets/public/slug/${encodeURIComponent(slug)}`);
+export async function apiGetGiftSetBySlug(
+  slug: string,
+  options?: ApiFetchOptions
+): Promise<ApiResponse<ApiGiftSet>> {
+  return apiFetch(`/api/gift-sets/public/slug/${encodeURIComponent(slug)}`, options);
 }
 
 // ─── Bundles ─────────────────────────────────────────────────────────────────
 
-export async function apiGetBundles(): Promise<ApiResponse<ApiBundle[]>> {
-  return apiFetch('/api/bundles/public');
+export async function apiGetBundles(options?: ApiFetchOptions): Promise<ApiResponse<ApiBundle[]>> {
+  return apiFetch('/api/bundles/public', options);
 }
 
-export async function apiGetBundleBySlug(slug: string): Promise<ApiResponse<ApiBundle>> {
-  return apiFetch(`/api/bundles/public/slug/${encodeURIComponent(slug)}`);
+export async function apiGetBundleBySlug(
+  slug: string,
+  options?: ApiFetchOptions
+): Promise<ApiResponse<ApiBundle>> {
+  return apiFetch(`/api/bundles/public/slug/${encodeURIComponent(slug)}`, options);
 }
 
 export async function apiGetCollections(slug?: string): Promise<ApiResponse<ApiCollection[]>> {

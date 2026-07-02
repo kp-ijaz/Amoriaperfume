@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ImagePlus, Video, X } from 'lucide-react';
 import { apiGetOrders, apiGetProduct, apiGetVerifiedGuestOrders } from '@/lib/api/client';
@@ -248,8 +249,9 @@ export default function NewReturnPage() {
           </h2>
           <div className="flex gap-3">
             {lineItem.image ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={lineItem.image} alt="" className="w-20 h-20 object-cover bg-gray-100" />
+              <div className="relative w-20 h-20 bg-gray-100 shrink-0">
+                <Image src={lineItem.image} alt={lineItem.productName} fill className="object-cover" sizes="80px" />
+              </div>
             ) : null}
             <div>
               <p className="font-medium" style={{ color: 'var(--color-amoria-text)' }}>
@@ -340,8 +342,7 @@ export default function NewReturnPage() {
             <div className="flex flex-wrap gap-2 mb-2">
               {images.map((ev, i) => (
                 <div key={ev.url} className="relative w-20 h-20">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={ev.url} alt="" className="w-full h-full object-cover border" />
+                  <Image src={ev.url} alt={`Uploaded photo ${i + 1}`} fill className="object-cover border" sizes="80px" />
                   <button
                     type="button"
                     aria-label="Remove image"

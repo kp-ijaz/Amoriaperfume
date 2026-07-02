@@ -481,7 +481,7 @@ export function useProductsByLimit(limit: number, params: ProductsParams = {}) {
   });
 }
 
-export function useQuizCatalogProducts() {
+export function useQuizCatalogProducts(enabled = true) {
   return useQuery({
     queryKey: ['products', 'quiz-catalog'],
     queryFn: async () => {
@@ -489,6 +489,7 @@ export function useQuizCatalogProducts() {
       if (!res.success || !res.data?.items) return [];
       return adaptProducts(res.data.items);
     },
+    enabled,
     staleTime: 10 * 60 * 1000,
   });
 }

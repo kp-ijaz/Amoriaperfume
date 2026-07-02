@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useBodyLock } from '@/lib/hooks/useBodyLock';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -19,6 +19,15 @@ export function FragranceFinderWidget() {
   const open = useSelector((s: RootState) => s.ui.finderOpen);
   useBodyLock(open);
 
+  useEffect(() => {
+    if (!open) return;
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') dispatch(closeFinder());
+    }
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [open, dispatch]);
+
   function setOpen(val: boolean) {
     if (val) dispatch(openFinder());
     else dispatch(closeFinder());
@@ -32,7 +41,7 @@ export function FragranceFinderWidget() {
   const progress   = started ? Math.round((step / totalSteps) * 100) : 0;
   const isDone     = started && step >= totalSteps;
 
-  const { data: allProducts = [] } = useQuizCatalogProducts();
+  const { data: allProducts = [] } = useQuizCatalogProducts(open);
 
   function pickAnswer(optionId: string) {
     const next = { ...answers, [current.id]: optionId };
@@ -76,6 +85,9 @@ export function FragranceFinderWidget() {
             />
 
             <motion.div
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="fragrance-finder-title"
               className="fixed bottom-0 right-0 z-[149] w-full sm:w-[340px] flex flex-col"
               style={{
                 maxHeight: '88vh',
@@ -102,7 +114,7 @@ export function FragranceFinderWidget() {
                     </button>
                   )}
                   <Sparkles size={13} style={{ color: '#C9A84C' }} />
-                  <span className="text-[11px] font-bold tracking-[0.22em] uppercase" style={{ color: '#C9A84C' }}>
+                  <span id="fragrance-finder-title" className="text-[11px] font-bold tracking-[0.22em] uppercase" style={{ color: '#C9A84C' }}>
                     {isDone ? 'Your Matches' : 'Find Your Scent'}
                   </span>
                 </div>
@@ -129,7 +141,7 @@ export function FragranceFinderWidget() {
                       <h3 className="text-xl font-light text-white mb-2 leading-tight" style={{ fontFamily: 'var(--font-heading)' }}>
                         Discover Your<br /><em style={{ color: '#C9A84C' }}>Perfect Scent</em>
                       </h3>
-                      <p className="text-xs leading-relaxed mb-6" style={{ color: 'rgba(255,255,255,0.45)' }}>
+                      <p className="text-xs leading-relaxed mb-6" style={{ color: 'rgba(255,255,255,0.65)' }}>
                         Answer 5 quick questions and we&apos;ll find fragrances tailored just for you.
                       </p>
                       <button
@@ -204,7 +216,7 @@ export function FragranceFinderWidget() {
                               >
                                 {/* Image */}
                                 <div className="relative flex-shrink-0 w-[60px] h-[60px] overflow-hidden" style={{ borderRadius: '3px' }}>
-                                  {imageUrl && <Image src={imageUrl} alt={product.name} fill className="object-cover" unoptimized />}
+                                  {imageUrl && <Image src={imageUrl} alt={product.name} fill className="object-cover" />}
                                   {/* Match badge */}
                                   <div className="absolute top-0 left-0 px-1 py-0.5 text-[8px] font-black" style={{ backgroundColor: '#C9A84C', color: '#1A0A2E' }}>
                                     {score}%

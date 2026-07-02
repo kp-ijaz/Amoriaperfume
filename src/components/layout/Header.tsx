@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useMemo } from 'react';
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useSelector, useDispatch } from 'react-redux';
@@ -11,8 +12,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { formatCurrency } from '@/lib/utils/formatCurrency';
 import { useSearchProducts } from '@/lib/hooks/useApiProducts';
 import Image from 'next/image';
-import { CartDrawer } from '@/components/cart/CartDrawer';
-import { MobileNav } from './MobileNav';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { useLanguage } from '@/lib/context/LanguageContext';
 import { useUtilityBarConfig, type UtilityBarOfferDisplay } from '@/lib/hooks/usePublicCms';
@@ -23,6 +22,12 @@ import {
   type ShopNavItem,
 } from '@/lib/navigation/shopNav';
 import type { TranslationKey } from '@/lib/i18n/translations';
+
+const CartDrawer = dynamic(
+  () => import('@/components/cart/CartDrawer').then((m) => m.CartDrawer),
+  { ssr: false }
+);
+const MobileNav = dynamic(() => import('./MobileNav').then((m) => m.MobileNav), { ssr: false });
 
 const OFFER_COLORS = ['#dc2626', '#16a34a', 'var(--color-amoria-accent)', '#7c3aed', '#ea580c'];
 
@@ -258,6 +263,7 @@ export function Header() {
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [searchOpen, setSearchOpen] = useState(false);
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -343,6 +349,7 @@ export function Header() {
                     <>
                       <Link
                         href="/store-locator"
+                        aria-label={t('storeLocator')}
                         className="flex items-center gap-1.5 flex-shrink-0 hover:opacity-70 transition-opacity"
                         style={{ color: 'var(--color-amoria-text-muted)' }}
                       >
@@ -429,7 +436,7 @@ export function Header() {
 
             {/* Mobile hamburger */}
             <button
-              className="md:hidden p-2 mr-1"
+              className="md:hidden min-h-12 min-w-12 flex items-center justify-center p-2 mr-1"
               onClick={() => dispatch(openMobileNav())}
               aria-label="Open menu"
             >
@@ -439,16 +446,16 @@ export function Header() {
             {/* Logo — left */}
             <Link
               href="/"
+              aria-label="Amoria home"
               className="flex items-center gap-2 flex-shrink-0 transition-transform duration-300"
               style={{ transform: scrolled ? 'scale(0.92)' : 'scale(1)', transformOrigin: 'left center' }}
             >
               <Image
                 src="/amoria_logo.png"
-                alt="Amoria"
-                width={40}
-                height={40}
-                className="transition-all duration-300 object-contain"
-                style={{ width: scrolled ? 28 : 34, height: scrolled ? 28 : 34 }}
+                alt=""
+                width={34}
+                height={34}
+                className={`transition-all duration-300 object-contain ${scrolled ? 'w-7 h-7' : 'w-[34px] h-[34px]'}`}
                 priority
               />
               <span
@@ -460,7 +467,7 @@ export function Header() {
             </Link>
 
             {/* Center nav — desktop only */}
-            <nav className="hidden md:flex items-center justify-center flex-nowrap whitespace-nowrap flex-1 gap-0.5 px-4">
+            <nav aria-label="Main navigation" className="hidden md:flex items-center justify-center flex-nowrap whitespace-nowrap flex-1 gap-0.5 px-4">
               {SHOP_NAV.map((link) => {
                 if (link.type === 'dropdown') {
                   return (
@@ -479,6 +486,7 @@ export function Header() {
                   <Link
                     key={link.href}
                     href={link.href}
+                    aria-current={active ? 'page' : undefined}
                     className={`relative px-3.5 py-2 text-[13px] font-medium tracking-wide group transition-colors duration-200 ${
                       link.isRed
                         ? 'text-red-500'
@@ -552,8 +560,9 @@ export function Header() {
                       {/* Center column — input */}
                       <input
                         ref={searchInputRef}
-                        type="text"
+                        type="search"
                         enterKeyHint="search"
+                        aria-label={t('searchPlaceholder')}
                         placeholder={t('searchPlaceholder')}
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
@@ -582,7 +591,7 @@ export function Header() {
 
                 {/* Mobile search icon — opens the mobile nav drawer (which holds the search field) */}
                 <button
-                  className="md:hidden p-2.5 hover:opacity-70 transition-opacity"
+                  className="md:hidden min-h-12 min-w-12 flex items-center justify-center p-2.5 hover:opacity-70 transition-opacity"
                   aria-label="Search"
                   onClick={() => dispatch(openMobileNav())}
                 >
@@ -620,7 +629,6 @@ export function Header() {
                                     alt={product.name}
                                     fill
                                     className="object-cover"
-                                    unoptimized
                                   />
                                 </div>
                                 <div className="flex-1 min-w-0">
@@ -659,8 +667,8 @@ export function Header() {
               {/* Wishlist */}
               <Link
                 href="/account/wishlist"
-                className="relative p-2.5 hover:opacity-70 transition-opacity hidden md:flex"
-                aria-label="Wishlist"
+                className="relative min-h-12 min-w-12 flex items-center justify-center p-2.5 hover:opacity-70 transition-opacity hidden md:flex"
+                aria-label={wishlistItems.length > 0 ? `Wishlist, ${wishlistItems.length} items` : 'Wishlist'}
               >
                 <Heart size={20} style={{ color: 'var(--color-amoria-primary)' }} />
                 {wishlistItems.length > 0 && (
@@ -676,8 +684,8 @@ export function Header() {
               {/* Cart */}
               <button
                 onClick={() => dispatch(openCartDrawer())}
-                className="relative p-2.5 hover:opacity-70 transition-opacity"
-                aria-label="Cart"
+                className="relative min-h-12 min-w-12 flex items-center justify-center p-2.5 hover:opacity-70 transition-opacity"
+                aria-label={cartCount > 0 ? `Cart, ${cartCount} items` : 'Cart'}
               >
                 <ShoppingBag size={20} style={{ color: 'var(--color-amoria-primary)' }} />
                 {cartCount > 0 && (
@@ -691,8 +699,20 @@ export function Header() {
               </button>
 
               {/* Account */}
-              <div className="relative group hidden md:block">
-                <button className="p-2.5 hover:opacity-70 transition-opacity flex items-center gap-1">
+              <div className="relative hidden md:block">
+                <button
+                  type="button"
+                  className="min-h-12 min-w-12 p-2.5 hover:opacity-70 transition-opacity flex items-center justify-center gap-1"
+                  aria-label="Account menu"
+                  aria-expanded={accountMenuOpen}
+                  aria-haspopup="menu"
+                  onClick={() => setAccountMenuOpen((open) => !open)}
+                  onBlur={(e) => {
+                    if (!e.currentTarget.parentElement?.contains(e.relatedTarget as Node)) {
+                      setAccountMenuOpen(false);
+                    }
+                  }}
+                >
                   {isLoggedIn ? (
                     <div
                       className="w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold"
@@ -707,8 +727,10 @@ export function Header() {
                     </>
                   )}
                 </button>
+                {accountMenuOpen ? (
                 <div
-                  className="absolute right-0 top-full hidden group-hover:block bg-white border shadow-xl min-w-[200px] z-50"
+                  role="menu"
+                  className="absolute right-0 top-full bg-white border shadow-xl min-w-[200px] z-50"
                   style={{ borderColor: 'var(--color-amoria-border)' }}
                 >
                   {isLoggedIn ? (
@@ -794,6 +816,7 @@ export function Header() {
                     </>
                   )}
                 </div>
+                ) : null}
               </div>
             </div>
           </div>

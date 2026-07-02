@@ -1,49 +1,49 @@
-'use client';
-
-import { use, useMemo } from 'react';
+import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import Link from 'next/link';
-import { useCategoryBySlug } from '@/lib/hooks/useApiCategories';
-import { ProductListingShell } from '@/components/plp/ProductListingShell';
+import { adaptCategory } from '@/lib/api/adapters';
+import { fetchCategoryBySlug } from '@/lib/api/server';
+import { buildPageMetadata } from '@/lib/seo/metadata';
+import { buildBreadcrumbJsonLd } from '@/lib/seo/jsonld';
+import { JsonLd } from '@/components/seo/JsonLd';
+import { CategoryPageClient } from './CategoryPageClient';
 
-export default function CategoryPage({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = use(params);
-  const { data: category, isLoading: catLoading } = useCategoryBySlug(slug);
+type PageProps = { params: Promise<{ slug: string }> };
 
-  const lockedFilters = useMemo(() => ({ categorySlug: slug }), [slug]);
-  const initialFilters = useMemo(() => ({ categorySlug: slug }), [slug]);
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { slug } = await params;
+  const category = await fetchCategoryBySlug(slug);
+  if (!category) {
+    return buildPageMetadata({ title: 'Category Not Found', path: `/categories/${slug}`, noIndex: true });
+  }
+  const title = `${category.name} Perfumes`;
+  const description =
+    category.description?.trim() ||
+    `Shop ${category.name} perfumes and fragrances online at Amoria UAE. Authentic Arabian scents delivered across Dubai and the Emirates.`;
+  return buildPageMetadata({
+    title,
+    description,
+    path: `/categories/${slug}`,
+    image: category.image,
+    keywords: [category.name, 'perfume', 'fragrance', 'UAE'],
+  });
+}
 
-  if (!catLoading && !category) return notFound();
+export default async function CategoryPage({ params }: PageProps) {
+  const { slug } = await params;
+  const api = await fetchCategoryBySlug(slug);
+  if (!api) notFound();
+
+  const initialCategory = adaptCategory(api);
+  const breadcrumbs = buildBreadcrumbJsonLd([
+    { name: 'Home', path: '/' },
+    { name: 'Categories', path: '/categories' },
+    { name: api.name, path: `/categories/${slug}` },
+  ]);
 
   return (
-    <ProductListingShell
-      initialFilters={initialFilters}
-      lockedFilters={lockedFilters}
-      hideFilterKeys={['categories']}
-      hideChipKeys={['categorySlug']}
-      hero={
-        <div className="py-10 px-4 text-center" style={{ backgroundColor: 'var(--color-amoria-primary)' }}>
-          <nav
-            className="flex items-center justify-center gap-2 text-xs mb-3"
-            style={{ color: 'rgba(255,255,255,0.5)' }}
-          >
-            <Link href="/" className="hover:opacity-80 text-white/50">
-              Home
-            </Link>
-            <span>/</span>
-            <span className="text-white">{category?.name ?? slug}</span>
-          </nav>
-          <h1
-            className="text-3xl md:text-4xl font-light text-white"
-            style={{ fontFamily: 'var(--font-heading)' }}
-          >
-            {catLoading ? <span className="opacity-50">Loading…</span> : category?.name}
-          </h1>
-          {category?.description && (
-            <p className="text-white/60 text-sm mt-2 max-w-md mx-auto">{category.description}</p>
-          )}
-        </div>
-      }
-    />
+    <>
+      <JsonLd data={breadcrumbs} />
+      <CategoryPageClient slug={slug} initialCategory={initialCategory} />
+    </>
   );
 }
